@@ -1,5 +1,7 @@
-<!-- 渲染版本：/harness-books/book1/appendix-b-diagram-notes.html -->
-<!-- Rendered HTML: /harness-books/book1/appendix-b-diagram-notes.html -->
+> 这是 Markdown 源文件 — 渲染版（推荐阅读）：
+> https://fanpeihua.github.io/harness-books/book1/appendix-b-diagram-notes.html
+
+---
 
 # 附录 B 图示：把运行时骨架画出来
 

@@ -1,5 +1,7 @@
-<!-- 渲染版本：/harness-books/book1/appendix-a-checklists.html -->
-<!-- Rendered HTML: /harness-books/book1/appendix-a-checklists.html -->
+> 这是 Markdown 源文件 — 渲染版（推荐阅读）：
+> https://fanpeihua.github.io/harness-books/book1/appendix-a-checklists.html
+
+---
 
 # 附录 A 检查清单：把原则落成能执行的约束
 

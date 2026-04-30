@@ -143,6 +143,27 @@ body {
   .hljs-variable, .hljs-tag { color: #ffab70; }
 }
 
+/* Images */
+.content img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 28px auto;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+.content img.cover {
+  max-width: 320px;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+  margin: 32px auto 40px;
+}
+@media (prefers-color-scheme: dark) {
+  .content img.cover { box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
+  .content img:not(.cover) { background: #fff; padding: 8px; }
+}
+
 .content table {
   width: 100%; border-collapse: collapse;
   margin: 20px 0; font-size: 14.5px;
@@ -212,7 +233,7 @@ body {
 <div class="chapter-meta">BOOK 2 · 05</div>
 <article class="content">
 <h1>第 5 章 技能、Hook 与本地规则：系统如何学会守乡约</h1>
-<p><img src="diagrams/diag-04-local-governance-comparison.png" alt="本地治理对比图"></p>
+<p><img src="diagrams/diag-04-local-governance-comparison.png" alt="本地治理对比图" loading="lazy"></p>
 <h2>5.1 真正能落地的 agent，一定会地方化</h2>
 <p>任何通用 coding agent 一旦开始给团队干活，就遇到同一问题：公司有公司规矩，仓库有仓库规矩，目录有目录规矩，人还有怪脾气。系统不能吸收这些局部制度，就只能停在演示环境里。Claude Code 和 Codex 都给出答案，方向不同。</p>
 <h2>5.2 Claude Code：把局部制度做成现场记忆</h2>

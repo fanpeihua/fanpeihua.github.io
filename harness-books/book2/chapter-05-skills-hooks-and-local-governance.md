@@ -1,5 +1,7 @@
-<!-- 渲染版本：/harness-books/book2/chapter-05-skills-hooks-and-local-governance.html -->
-<!-- Rendered HTML: /harness-books/book2/chapter-05-skills-hooks-and-local-governance.html -->
+> 这是 Markdown 源文件 — 渲染版（推荐阅读）：
+> https://fanpeihua.github.io/harness-books/book2/chapter-05-skills-hooks-and-local-governance.html
+
+---
 
 # 第 5 章 技能、Hook 与本地规则：系统如何学会守乡约
 

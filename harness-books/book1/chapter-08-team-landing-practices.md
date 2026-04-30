@@ -1,5 +1,7 @@
-<!-- 渲染版本：/harness-books/book1/chapter-08-team-landing-practices.html -->
-<!-- Rendered HTML: /harness-books/book1/chapter-08-team-landing-practices.html -->
+> 这是 Markdown 源文件 — 渲染版（推荐阅读）：
+> https://fanpeihua.github.io/harness-books/book1/chapter-08-team-landing-practices.html
+
+---
 
 # 第 8 章 团队落地：把一个聪明工具变成可承受的工作流
 

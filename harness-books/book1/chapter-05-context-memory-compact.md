@@ -1,5 +1,7 @@
-<!-- 渲染版本：/harness-books/book1/chapter-05-context-memory-compact.html -->
-<!-- Rendered HTML: /harness-books/book1/chapter-05-context-memory-compact.html -->
+> 这是 Markdown 源文件 — 渲染版（推荐阅读）：
+> https://fanpeihua.github.io/harness-books/book1/chapter-05-context-memory-compact.html
+
+---
 
 # 第 5 章 上下文治理：Memory、CLAUDE.md 与 Compact 是预算制度
 

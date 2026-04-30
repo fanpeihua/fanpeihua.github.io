@@ -1,5 +1,7 @@
-<!-- 渲染版本：/harness-books/book2/chapter-06-delegation-verification-and-state.html -->
-<!-- Rendered HTML: /harness-books/book2/chapter-06-delegation-verification-and-state.html -->
+> 这是 Markdown 源文件 — 渲染版（推荐阅读）：
+> https://fanpeihua.github.io/harness-books/book2/chapter-06-delegation-verification-and-state.html
+
+---
 
 # 第 6 章 委派、验证与持久状态：谁来防止系统自己给自己打高分
 

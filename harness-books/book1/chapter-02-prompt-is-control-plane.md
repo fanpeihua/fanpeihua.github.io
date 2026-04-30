@@ -1,5 +1,7 @@
-<!-- 渲染版本：/harness-books/book1/chapter-02-prompt-is-control-plane.html -->
-<!-- Rendered HTML: /harness-books/book1/chapter-02-prompt-is-control-plane.html -->
+> 这是 Markdown 源文件 — 渲染版（推荐阅读）：
+> https://fanpeihua.github.io/harness-books/book1/chapter-02-prompt-is-control-plane.html
+
+---
 
 # 第 2 章 Prompt 不是人格，Prompt 是控制平面
 

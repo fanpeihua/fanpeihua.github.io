@@ -143,6 +143,27 @@ body {
   .hljs-variable, .hljs-tag { color: #ffab70; }
 }
 
+/* Images */
+.content img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 28px auto;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+.content img.cover {
+  max-width: 320px;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+  margin: 32px auto 40px;
+}
+@media (prefers-color-scheme: dark) {
+  .content img.cover { box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
+  .content img:not(.cover) { background: #fff; padding: 8px; }
+}
+
 .content table {
   width: 100%; border-collapse: collapse;
   margin: 20px 0; font-size: 14.5px;

@@ -1,5 +1,7 @@
-<!-- 渲染版本：/harness-books/book1/appendix-c-source-map.html -->
-<!-- Rendered HTML: /harness-books/book1/appendix-c-source-map.html -->
+> 这是 Markdown 源文件 — 渲染版（推荐阅读）：
+> https://fanpeihua.github.io/harness-books/book1/appendix-c-source-map.html
+
+---
 
 # 附录 C 源码地图：本书各章主要依据哪些文件
 

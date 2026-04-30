@@ -143,6 +143,27 @@ body {
   .hljs-variable, .hljs-tag { color: #ffab70; }
 }
 
+/* Images */
+.content img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 28px auto;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+.content img.cover {
+  max-width: 320px;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+  margin: 32px auto 40px;
+}
+@media (prefers-color-scheme: dark) {
+  .content img.cover { box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
+  .content img:not(.cover) { background: #fff; padding: 8px; }
+}
+
 .content table {
   width: 100%; border-collapse: collapse;
   margin: 20px 0; font-size: 14.5px;
@@ -308,7 +329,7 @@ assert verification_worker ≠ implementation_worker              # 验证与实
 <li>它的输出文件是否还要保留</li>
 <li>它的 cleanup callback 有没有泄漏</li>
 </ul>
-<p><img src="diagrams/diag-ch07-01-multi-agent-lifecycle.png" alt="Claude Code Multi-Agent Runtime Lifecycle"></p>
+<p><img src="diagrams/diag-ch07-01-multi-agent-lifecycle.png" alt="Claude Code Multi-Agent Runtime Lifecycle" loading="lazy"></p>
 <p>很多多代理 demo 都只做到“我能再起一个 agent”，Claude Code 至少多做了一步：它把 agent 当作会泄漏资源、会残留状态、会在父进程结束后变成孤儿的运行实体来看待。这才像是在把代理当系统组件处理。</p>
 <h3>子代理生命周期失败矩阵 (failure matrix)</h3>
 <table>

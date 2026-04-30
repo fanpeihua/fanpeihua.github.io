@@ -1,5 +1,7 @@
-<!-- 渲染版本：/harness-books/book1/chapter-01-why-harness-engineering.html -->
-<!-- Rendered HTML: /harness-books/book1/chapter-01-why-harness-engineering.html -->
+> 这是 Markdown 源文件 — 渲染版（推荐阅读）：
+> https://fanpeihua.github.io/harness-books/book1/chapter-01-why-harness-engineering.html
+
+---
 
 # 第 1 章 为什么需要 Harness Engineering
 

@@ -1,5 +1,7 @@
-<!-- 渲染版本：/harness-books/book1/chapter-04-tools-permissions-interrupts.html -->
-<!-- Rendered HTML: /harness-books/book1/chapter-04-tools-permissions-interrupts.html -->
+> 这是 Markdown 源文件 — 渲染版（推荐阅读）：
+> https://fanpeihua.github.io/harness-books/book1/chapter-04-tools-permissions-interrupts.html
+
+---
 
 # 第 4 章 工具、权限与中断：为什么代理不能直接碰世界
 

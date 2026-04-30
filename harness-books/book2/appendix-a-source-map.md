@@ -1,5 +1,7 @@
-<!-- 渲染版本：/harness-books/book2/appendix-a-source-map.html -->
-<!-- Rendered HTML: /harness-books/book2/appendix-a-source-map.html -->
+> 这是 Markdown 源文件 — 渲染版（推荐阅读）：
+> https://fanpeihua.github.io/harness-books/book2/appendix-a-source-map.html
+
+---
 
 # 附录 A 源码地图：这套比较主要依据哪些文件
 

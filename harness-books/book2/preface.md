@@ -1,5 +1,7 @@
-<!-- 渲染版本：/harness-books/book2/preface.html -->
-<!-- Rendered HTML: /harness-books/book2/preface.html -->
+> 这是 Markdown 源文件 — 渲染版（推荐阅读）：
+> https://fanpeihua.github.io/harness-books/book2/preface.html
+
+---
 
 # 序言 两套 Harness，不必假装是同一匹马的附件
 

@@ -1,5 +1,7 @@
-<!-- 渲染版本：/harness-books/book1/chapter-03-query-loop-heartbeat.html -->
-<!-- Rendered HTML: /harness-books/book1/chapter-03-query-loop-heartbeat.html -->
+> 这是 Markdown 源文件 — 渲染版（推荐阅读）：
+> https://fanpeihua.github.io/harness-books/book1/chapter-03-query-loop-heartbeat.html
+
+---
 
 # 第 3 章 Query Loop：代理系统的心跳
 

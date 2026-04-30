@@ -1,5 +1,7 @@
-<!-- 渲染版本：/harness-books/book1/chapter-07-multi-agent-and-verification.html -->
-<!-- Rendered HTML: /harness-books/book1/chapter-07-multi-agent-and-verification.html -->
+> 这是 Markdown 源文件 — 渲染版（推荐阅读）：
+> https://fanpeihua.github.io/harness-books/book1/chapter-07-multi-agent-and-verification.html
+
+---
 
 # 第 7 章 多代理与验证：用分工和验证管理不稳定性
 

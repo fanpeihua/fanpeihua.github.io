@@ -1,5 +1,7 @@
-<!-- 渲染版本：/harness-books/book1/chapter-09-ten-principles.html -->
-<!-- Rendered HTML: /harness-books/book1/chapter-09-ten-principles.html -->
+> 这是 Markdown 源文件 — 渲染版（推荐阅读）：
+> https://fanpeihua.github.io/harness-books/book1/chapter-09-ten-principles.html
+
+---
 
 # 第 9 章 Harness Engineering 十条原则
 

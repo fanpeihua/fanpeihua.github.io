@@ -1,5 +1,7 @@
-<!-- 渲染版本：/harness-books/book2/appendix-b-checklists.html -->
-<!-- Rendered HTML: /harness-books/book2/appendix-b-checklists.html -->
+> 这是 Markdown 源文件 — 渲染版（推荐阅读）：
+> https://fanpeihua.github.io/harness-books/book2/appendix-b-checklists.html
+
+---
 
 # 附录 B 检查清单：如何判断你的 Harness 更像 Claude Code、Codex，还是半成品
 

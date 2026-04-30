@@ -1,5 +1,7 @@
-<!-- 渲染版本：/harness-books/book1/chapter-06-errors-and-recovery.html -->
-<!-- Rendered HTML: /harness-books/book1/chapter-06-errors-and-recovery.html -->
+> 这是 Markdown 源文件 — 渲染版（推荐阅读）：
+> https://fanpeihua.github.io/harness-books/book1/chapter-06-errors-and-recovery.html
+
+---
 
 # 第 6 章 错误与恢复：出错后仍能继续工作的代理系统
 

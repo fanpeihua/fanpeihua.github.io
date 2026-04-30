@@ -1,5 +1,7 @@
-<!-- 渲染版本：/harness-books/book2/chapter-03-loop-thread-and-rollout.html -->
-<!-- Rendered HTML: /harness-books/book2/chapter-03-loop-thread-and-rollout.html -->
+> 这是 Markdown 源文件 — 渲染版（推荐阅读）：
+> https://fanpeihua.github.io/harness-books/book2/chapter-03-loop-thread-and-rollout.html
+
+---
 
 # 第 3 章 心跳放在哪：Query Loop 对照 Thread、Rollout 与 State
 

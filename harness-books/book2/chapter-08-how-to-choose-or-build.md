@@ -1,5 +1,7 @@
-<!-- 渲染版本：/harness-books/book2/chapter-08-how-to-choose-or-build.html -->
-<!-- Rendered HTML: /harness-books/book2/chapter-08-how-to-choose-or-build.html -->
+> 这是 Markdown 源文件 — 渲染版（推荐阅读）：
+> https://fanpeihua.github.io/harness-books/book2/chapter-08-how-to-choose-or-build.html
+
+---
 
 # 第 8 章 如果你要自己做：该向谁学，先学什么
 

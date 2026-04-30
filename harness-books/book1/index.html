@@ -143,6 +143,27 @@ body {
   .hljs-variable, .hljs-tag { color: #ffab70; }
 }
 
+/* Images */
+.content img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 28px auto;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+.content img.cover {
+  max-width: 320px;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+  margin: 32px auto 40px;
+}
+@media (prefers-color-scheme: dark) {
+  .content img.cover { box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
+  .content img:not(.cover) { background: #fff; padding: 8px; }
+}
+
 .content table {
   width: 100%; border-collapse: collapse;
   margin: 20px 0; font-size: 14.5px;
@@ -212,7 +233,7 @@ body {
 <div class="chapter-meta">BOOK 1 · 00</div>
 <article class="content">
 <h1>导读</h1>
-<p><img src="assets/cover-wxb.svg" alt="封面：Harness Engineering：Claude Code 设计指南"></p>
+<p><img src="assets/cover-wxb.svg" alt="封面：Harness Engineering：Claude Code 设计指南" class="cover" loading="lazy"></p>
 <blockquote>
 <p>这本书关心的不是“模型会不会写代码”，而是“一个会写代码的模型被放进终端、仓库和团队流程以后，怎样才不会把系统带偏”。</p>
 </blockquote>
