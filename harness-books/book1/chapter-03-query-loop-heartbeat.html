@@ -236,7 +236,7 @@ body {
 <h2>3.1 一个代理系统是否成熟，先看它有没有循环</h2>
 <p>把会写代码的模型当加强版问答接口，是最常见的错误：一旦系统开始调用工具、跨轮执行、处理中断、保存状态、压缩上下文，“一问一答”就失效了。Claude Code 从结构上明确承认代理依赖一段持续的、有状态的执行过程。</p>
 <p><code>src/query.ts:219</code> 的 <code>query()</code> 只是壳，真正重要的是 <code>src/query.ts:241</code> 的 <code>queryLoop()</code>。它维护一套跨迭代状态，先处理前置治理，再进入流式阶段；模型返回后再决定进入工具执行、恢复、压缩、继续下一轮还是终止。</p>
-<p><img src="diagrams/diag-ch03-01-query-loop-core.png" alt="Claude Code Query Loop Core" loading="lazy"></p>
+<p><img src="diagrams/diag-ch03-01-query-loop-core.png" alt="Claude Code Query Loop Core" style="max-width:100%;height:auto;display:block;margin:24px auto" loading="lazy"></p>
 <p>关键名词是 lifecycle：一个系统能否被称为 agent，不在于它会不会说，而在于它几轮之后还知不知道自己在做什么。</p>
 <h2>3.2 状态属于主业务</h2>
 <p>很多系统在设计之初，都倾向于把状态看成包袱，仿佛无状态才更优雅。对代理系统来说，这种偏好作用有限。只要它进入真实工作流，状态就会自然出现。忽视状态，并不能消除状态，只会让它以更难管理的方式返回。</p>
@@ -392,8 +392,8 @@ assert hasAttemptedReactiveCompact ⇒ no further compact      # 防自回环</c
 <blockquote>
 <p>QueryEngine owns the query lifecycle and session state for a conversation.</p>
 </blockquote>
-<p><img src="diagrams/diag-ch03-02-queryengine-turn-flow.png" alt="Claude Code QueryEngine Turn Flow" loading="lazy"></p>
-<p><img src="diagrams/diag-ch03-03-queryengine-state-carryover.png" alt="Claude Code QueryEngine State Carry-Over" loading="lazy"></p>
+<p><img src="diagrams/diag-ch03-02-queryengine-turn-flow.png" alt="Claude Code QueryEngine Turn Flow" style="max-width:100%;height:auto;display:block;margin:24px auto" loading="lazy"></p>
+<p><img src="diagrams/diag-ch03-03-queryengine-state-carryover.png" alt="Claude Code QueryEngine State Carry-Over" style="max-width:100%;height:auto;display:block;margin:24px auto" loading="lazy"></p>
 <p>这句话已经把整章的重点说得很明确。<code>QueryEngine</code> 管理的是一个 conversation 的 query lifecycle，而不是某一次调用。<code>src/QueryEngine.ts:180</code> 还专门说明：一个 <code>QueryEngine</code> 对应一个 conversation，每次 <code>submitMessage()</code> 都是在同一个 conversation 里开启新一轮 turn，状态会持续保存。</p>
 <p>到了 <code>src/QueryEngine.ts:675</code> 往后，<code>QueryEngine</code> 把准备好的 <code>messages</code>、<code>systemPrompt</code>、<code>userContext</code>、<code>systemContext</code>、<code>toolUseContext</code> 一起交给 <code>query()</code>，再把 assistant、user、compact boundary 等消息写回 transcript。</p>
 <p>这说明 query loop 是会话系统真正的执行中心。外层的 UI、SDK、session persistence 都围着它转。要理解 Claude Code 的设计，不能只看它有哪些工具，也不能只看它 prompt 写了什么，最终还是得看这个循环如何把前面的约束落实成连续行为。</p>

@@ -233,7 +233,7 @@ body {
 <div class="chapter-meta">BOOK 2 · 02</div>
 <article class="content">
 <h1>第 2 章 两种控制面：Prompt 拼装与 Instruction Fragment</h1>
-<p><img src="diagrams/diag-01-control-plane-comparison.png" alt="控制面对比图" loading="lazy"></p>
+<p><img src="diagrams/diag-01-control-plane-comparison.png" alt="控制面对比图" style="max-width:100%;height:auto;display:block;margin:24px auto" loading="lazy"></p>
 <h2>2.1 控制面这件事，首先不是文风问题</h2>
 <p>谈 prompt 最容易落到文风上，仿佛系统控制的核心是把一段文字写得更像老工程师——这有点像把警察制度理解成说话语气。Claude Code 和 Codex 都不这么看，它们都把面向模型的指令当作行为控制的一部分，只是实现方式不同。Claude Code 采用层层拼装：<code>constants/prompts.ts</code>、<code>utils/systemPrompt.ts</code>、<code>claudemd.ts</code>、memory 与 output style 按运行时条件注入到 system prompt 里，重点不是文案而是多个来源如何排优先级、避免互相打架。Codex 则是结构化片段：<code>instructions/src/fragment.rs</code> 定义 <code>AGENTS.md</code> 和 skill 的 fragment 标记，<code>user_instructions.rs</code> 把用户指令序列化成带目录和边界标记的消息——instruction 不是随意串接的自由文本，而是&quot;有开始、有结束、有来源类型&quot;的上下文单元。</p>
 <h2>2.2 Claude Code 的控制面是动态装配线</h2>

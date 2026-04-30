@@ -235,7 +235,7 @@ body {
 <h1>附录 B 图示：把运行时骨架画出来</h1>
 <p>前面的章节一直在用文字解释运行时结构。文字当然能说清楚，但有些东西画成图以后，读者会更快意识到：Claude Code 是一套相当明确的状态机，不只是“一团 prompt 加几个工具”。</p>
 <h2>B.1 图一：Claude Code 总体控制面</h2>
-<p><img src="diagrams/diag-01-claude-code-control-plane.png" alt="Claude Code 总体控制面" loading="lazy"></p>
+<p><img src="diagrams/diag-01-claude-code-control-plane.png" alt="Claude Code 总体控制面" style="max-width:100%;height:auto;display:block;margin:24px auto" loading="lazy"></p>
 <p>这张图不该画成“用户 -&gt; 模型 -&gt; 工具 -&gt; 输出”那种幼儿读物，因为那种画法会把真正重要的器官都藏起来。更合理的理解方式，是把 Claude Code 分成五层：</p>
 <ol>
 <li>用户交互层</li>
@@ -251,19 +251,19 @@ body {
 <li>真正把系统绑在一起的，是控制面和恢复面</li>
 </ul>
 <h2>B.2 图二：Query Loop 主循环与恢复分支</h2>
-<p><img src="diagrams/diag-b02-01-query-loop-main.png" alt="Query Loop 主循环" loading="lazy"></p>
-<p><img src="diagrams/diag-b02-02-query-loop-recovery-branches.png" alt="Query Loop 恢复分支" class="cover" loading="lazy"></p>
+<p><img src="diagrams/diag-b02-01-query-loop-main.png" alt="Query Loop 主循环" style="max-width:100%;height:auto;display:block;margin:24px auto" loading="lazy"></p>
+<p><img src="diagrams/diag-b02-02-query-loop-recovery-branches.png" alt="Query Loop 恢复分支" class="cover" style="max-width:240px;width:100%;height:auto;display:block;margin:32px auto 40px" loading="lazy"></p>
 <h2>B.3 图三：Tool Batch Ordering 与 StreamingToolExecutor</h2>
-<p><img src="diagrams/diag-b03-01-tool-batch-ordering.png" alt="Tool Batch Ordering" loading="lazy"></p>
-<p><img src="diagrams/diag-b03-02-streaming-tool-executor.png" alt="StreamingToolExecutor Lifecycle" loading="lazy"></p>
+<p><img src="diagrams/diag-b03-01-tool-batch-ordering.png" alt="Tool Batch Ordering" style="max-width:100%;height:auto;display:block;margin:24px auto" loading="lazy"></p>
+<p><img src="diagrams/diag-b03-02-streaming-tool-executor.png" alt="StreamingToolExecutor Lifecycle" style="max-width:100%;height:auto;display:block;margin:24px auto" loading="lazy"></p>
 <h2>B.4 图四：Context Sources 与 Compact Rebuild</h2>
-<p><img src="diagrams/diag-b04-01-context-sources-and-budget.png" alt="Context Sources And Budget" loading="lazy"></p>
-<p><img src="diagrams/diag-b04-02-compact-rebuild-pipeline.png" alt="Compact Rebuild Pipeline" loading="lazy"></p>
+<p><img src="diagrams/diag-b04-01-context-sources-and-budget.png" alt="Context Sources And Budget" style="max-width:100%;height:auto;display:block;margin:24px auto" loading="lazy"></p>
+<p><img src="diagrams/diag-b04-02-compact-rebuild-pipeline.png" alt="Compact Rebuild Pipeline" style="max-width:100%;height:auto;display:block;margin:24px auto" loading="lazy"></p>
 <h2>B.5 图五：Coordinator-Worker Flow 与 Verification Separation</h2>
-<p><img src="diagrams/diag-b05-01-coordinator-worker-flow.png" alt="Coordinator And Worker Flow" loading="lazy"></p>
-<p><img src="diagrams/diag-b05-02-verification-separation.png" alt="Verification Separation" loading="lazy"></p>
+<p><img src="diagrams/diag-b05-01-coordinator-worker-flow.png" alt="Coordinator And Worker Flow" style="max-width:100%;height:auto;display:block;margin:24px auto" loading="lazy"></p>
+<p><img src="diagrams/diag-b05-02-verification-separation.png" alt="Verification Separation" style="max-width:100%;height:auto;display:block;margin:24px auto" loading="lazy"></p>
 <h2>B.6 图六：团队治理图</h2>
-<p><img src="diagrams/diag-06-team-governance-map.png" alt="团队治理图" loading="lazy"></p>
+<p><img src="diagrams/diag-06-team-governance-map.png" alt="团队治理图" style="max-width:100%;height:auto;display:block;margin:24px auto" loading="lazy"></p>
 
 </article>
 <nav class="pager">

@@ -329,7 +329,7 @@ assert verification_worker ≠ implementation_worker              # 验证与实
 <li>它的输出文件是否还要保留</li>
 <li>它的 cleanup callback 有没有泄漏</li>
 </ul>
-<p><img src="diagrams/diag-ch07-01-multi-agent-lifecycle.png" alt="Claude Code Multi-Agent Runtime Lifecycle" loading="lazy"></p>
+<p><img src="diagrams/diag-ch07-01-multi-agent-lifecycle.png" alt="Claude Code Multi-Agent Runtime Lifecycle" style="max-width:100%;height:auto;display:block;margin:24px auto" loading="lazy"></p>
 <p>很多多代理 demo 都只做到“我能再起一个 agent”，Claude Code 至少多做了一步：它把 agent 当作会泄漏资源、会残留状态、会在父进程结束后变成孤儿的运行实体来看待。这才像是在把代理当系统组件处理。</p>
 <h3>子代理生命周期失败矩阵 (failure matrix)</h3>
 <table>

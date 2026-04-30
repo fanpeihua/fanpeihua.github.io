@@ -233,7 +233,7 @@ body {
 <div class="chapter-meta">BOOK 2 · 04</div>
 <article class="content">
 <h1>第 4 章 工具、沙箱与策略语言：谁来阻止模型动手太快</h1>
-<p><img src="diagrams/diag-03-tool-governance-comparison.png" alt="工具治理对比图" loading="lazy"></p>
+<p><img src="diagrams/diag-03-tool-governance-comparison.png" alt="工具治理对比图" style="max-width:100%;height:auto;display:block;margin:24px auto" loading="lazy"></p>
 <h2>4.1 真正危险的是开始执行</h2>
 <p>模型说错话只浪费时间，跑错命令就可能把目录、仓库、进程和工作流一起带坏。真正把 AI coding system 区分开来的，是调工具之前谁拥有最后解释权。Claude Code 和 Codex 都很认真，但认真得不一样：前者在运行时把工具纳入调度纪律——<code>toolOrchestration.ts</code>、<code>toolExecution.ts</code>、<code>StreamingToolExecutor.ts</code>、<code>useCanUseTool.tsx</code>、Bash 专门 prompt 和 allow/deny/ask 语义，关心的是能不能跑、怎么跑、能不能并发、用户有没有拒绝、如何中断、结果怎么回到上下文。后者把工具本身做成类型化接口——<code>tools/src/lib.rs</code> 导出工具构造器，<code>local_tool.rs</code> 定义 <code>exec_command</code>、<code>shell</code>、<code>shell_command</code>、<code>request_permissions</code> 等 schema。工具在 Codex 里首先是规范化 API，其次才是执行单元。</p>
 <h2>4.2 Claude Code：重点在运行时编排和危险动作约束</h2>

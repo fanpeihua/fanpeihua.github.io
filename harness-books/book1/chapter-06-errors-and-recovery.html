@@ -347,8 +347,8 @@ assert every withheld recoverable_error surfaces iff recovery exhausted    # 扣
 <p>Claude Code 的处理方式，是在 <code>compact.ts</code> 里引入 <code>truncateHeadForPTLRetry()</code>。当 compact 自己太长时，系统会先把更早的 API round 成组地从头部剥掉，再重试 compact，避免让用户卡在“连压缩都压不动”的状态里。</p>
 <p>这里的取舍很清楚：这种修复有损，也会丢历史，但它优先保证用户不被完全锁死。源码注释写得很实在，这是一种 last-resort escape hatch。</p>
 <p>这种处理方式的价值，在于它没有回避现实约束。系统快要窒息时，优先级是先恢复呼吸，再讨论信息保真度。这个判断不追求漂亮，但很实用。</p>
-<p><img src="diagrams/diag-ch06-01-recovery-decision-paths.png" alt="Claude Code Recovery Decision Paths" class="cover" loading="lazy"></p>
-<p><img src="diagrams/diag-ch06-02-compact-fallbacks.png" alt="Claude Code Compact Fallbacks" loading="lazy"></p>
+<p><img src="diagrams/diag-ch06-01-recovery-decision-paths.png" alt="Claude Code Recovery Decision Paths" class="cover" style="max-width:240px;width:100%;height:auto;display:block;margin:32px auto 40px" loading="lazy"></p>
+<p><img src="diagrams/diag-ch06-02-compact-fallbacks.png" alt="Claude Code Compact Fallbacks" style="max-width:100%;height:auto;display:block;margin:24px auto" loading="lazy"></p>
 <h2>6.7 abort 语义说明，中断也属于错误恢复的一部分</h2>
 <p>很多人把 abort 归为交互体验，不愿意放进错误恢复讨论。从运行时角度看，中断是必须被正确回收的失败态。</p>
 <p>Claude Code 在两层都处理了：<code>query.ts</code> 里，流式打断会先消费 <code>StreamingToolExecutor.getRemainingResults()</code>，为悬空的 <code>tool_use</code> 生成 synthetic tool_result；<code>compact.ts</code> 把 compact 的 abort controller 传给 forked agent，并处理 <code>APIUserAbortError</code>，防止&quot;被 Esc 的 compact&quot;误算成一次成功摘要。</p>
