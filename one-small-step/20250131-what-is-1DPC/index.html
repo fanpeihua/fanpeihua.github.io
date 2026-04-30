@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>什么是 1DPC · One Small Step · Fan's Notes</title>
+<style>
+:root {
+  --bg: #fafaf7; --surface: #ffffff; --surface-2: #f5f5f0;
+  --text: #1a1a1a; --muted: #6b7280; --border: #e5e7eb;
+  --accent: #b45309; --tech: #0369a1; --tech-soft: #f0f9ff;
+  --code-bg: #f6f7f8; --code-text: #24292e;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f0f0e; --surface: #1a1a18; --surface-2: #14140f;
+    --text: #e5e5e0; --muted: #9ca3af; --border: #2d2d2a;
+    --accent: #fbbf24; --tech: #38bdf8; --tech-soft: #0c1e2e;
+    --code-bg: #1e1e1c; --code-text: #d4d4d4;
+  }
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB",
+               "Microsoft YaHei", "Source Han Sans CN", sans-serif;
+  font-size: 16px; line-height: 1.78;
+  -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+}
+.layout { max-width: 760px; margin: 0 auto; padding: 48px 24px 80px; }
+.crumb {
+  font-size: 13px; color: var(--muted);
+  margin-bottom: 24px; display: flex; align-items: center;
+  gap: 8px; flex-wrap: wrap;
+}
+.crumb a { color: var(--muted); text-decoration: none; border-bottom: 1px solid var(--border); }
+.crumb a:hover { color: var(--accent); border-color: var(--accent); }
+.crumb .sep { color: var(--border); }
+.chapter-meta {
+  font-family: "SF Mono", Monaco, monospace;
+  font-size: 11px; letter-spacing: 0.1em;
+  color: var(--tech); font-weight: 700; margin-bottom: 8px;
+}
+.content h1 {
+  font-size: 32px; line-height: 1.25; margin: 0 0 32px;
+  font-weight: 700; letter-spacing: -0.015em;
+  padding-bottom: 16px; border-bottom: 2px solid var(--text);
+}
+.content h2 { font-size: 24px; margin: 48px 0 14px; line-height: 1.3; font-weight: 600; }
+.content h3 { font-size: 18px; margin: 32px 0 12px; font-weight: 600; color: var(--accent); }
+.content h4 { font-size: 16px; margin: 24px 0 10px; font-weight: 600; }
+.content p { margin: 0 0 18px; }
+.content a { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--border); transition: border-color 0.15s; }
+.content a:hover { border-color: var(--accent); }
+.content ul, .content ol { padding-left: 24px; margin: 0 0 18px; }
+.content li { margin-bottom: 6px; }
+.content li > ul, .content li > ol { margin-top: 6px; }
+.content strong { font-weight: 600; }
+.content em { font-style: italic; }
+.content blockquote { margin: 20px 0; padding: 4px 0 4px 16px; border-left: 3px solid var(--border); color: var(--muted); font-style: italic; }
+.content hr { border: 0; height: 1px; background: var(--border); margin: 40px 0; }
+.content code {
+  font-family: "SF Mono", Monaco, Consolas, "Liberation Mono", monospace;
+  background: var(--code-bg); color: var(--code-text);
+  padding: 2px 6px; border-radius: 4px; font-size: 0.88em;
+  border: 1px solid var(--border);
+}
+.content pre {
+  margin: 20px 0; background: var(--code-bg); border: 1px solid var(--border);
+  border-radius: 8px; padding: 14px 18px; overflow-x: auto;
+  font-size: 13px; line-height: 1.65;
+}
+.content pre code { background: transparent; border: 0; padding: 0; font-size: inherit; color: var(--code-text); }
+.hljs-comment, .hljs-quote { color: #708090; font-style: italic; }
+.hljs-keyword, .hljs-selector-tag, .hljs-built_in { color: #d73a49; }
+.hljs-string, .hljs-attr { color: #032f62; }
+.hljs-number, .hljs-literal { color: #005cc5; }
+.hljs-title, .hljs-function { color: #6f42c1; }
+.hljs-variable, .hljs-tag { color: #e36209; }
+@media (prefers-color-scheme: dark) {
+  .hljs-comment, .hljs-quote { color: #6a737d; }
+  .hljs-keyword, .hljs-selector-tag, .hljs-built_in { color: #f97583; }
+  .hljs-string, .hljs-attr { color: #9ecbff; }
+  .hljs-number, .hljs-literal { color: #79b8ff; }
+  .hljs-title, .hljs-function { color: #b392f0; }
+  .hljs-variable, .hljs-tag { color: #ffab70; }
+}
+.content img {
+  max-width: 100%; height: auto; display: block;
+  margin: 28px auto; border-radius: 6px;
+  border: 1px solid var(--border); background: var(--surface);
+}
+.content img.cover { max-width: 320px; }
+@media (prefers-color-scheme: dark) {
+  .content img:not(.cover) { background: #fff; padding: 8px; }
+}
+.content table {
+  width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14.5px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; overflow: hidden;
+}
+.content th, .content td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); }
+.content th { background: var(--code-bg); font-weight: 600; font-size: 13px; color: var(--muted); }
+.content tr:last-child td { border-bottom: 0; }
+.pager {
+  margin-top: 64px; padding-top: 24px; border-top: 1px solid var(--border);
+  display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+}
+.pager a {
+  display: block; padding: 16px 20px; background: var(--surface);
+  border: 1px solid var(--border); border-radius: 10px;
+  text-decoration: none; color: inherit; transition: all 0.15s;
+}
+.pager a:hover { border-color: var(--accent); transform: translateY(-1px); }
+.pager .pager-label { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+.pager .pager-title { font-size: 14px; font-weight: 600; line-height: 1.4; }
+.pager .next { text-align: right; }
+.pager .prev:empty, .pager .next:empty { background: transparent; border: 0; }
+@media (max-width: 600px) {
+  .layout { padding: 32px 18px 64px; }
+  .content h1 { font-size: 26px; }
+  .content h2 { font-size: 21px; }
+  body { font-size: 15.5px; }
+  .pager { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="layout">
+<nav class="crumb">
+  <a href="/">Fan's Notes</a><span class="sep">/</span>
+  <a href="/one-small-step/">One Small Step</a><span class="sep">/</span>
+  <span>什么是 1DPC</span>
+</nav>
+<div class="chapter-meta">OSS · 2025-01-31</div>
+<article class="content">
+<h2>什么是 1DPC? 为什么内存条要插在远端插槽?</h2>
+<ul>
+<li>by @karminski-牙医</li>
+</ul>
+<p><img src="./assets/images/dell-t7920-memory-config.png" alt="" style="max-width:100%;height:auto;display:block;margin:24px auto" loading="lazy"></p>
+<p>稍微装过机的同学可能都知道, 内存不能乱插, 否则可能会无法开机. 而有经验的同学会去查一查主板手册, 看看内存插槽的配置. </p>
+<p>如上图, 就是 DELL Precision T7920 工作站的内存插槽配置. 我们可以看到 DPC 这一列做的 1DPC 和 2DPC 的区分. 那么这到底是什么意思呢?</p>
+<h2>1DPC 和 2DPC 是什么?</h2>
+<p>首先要澄清的是, 2DPC 可不是双通道内存的意思. 简单来讲, 1DPC 是 每个通道一插条内存 (one DIMM per channel) 的缩写. </p>
+<p>现在大多数消费级主板都是双通道, 4个内存插槽. 所以可以推理出来, 1DPC 配置就是每个通道只插一条内存, 或者只在通道1上插1条内存. 而 2DPC 配置则是插满4个内存插槽.</p>
+<h2>为什么 1DPC 配置要插在远离CPU的最外端?</h2>
+<p><img src="./assets/images/daisy-chain.jpg" alt="" style="max-width:100%;height:auto;display:block;margin:24px auto" loading="lazy"></p>
+<p>(图片来自 forum-en.msi.com)</p>
+<p>现代主板内存布线主要采用两种拓扑结构, Daisy Chain (菊花链) 和 T-Topology (T型拓扑) . 现在高频消费级主板大多采用菊花链拓扑, 而服务器/工作站主板更多使用T型拓扑.</p>
+<p>通过图片我们可以看到, 菊花链的拓扑结构, 内存控制器信号的终止节点在最远端. 而 T型拓扑每个内存插槽都是终止节点.</p>
+<p>菊花链的优点:</p>
+<ul>
+<li><strong>信号完整性要求</strong>：当使用1DPC配置时, 内存控制器信号需要直达最远端插槽</li>
+<li><strong>终端电阻位置</strong>：DDR4/DDR5 规范要求通道末端必须配置终端电阻 (On-Die Termination, 现在已经集成在内存条上了) , 插外侧插槽可确保信号路径阻抗匹配以及减少信号反射</li>
+</ul>
+<p>而T型拓扑的缺点有:</p>
+<ul>
+<li><strong>分支结构缺陷</strong>：当只插1条内存时, 未插内存的分支会产生阻抗突变以及造成信号反射</li>
+<li><strong>串扰增加</strong>：空置插槽的耦合电容会降低信号质量</li>
+</ul>
+<p>可以看到T型拓扑的缺点基本都存在于没插满内存的情况, 所以服务器/工作站主板大多采用T型拓扑(最高配置获得最优性能). </p>
+<p>以上这些全都是为了保证DDR信号在电路中的传输质量, 我们现在使用的内存频率对于电气特性要求非常高, 信号都在ns级别. 只有传输质量上升, 电路才能运行在更高的频率. </p>
+<p>现在的 DDR5-8000 内存对于 1990 年代 386 电脑上的 FPM 内存 (25MHz) 来讲简直是外星科技.</p>
+<h2>Refs</h2>
+<p>强烈建议花时间阅读 MSI 论坛的这篇帖子, 介绍的非常全面.</p>
+<ul>
+<li><a href="https://forum-en.msi.com/index.php?threads/ram-explained-why-two-modules-are-better-than-four-single-vs-dual-rank-stability-testing.363139">ram-explained-why-two-modules-are-better-than-four-single-vs-dual-rank-stability-testing</a></li>
+</ul>
+
+</article>
+<nav class="pager"><a class="prev" href="/one-small-step/20250125-does-CXL-will-be-LLM-memory-solution/"><div class="pager-label">← 上一篇</div><div class="pager-title">CLX 会是大语言模型的内存解决方案吗?</div></a><a class="next" href="/one-small-step/20250206-what-is-L1-cache/"><div class="pager-label">下一篇 →</div><div class="pager-title">什么是 L1 缓存</div></a></nav>
+<footer style="margin-top:48px;padding-top:24px;border-top:1px solid var(--border);color:var(--muted);font-size:13px;">
+  <p>原文作者：<a href="https://github.com/karminski" target="_blank" rel="noopener" style="color:var(--accent);">@karminski-牙医</a> · MIT License · <a href="https://github.com/karminski/one-small-step/tree/master/20250131-what-is-1DPC" target="_blank" rel="noopener" style="color:var(--accent);">查看仓库</a></p>
+</footer>
+</div>
+</body>
+</html>

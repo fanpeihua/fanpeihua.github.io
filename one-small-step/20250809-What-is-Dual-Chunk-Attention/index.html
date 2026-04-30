@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Qwen3 扩展到 1M 上下文是如何做到的? · One Small Step · Fan's Notes</title>
+<style>
+:root {
+  --bg: #fafaf7; --surface: #ffffff; --surface-2: #f5f5f0;
+  --text: #1a1a1a; --muted: #6b7280; --border: #e5e7eb;
+  --accent: #b45309; --tech: #0369a1; --tech-soft: #f0f9ff;
+  --code-bg: #f6f7f8; --code-text: #24292e;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f0f0e; --surface: #1a1a18; --surface-2: #14140f;
+    --text: #e5e5e0; --muted: #9ca3af; --border: #2d2d2a;
+    --accent: #fbbf24; --tech: #38bdf8; --tech-soft: #0c1e2e;
+    --code-bg: #1e1e1c; --code-text: #d4d4d4;
+  }
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB",
+               "Microsoft YaHei", "Source Han Sans CN", sans-serif;
+  font-size: 16px; line-height: 1.78;
+  -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+}
+.layout { max-width: 760px; margin: 0 auto; padding: 48px 24px 80px; }
+.crumb {
+  font-size: 13px; color: var(--muted);
+  margin-bottom: 24px; display: flex; align-items: center;
+  gap: 8px; flex-wrap: wrap;
+}
+.crumb a { color: var(--muted); text-decoration: none; border-bottom: 1px solid var(--border); }
+.crumb a:hover { color: var(--accent); border-color: var(--accent); }
+.crumb .sep { color: var(--border); }
+.chapter-meta {
+  font-family: "SF Mono", Monaco, monospace;
+  font-size: 11px; letter-spacing: 0.1em;
+  color: var(--tech); font-weight: 700; margin-bottom: 8px;
+}
+.content h1 {
+  font-size: 32px; line-height: 1.25; margin: 0 0 32px;
+  font-weight: 700; letter-spacing: -0.015em;
+  padding-bottom: 16px; border-bottom: 2px solid var(--text);
+}
+.content h2 { font-size: 24px; margin: 48px 0 14px; line-height: 1.3; font-weight: 600; }
+.content h3 { font-size: 18px; margin: 32px 0 12px; font-weight: 600; color: var(--accent); }
+.content h4 { font-size: 16px; margin: 24px 0 10px; font-weight: 600; }
+.content p { margin: 0 0 18px; }
+.content a { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--border); transition: border-color 0.15s; }
+.content a:hover { border-color: var(--accent); }
+.content ul, .content ol { padding-left: 24px; margin: 0 0 18px; }
+.content li { margin-bottom: 6px; }
+.content li > ul, .content li > ol { margin-top: 6px; }
+.content strong { font-weight: 600; }
+.content em { font-style: italic; }
+.content blockquote { margin: 20px 0; padding: 4px 0 4px 16px; border-left: 3px solid var(--border); color: var(--muted); font-style: italic; }
+.content hr { border: 0; height: 1px; background: var(--border); margin: 40px 0; }
+.content code {
+  font-family: "SF Mono", Monaco, Consolas, "Liberation Mono", monospace;
+  background: var(--code-bg); color: var(--code-text);
+  padding: 2px 6px; border-radius: 4px; font-size: 0.88em;
+  border: 1px solid var(--border);
+}
+.content pre {
+  margin: 20px 0; background: var(--code-bg); border: 1px solid var(--border);
+  border-radius: 8px; padding: 14px 18px; overflow-x: auto;
+  font-size: 13px; line-height: 1.65;
+}
+.content pre code { background: transparent; border: 0; padding: 0; font-size: inherit; color: var(--code-text); }
+.hljs-comment, .hljs-quote { color: #708090; font-style: italic; }
+.hljs-keyword, .hljs-selector-tag, .hljs-built_in { color: #d73a49; }
+.hljs-string, .hljs-attr { color: #032f62; }
+.hljs-number, .hljs-literal { color: #005cc5; }
+.hljs-title, .hljs-function { color: #6f42c1; }
+.hljs-variable, .hljs-tag { color: #e36209; }
+@media (prefers-color-scheme: dark) {
+  .hljs-comment, .hljs-quote { color: #6a737d; }
+  .hljs-keyword, .hljs-selector-tag, .hljs-built_in { color: #f97583; }
+  .hljs-string, .hljs-attr { color: #9ecbff; }
+  .hljs-number, .hljs-literal { color: #79b8ff; }
+  .hljs-title, .hljs-function { color: #b392f0; }
+  .hljs-variable, .hljs-tag { color: #ffab70; }
+}
+.content img {
+  max-width: 100%; height: auto; display: block;
+  margin: 28px auto; border-radius: 6px;
+  border: 1px solid var(--border); background: var(--surface);
+}
+.content img.cover { max-width: 320px; }
+@media (prefers-color-scheme: dark) {
+  .content img:not(.cover) { background: #fff; padding: 8px; }
+}
+.content table {
+  width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14.5px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; overflow: hidden;
+}
+.content th, .content td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); }
+.content th { background: var(--code-bg); font-weight: 600; font-size: 13px; color: var(--muted); }
+.content tr:last-child td { border-bottom: 0; }
+.pager {
+  margin-top: 64px; padding-top: 24px; border-top: 1px solid var(--border);
+  display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+}
+.pager a {
+  display: block; padding: 16px 20px; background: var(--surface);
+  border: 1px solid var(--border); border-radius: 10px;
+  text-decoration: none; color: inherit; transition: all 0.15s;
+}
+.pager a:hover { border-color: var(--accent); transform: translateY(-1px); }
+.pager .pager-label { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+.pager .pager-title { font-size: 14px; font-weight: 600; line-height: 1.4; }
+.pager .next { text-align: right; }
+.pager .prev:empty, .pager .next:empty { background: transparent; border: 0; }
+@media (max-width: 600px) {
+  .layout { padding: 32px 18px 64px; }
+  .content h1 { font-size: 26px; }
+  .content h2 { font-size: 21px; }
+  body { font-size: 15.5px; }
+  .pager { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="layout">
+<nav class="crumb">
+  <a href="/">Fan's Notes</a><span class="sep">/</span>
+  <a href="/one-small-step/">One Small Step</a><span class="sep">/</span>
+  <span>Qwen3 扩展到 1M 上下文是如何做到的?</span>
+</nav>
+<div class="chapter-meta">OSS · 2025-08-09</div>
+<article class="content">
+<h2>什么是 Dual Chunk Attention</h2>
+<p>by @karminski-牙医</p>
+<p><img src="assets/images/dca.png" alt="dual-chunk-attention-concept" style="max-width:100%;height:auto;display:block;margin:24px auto" loading="lazy"></p>
+<p>(图片来自论文 &quot;Training-Free Long-Context Scaling of Large Language Models&quot;)</p>
+<p>DCA（Dual Chunk Attention, 双块注意力机制）：由香港大学等机构于 2024 年提出，是一种无需训练即可扩展大型语言模型上下文窗口的技术。</p>
+<p>它通过将长序列的注意力计算分解为基于块（chunk）的模块，使得 Llama2 70B (原生 4k 上下文) 能够支持超过 100k tokens 的上下文窗口，而无需任何持续训练。</p>
+<h2>DCA 的工作原理</h2>
+<p>DCA 基于这样一个核心思想：通过重新设计相对位置矩阵的构建方式，使其能够准确反映两个 token 之间的相对位置，同时保持预训练模型的原始位置索引和嵌入。</p>
+<h3>三个核心组件</h3>
+<ol>
+<li><p><strong>块内注意力（Intra-Chunk Attention）</strong>：</p>
+<ul>
+<li>处理同一块内的 tokens</li>
+<li>维持原始的相对位置编码</li>
+<li>每个块的大小小于预训练窗口大小</li>
+</ul>
+</li>
+<li><p><strong>块间注意力（Inter-Chunk Attention）</strong>：</p>
+<ul>
+<li>处理不同块之间的 tokens</li>
+<li>通过特殊的位置索引映射保持长程依赖</li>
+<li>避免位置索引超出预训练范围</li>
+</ul>
+</li>
+<li><p><strong>连续块注意力（Successive-Chunk Attention）</strong>：</p>
+<ul>
+<li>专门处理相邻块之间的 tokens</li>
+<li>确保块边界处的连续性</li>
+<li>维护局部性特征</li>
+</ul>
+</li>
+</ol>
+<h3>数学表示</h3>
+<p>对于长度为 $L$ 的序列，DCA 将其分割为 $C = \lceil L/w \rceil$ 个块，其中 $w$ 是块大小（通常设为预训练窗口大小）：</p>
+<p><strong>块内注意力</strong>：
+$$A_{intra} = \text{softmax}\left(\frac{Q_i K_i^T}{\sqrt{d_k}}\right) V_i$$</p>
+<p><strong>块间注意力</strong>：
+$$A_{inter} = \text{softmax}\left(\frac{Q_i K_j^T}{\sqrt{d_k}} \cdot M_{ij}\right) V_j$$</p>
+<p>其中 $M_{ij}$ 是位置掩码矩阵，确保相对位置不超出预训练范围。</p>
+<p><strong>参数效率分析</strong>：</p>
+<ul>
+<li>原始注意力计算复杂度：$O(L^2)$</li>
+<li>DCA 计算复杂度：$O(L \cdot w)$，其中 $w \ll L$</li>
+<li>内存消耗降低：从 $L^2$ 降至约 $L \cdot w$</li>
+<li>与 Flash Attention 2 无缝集成，进一步优化效率</li>
+</ul>
+<h2>DCA 的主要特点和优势</h2>
+<ul>
+<li><strong>无需训练：</strong> DCA 是完全训练无关的方法，可以直接应用于现有的预训练模型，无需额外的微调或训练成本。</li>
+<li><strong>显著扩展上下文：</strong> 可以将 4k 上下文窗口的模型扩展到 100k+ tokens，扩展倍数超过 25 倍。</li>
+<li><strong>保持原始性能：</strong> 在扩展上下文的同时，困惑度（PPL）增长微乎其微，远优于传统的位置插值方法。</li>
+<li><strong>计算效率高：</strong> 通过块分割大幅降低计算复杂度，与 Flash Attention 结合可在有限硬件上处理超长序列。</li>
+<li><strong>正交性强：</strong> 可以与现有的位置编码缩放方法（如 PI、NTK）结合使用，进一步提升性能。</li>
+<li><strong>实用性强：</strong> 在长文档问答、文档总结等实际任务中表现可媲美甚至超越专门微调的模型。</li>
+</ul>
+<h2>DCA 的应用场景</h2>
+<ul>
+<li><strong>长文档分析：</strong> 处理大型 PDF 文档、学术论文、法律合同等超长文本的理解和问答。</li>
+<li><strong>扩展对话历史：</strong> 维护更长的对话上下文，提升聊天机器人的连贯性和记忆能力。</li>
+<li><strong>代码理解：</strong> 分析大型代码库，理解跨文件的复杂依赖关系。</li>
+<li><strong>文档摘要：</strong> 对超长文档进行准确的摘要生成，保持全局信息的完整性。</li>
+<li><strong>信息检索：</strong> 在大型文档集合中进行精确的信息定位和提取。</li>
+</ul>
+<p>需要注意的是，DCA 主要解决的是上下文长度限制问题，而不是模型的核心能力提升。对于需要增强模型特定领域知识的场景，仍建议结合 RAG（检索增强生成）技术。</p>
+<h2>DCA 的局限性</h2>
+<p>虽然 DCA 表现优异，但也存在一些限制：</p>
+<ul>
+<li><strong>硬件要求：</strong> 处理超长序列仍需要较大的 GPU 内存，特别是对于 70B 等大规模模型。</li>
+<li><strong>块大小敏感：</strong> 块大小的选择会影响性能，需要根据具体任务和模型进行调优。</li>
+<li><strong>某些任务局限：</strong> 对于需要频繁跨块信息交互的任务，性能可能不如专门训练的长上下文模型。</li>
+</ul>
+<p>总结，DCA 是一项突破性的技术，通过巧妙的注意力机制重设计，在无需任何训练成本的前提下大幅扩展了语言模型的上下文处理能力，为长文档理解和处理开辟了新的可能性。</p>
+<p>随着对长上下文需求的不断增长，DCA 及其衍生技术将在 AI 应用中发挥越来越重要的作用。</p>
+<h2>支持 DCA 的实现</h2>
+<ul>
+<li><a href="https://github.com/HKUNLP/ChunkLlama">ChunkLlama</a> (论文官方实现，支持多种 Llama 模型变体)</li>
+<li>可集成到现有的 Transformer 库中，如 Hugging Face Transformers</li>
+</ul>
+<h2>Reference</h2>
+<ul>
+<li><a href="https://arxiv.org/html/2402.17463">Training-Free Long-Context Scaling of Large Language Models</a></li>
+<li><a href="https://github.com/HKUNLP/ChunkLlama">ChunkLlama: Official Implementation</a></li>
+<li><a href="https://arxiv.org/abs/2104.09864">Rotary Position Embedding (RoPE)</a></li>
+<li><a href="https://arxiv.org/abs/2205.14135">Flash Attention: Fast and Memory-Efficient Exact Attention</a></li>
+</ul>
+
+</article>
+<nav class="pager"><a class="prev" href="/one-small-step/20250611-what-is-vibe-coding/"><div class="pager-label">← 上一篇</div><div class="pager-title">什么是vibe coding?</div></a><a class="next" href="/one-small-step/20250812-What-is-Recall/"><div class="pager-label">下一篇 →</div><div class="pager-title">什么是召回</div></a></nav>
+<footer style="margin-top:48px;padding-top:24px;border-top:1px solid var(--border);color:var(--muted);font-size:13px;">
+  <p>原文作者：<a href="https://github.com/karminski" target="_blank" rel="noopener" style="color:var(--accent);">@karminski-牙医</a> · MIT License · <a href="https://github.com/karminski/one-small-step/tree/master/20250809-What-is-Dual-Chunk-Attention" target="_blank" rel="noopener" style="color:var(--accent);">查看仓库</a></p>
+</footer>
+</div>
+</body>
+</html>

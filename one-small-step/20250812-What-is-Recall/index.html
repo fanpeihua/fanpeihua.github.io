@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>什么是召回 · One Small Step · Fan's Notes</title>
+<style>
+:root {
+  --bg: #fafaf7; --surface: #ffffff; --surface-2: #f5f5f0;
+  --text: #1a1a1a; --muted: #6b7280; --border: #e5e7eb;
+  --accent: #b45309; --tech: #0369a1; --tech-soft: #f0f9ff;
+  --code-bg: #f6f7f8; --code-text: #24292e;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f0f0e; --surface: #1a1a18; --surface-2: #14140f;
+    --text: #e5e5e0; --muted: #9ca3af; --border: #2d2d2a;
+    --accent: #fbbf24; --tech: #38bdf8; --tech-soft: #0c1e2e;
+    --code-bg: #1e1e1c; --code-text: #d4d4d4;
+  }
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB",
+               "Microsoft YaHei", "Source Han Sans CN", sans-serif;
+  font-size: 16px; line-height: 1.78;
+  -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+}
+.layout { max-width: 760px; margin: 0 auto; padding: 48px 24px 80px; }
+.crumb {
+  font-size: 13px; color: var(--muted);
+  margin-bottom: 24px; display: flex; align-items: center;
+  gap: 8px; flex-wrap: wrap;
+}
+.crumb a { color: var(--muted); text-decoration: none; border-bottom: 1px solid var(--border); }
+.crumb a:hover { color: var(--accent); border-color: var(--accent); }
+.crumb .sep { color: var(--border); }
+.chapter-meta {
+  font-family: "SF Mono", Monaco, monospace;
+  font-size: 11px; letter-spacing: 0.1em;
+  color: var(--tech); font-weight: 700; margin-bottom: 8px;
+}
+.content h1 {
+  font-size: 32px; line-height: 1.25; margin: 0 0 32px;
+  font-weight: 700; letter-spacing: -0.015em;
+  padding-bottom: 16px; border-bottom: 2px solid var(--text);
+}
+.content h2 { font-size: 24px; margin: 48px 0 14px; line-height: 1.3; font-weight: 600; }
+.content h3 { font-size: 18px; margin: 32px 0 12px; font-weight: 600; color: var(--accent); }
+.content h4 { font-size: 16px; margin: 24px 0 10px; font-weight: 600; }
+.content p { margin: 0 0 18px; }
+.content a { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--border); transition: border-color 0.15s; }
+.content a:hover { border-color: var(--accent); }
+.content ul, .content ol { padding-left: 24px; margin: 0 0 18px; }
+.content li { margin-bottom: 6px; }
+.content li > ul, .content li > ol { margin-top: 6px; }
+.content strong { font-weight: 600; }
+.content em { font-style: italic; }
+.content blockquote { margin: 20px 0; padding: 4px 0 4px 16px; border-left: 3px solid var(--border); color: var(--muted); font-style: italic; }
+.content hr { border: 0; height: 1px; background: var(--border); margin: 40px 0; }
+.content code {
+  font-family: "SF Mono", Monaco, Consolas, "Liberation Mono", monospace;
+  background: var(--code-bg); color: var(--code-text);
+  padding: 2px 6px; border-radius: 4px; font-size: 0.88em;
+  border: 1px solid var(--border);
+}
+.content pre {
+  margin: 20px 0; background: var(--code-bg); border: 1px solid var(--border);
+  border-radius: 8px; padding: 14px 18px; overflow-x: auto;
+  font-size: 13px; line-height: 1.65;
+}
+.content pre code { background: transparent; border: 0; padding: 0; font-size: inherit; color: var(--code-text); }
+.hljs-comment, .hljs-quote { color: #708090; font-style: italic; }
+.hljs-keyword, .hljs-selector-tag, .hljs-built_in { color: #d73a49; }
+.hljs-string, .hljs-attr { color: #032f62; }
+.hljs-number, .hljs-literal { color: #005cc5; }
+.hljs-title, .hljs-function { color: #6f42c1; }
+.hljs-variable, .hljs-tag { color: #e36209; }
+@media (prefers-color-scheme: dark) {
+  .hljs-comment, .hljs-quote { color: #6a737d; }
+  .hljs-keyword, .hljs-selector-tag, .hljs-built_in { color: #f97583; }
+  .hljs-string, .hljs-attr { color: #9ecbff; }
+  .hljs-number, .hljs-literal { color: #79b8ff; }
+  .hljs-title, .hljs-function { color: #b392f0; }
+  .hljs-variable, .hljs-tag { color: #ffab70; }
+}
+.content img {
+  max-width: 100%; height: auto; display: block;
+  margin: 28px auto; border-radius: 6px;
+  border: 1px solid var(--border); background: var(--surface);
+}
+.content img.cover { max-width: 320px; }
+@media (prefers-color-scheme: dark) {
+  .content img:not(.cover) { background: #fff; padding: 8px; }
+}
+.content table {
+  width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14.5px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; overflow: hidden;
+}
+.content th, .content td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); }
+.content th { background: var(--code-bg); font-weight: 600; font-size: 13px; color: var(--muted); }
+.content tr:last-child td { border-bottom: 0; }
+.pager {
+  margin-top: 64px; padding-top: 24px; border-top: 1px solid var(--border);
+  display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+}
+.pager a {
+  display: block; padding: 16px 20px; background: var(--surface);
+  border: 1px solid var(--border); border-radius: 10px;
+  text-decoration: none; color: inherit; transition: all 0.15s;
+}
+.pager a:hover { border-color: var(--accent); transform: translateY(-1px); }
+.pager .pager-label { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+.pager .pager-title { font-size: 14px; font-weight: 600; line-height: 1.4; }
+.pager .next { text-align: right; }
+.pager .prev:empty, .pager .next:empty { background: transparent; border: 0; }
+@media (max-width: 600px) {
+  .layout { padding: 32px 18px 64px; }
+  .content h1 { font-size: 26px; }
+  .content h2 { font-size: 21px; }
+  body { font-size: 15.5px; }
+  .pager { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="layout">
+<nav class="crumb">
+  <a href="/">Fan's Notes</a><span class="sep">/</span>
+  <a href="/one-small-step/">One Small Step</a><span class="sep">/</span>
+  <span>什么是召回</span>
+</nav>
+<div class="chapter-meta">OSS · 2025-08-12</div>
+<article class="content">
+<h2>什么是召回（Recall）</h2>
+<p>by @karminski-牙医</p>
+<p><img src="assets/images/what-is-recall.png" alt="What is Recall" style="max-width:100%;height:auto;display:block;margin:24px auto" loading="lazy"></p>
+<p>召回（Recall）是机器学习分类任务中最重要的评估指标之一，用于衡量模型能否<strong>找到所有目标类别的对象</strong>。与准确率（Accuracy）关注整体正确性不同，召回率专注于回答一个关键问题：在所有真正的正样本中，我们的模型成功识别出了多少？</p>
+<p>这个指标在 RAG, 医疗诊断、欺诈检测、故障预警等关键应用中尤为重要，因为<strong>漏检的代价往往远高于误报</strong>。</p>
+<h2>召回的工作原理</h2>
+<p>召回基于混淆矩阵（Confusion Matrix）的概念，通过分析模型在目标类别上的表现来评估其&quot;查全率&quot;。</p>
+<h3>核心概念</h3>
+<p>我们用让大模型回答《孔乙己》这篇文章中出现了几次&quot;孔乙己&quot;这个名字作为例子. 召回率的计算涉及两个关键概念：</p>
+<ol>
+<li><p><strong>真阳性（True Positive, TP）</strong>：</p>
+<ul>
+<li>实际为正类，模型也预测为正类</li>
+<li>例如：&quot;孔乙己是站着喝酒而穿长衫的唯一的人&quot;, 模型命中了这里, 内容也真的包含孔乙己, 即为TP</li>
+</ul>
+</li>
+<li><p><strong>假阴性（False Negative, FN）</strong>：</p>
+<ul>
+<li>实际为正类，但模型预测为负类</li>
+<li>例如：&quot;掌柜取下粉板说，“孔乙己还欠十九个钱呢！”&quot;, 模型没有命中这里, 但其实内容包含孔乙己, 即为FN</li>
+</ul>
+</li>
+</ol>
+<h3>数学表示</h3>
+<p>召回率的计算公式为：</p>
+<p>$$\text{Recall} = \frac{\text{True Positive (TP)}}{\text{True Positive (TP)} + \text{False Negative (FN)}}$$</p>
+<p>召回率的取值范围是 0 到 1（或 0% 到 100%）：</p>
+<ul>
+<li><strong>Recall = 1.0</strong>：完美召回，找到了所有正样本, <strong>&quot;这篇文章总计出现了33次孔乙己, 分别在...&quot;</strong></li>
+<li><strong>Recall = 0.0</strong>：最差情况，没有找到任何正样本. <strong>&quot;你扯淡, 这篇文章明明说的是猹, 没有什么孔乙己...&quot;</strong></li>
+</ul>
+<h2>召回能力对大模型的影响</h2>
+<p>在大型语言模型（LLM）的实际应用中，召回能力直接影响着模型在多个关键维度的表现：</p>
+<ul>
+<li><p>生成代码的时候变量的生命周期管理, <strong>比如变量的调用出现在了变量声明前面, 这通常是召回出问题导致的.</strong></p>
+</li>
+<li><p>RAG 系统中的信息检索召回, 在检索增强生成系统中，召回率决定了检索阶段能否找到所有相关文档，直接影响最终答案的完整性和准确性。<strong>&quot;我只搜到了一篇关于2024年财务报告的数据&quot; 实际上数据库里躺着10篇.</strong></p>
+</li>
+<li><p>长文本理解中的关键信息捕获, 处理长文档时，召回能力决定了模型能否捕获所有重要信息点，影响文档理解和摘要的完整性。<strong>比如我们举的孔乙己这个例子</strong>。</p>
+</li>
+<li><p>多轮对话中的上下文召回, 在长对话场景中，模型需要准确召回历史信息以维持对话连贯性和个性化体验。<strong>聊了几次忘了用户叫啥，通常这个会用向量数据库来解决模型长期个性化记忆问题。</strong></p>
+</li>
+<li><p>指令理解的完整性, 复杂指令通常包含多个要求，召回能力不足会导致只执行部分需求，忽略重要约束条件。&quot;<strong>帮我打开电风扇关闭吹风机空调调到26度微波炉定时3分钟...结果大模型只记得微波炉定时3分钟&quot;</strong></p>
+</li>
+<li><p>知识一致性与事实准确性, 召回能力影响模型知识表达的完整性，部分召回可能导致答案不够全面或缺乏跨域知识整合。 <strong>&quot;1,2,3,4,5,... 总计有3个!&quot;</strong></p>
+</li>
+</ul>
+<p>总的来说，在大模型应用中，召回能力的不足往往比准确率的下降更容易导致用户体验的显著下降。下期我们会讲另一个概念, 准确率.</p>
+<h2>有没有大模型召回性能的评测</h2>
+<p>有的, Fiction.LiveBench 就是. 也是目前社区引用数量最多的. 但是 Fiction.LiveBench 不公布他们的测试过程和数据, 所以最终结论很容易受到质疑. 但说实话也没有其它更好的可以参考了.</p>
+<h2>Reference</h2>
+<ul>
+<li><a href="https://www.evidentlyai.com/classification-metrics/accuracy-precision-recall">Accuracy vs. precision vs. recall in machine learning</a></li>
+<li><a href="https://developers.google.com/machine-learning/crash-course/classification/precision-and-recall">The Precision-Recall Trade-off</a></li>
+</ul>
+
+</article>
+<nav class="pager"><a class="prev" href="/one-small-step/20250809-What-is-Dual-Chunk-Attention/"><div class="pager-label">← 上一篇</div><div class="pager-title">Qwen3 扩展到 1M 上下文是如何做到的?</div></a><a class="next" href="/one-small-step/20251110-Parameter-Precision-Formats-for-LLMs/"><div class="pager-label">下一篇 →</div><div class="pager-title">大模型精度格式一览</div></a></nav>
+<footer style="margin-top:48px;padding-top:24px;border-top:1px solid var(--border);color:var(--muted);font-size:13px;">
+  <p>原文作者：<a href="https://github.com/karminski" target="_blank" rel="noopener" style="color:var(--accent);">@karminski-牙医</a> · MIT License · <a href="https://github.com/karminski/one-small-step/tree/master/20250812-What-is-Recall" target="_blank" rel="noopener" style="color:var(--accent);">查看仓库</a></p>
+</footer>
+</div>
+</body>
+</html>

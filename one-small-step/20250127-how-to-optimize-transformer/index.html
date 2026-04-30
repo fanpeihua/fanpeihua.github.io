@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>如何优化 Transformer · One Small Step · Fan's Notes</title>
+<style>
+:root {
+  --bg: #fafaf7; --surface: #ffffff; --surface-2: #f5f5f0;
+  --text: #1a1a1a; --muted: #6b7280; --border: #e5e7eb;
+  --accent: #b45309; --tech: #0369a1; --tech-soft: #f0f9ff;
+  --code-bg: #f6f7f8; --code-text: #24292e;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f0f0e; --surface: #1a1a18; --surface-2: #14140f;
+    --text: #e5e5e0; --muted: #9ca3af; --border: #2d2d2a;
+    --accent: #fbbf24; --tech: #38bdf8; --tech-soft: #0c1e2e;
+    --code-bg: #1e1e1c; --code-text: #d4d4d4;
+  }
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB",
+               "Microsoft YaHei", "Source Han Sans CN", sans-serif;
+  font-size: 16px; line-height: 1.78;
+  -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+}
+.layout { max-width: 760px; margin: 0 auto; padding: 48px 24px 80px; }
+.crumb {
+  font-size: 13px; color: var(--muted);
+  margin-bottom: 24px; display: flex; align-items: center;
+  gap: 8px; flex-wrap: wrap;
+}
+.crumb a { color: var(--muted); text-decoration: none; border-bottom: 1px solid var(--border); }
+.crumb a:hover { color: var(--accent); border-color: var(--accent); }
+.crumb .sep { color: var(--border); }
+.chapter-meta {
+  font-family: "SF Mono", Monaco, monospace;
+  font-size: 11px; letter-spacing: 0.1em;
+  color: var(--tech); font-weight: 700; margin-bottom: 8px;
+}
+.content h1 {
+  font-size: 32px; line-height: 1.25; margin: 0 0 32px;
+  font-weight: 700; letter-spacing: -0.015em;
+  padding-bottom: 16px; border-bottom: 2px solid var(--text);
+}
+.content h2 { font-size: 24px; margin: 48px 0 14px; line-height: 1.3; font-weight: 600; }
+.content h3 { font-size: 18px; margin: 32px 0 12px; font-weight: 600; color: var(--accent); }
+.content h4 { font-size: 16px; margin: 24px 0 10px; font-weight: 600; }
+.content p { margin: 0 0 18px; }
+.content a { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--border); transition: border-color 0.15s; }
+.content a:hover { border-color: var(--accent); }
+.content ul, .content ol { padding-left: 24px; margin: 0 0 18px; }
+.content li { margin-bottom: 6px; }
+.content li > ul, .content li > ol { margin-top: 6px; }
+.content strong { font-weight: 600; }
+.content em { font-style: italic; }
+.content blockquote { margin: 20px 0; padding: 4px 0 4px 16px; border-left: 3px solid var(--border); color: var(--muted); font-style: italic; }
+.content hr { border: 0; height: 1px; background: var(--border); margin: 40px 0; }
+.content code {
+  font-family: "SF Mono", Monaco, Consolas, "Liberation Mono", monospace;
+  background: var(--code-bg); color: var(--code-text);
+  padding: 2px 6px; border-radius: 4px; font-size: 0.88em;
+  border: 1px solid var(--border);
+}
+.content pre {
+  margin: 20px 0; background: var(--code-bg); border: 1px solid var(--border);
+  border-radius: 8px; padding: 14px 18px; overflow-x: auto;
+  font-size: 13px; line-height: 1.65;
+}
+.content pre code { background: transparent; border: 0; padding: 0; font-size: inherit; color: var(--code-text); }
+.hljs-comment, .hljs-quote { color: #708090; font-style: italic; }
+.hljs-keyword, .hljs-selector-tag, .hljs-built_in { color: #d73a49; }
+.hljs-string, .hljs-attr { color: #032f62; }
+.hljs-number, .hljs-literal { color: #005cc5; }
+.hljs-title, .hljs-function { color: #6f42c1; }
+.hljs-variable, .hljs-tag { color: #e36209; }
+@media (prefers-color-scheme: dark) {
+  .hljs-comment, .hljs-quote { color: #6a737d; }
+  .hljs-keyword, .hljs-selector-tag, .hljs-built_in { color: #f97583; }
+  .hljs-string, .hljs-attr { color: #9ecbff; }
+  .hljs-number, .hljs-literal { color: #79b8ff; }
+  .hljs-title, .hljs-function { color: #b392f0; }
+  .hljs-variable, .hljs-tag { color: #ffab70; }
+}
+.content img {
+  max-width: 100%; height: auto; display: block;
+  margin: 28px auto; border-radius: 6px;
+  border: 1px solid var(--border); background: var(--surface);
+}
+.content img.cover { max-width: 320px; }
+@media (prefers-color-scheme: dark) {
+  .content img:not(.cover) { background: #fff; padding: 8px; }
+}
+.content table {
+  width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14.5px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; overflow: hidden;
+}
+.content th, .content td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); }
+.content th { background: var(--code-bg); font-weight: 600; font-size: 13px; color: var(--muted); }
+.content tr:last-child td { border-bottom: 0; }
+.pager {
+  margin-top: 64px; padding-top: 24px; border-top: 1px solid var(--border);
+  display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+}
+.pager a {
+  display: block; padding: 16px 20px; background: var(--surface);
+  border: 1px solid var(--border); border-radius: 10px;
+  text-decoration: none; color: inherit; transition: all 0.15s;
+}
+.pager a:hover { border-color: var(--accent); transform: translateY(-1px); }
+.pager .pager-label { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+.pager .pager-title { font-size: 14px; font-weight: 600; line-height: 1.4; }
+.pager .next { text-align: right; }
+.pager .prev:empty, .pager .next:empty { background: transparent; border: 0; }
+@media (max-width: 600px) {
+  .layout { padding: 32px 18px 64px; }
+  .content h1 { font-size: 26px; }
+  .content h2 { font-size: 21px; }
+  body { font-size: 15.5px; }
+  .pager { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="layout">
+<nav class="crumb">
+  <a href="/">Fan's Notes</a><span class="sep">/</span>
+  <a href="/one-small-step/">One Small Step</a><span class="sep">/</span>
+  <span>如何优化 Transformer</span>
+</nav>
+<div class="chapter-meta">OSS · 2025-01-27</div>
+<article class="content">
+<h2>Transformer 的优化方案都有哪些?</h2>
+<p>by @karminski-牙医</p>
+<p><img src="./assets/images/mixed-precision-training.png" alt="" style="max-width:100%;height:auto;display:block;margin:24px auto" loading="lazy"></p>
+<p>目前使用 Transformer 架构的模型, 都使用了一些优化方案来达到更好的效果或更高的性能, 所以我整理了常见的优化方案 (包括训练和推理), 后续会详细讲解每个优化方案的技术细节.</p>
+<h3><strong>注意力机制优化</strong></h3>
+<ul>
+<li><p><strong>Flash Attention</strong></p>
+<ul>
+<li>减少内存访问和计算复杂度, 显著提升训练和推理速度</li>
+<li>被 Llama2, Qwen, PaLM2, Mistral, DeepSeek 等采用</li>
+<li>部分闭源模型可能采用类似技术或自研方案</li>
+</ul>
+</li>
+<li><p><strong>Multi-Query Attention (MQA)</strong></p>
+<ul>
+<li>减少 Key 和 Value 的头数, 降低内存使用和计算量</li>
+<li>被 PaLM, Falcon, BLOOM 等采用</li>
+</ul>
+</li>
+<li><p><strong>Grouped-Query Attention (GQA)</strong></p>
+<ul>
+<li>MQA 的改进版本, 通过分组共享 Key/Value 矩阵（而非完全独立）实现性能和效率的平衡</li>
+<li>被 Llama2, PaLM2, Gemini, Mistral, DeepSeek 等采用</li>
+</ul>
+</li>
+</ul>
+<h3><strong>位置编码优化</strong></h3>
+<ul>
+<li><p><strong>RoPE (Rotary Position Embedding)</strong></p>
+<ul>
+<li>通过旋转矩阵实现相对位置编码, 支持更好的长度外推性</li>
+<li>被 Llama, DeepSeek, Qwen, Mistral, Falcon, PaLM 等广泛采用</li>
+<li>支持 NTK-aware 插值和 Dynamic NTK 等长度扩展方法</li>
+</ul>
+</li>
+<li><p><strong>ALiBi (Attention with Linear Biases)</strong></p>
+<ul>
+<li>线性注意力偏置, 有助于外推到更长序列</li>
+<li>被 Bloom, Stable LM 等采用</li>
+</ul>
+</li>
+</ul>
+<h3><strong>架构优化</strong></h3>
+<ul>
+<li><p><strong>并行计算优化</strong></p>
+<ul>
+<li>通过解耦注意力层和前馈层的计算路径，实现：<ol>
+<li>减少层间计算依赖，提升计算并行度</li>
+<li>优化内存访问模式，降低显存占用</li>
+<li>提高计算资源利用率（特别是 Tensor Core）</li>
+<li>支持更大 batch size 的训练</li>
+</ol>
+</li>
+<li>典型实现方案：<ul>
+<li><strong>PaLM 并行结构</strong>：同时计算注意力层和前馈层，结果合并后做残差连接</li>
+<li><strong>GPT-3 模型并行</strong>：通过张量/流水线并行实现超大规模模型训练</li>
+</ul>
+</li>
+<li>被 PaLM, GPT-3, T5, Megatron-LM 等模型采用</li>
+</ul>
+</li>
+<li><p><strong>激活函数优化</strong></p>
+<ul>
+<li>使用 SwiGLU 替代标准 FFN 中的激活函数, 提供更好的性能</li>
+<li>被 PaLM, Llama2, Gemini, Qwen 等采用</li>
+</ul>
+</li>
+<li><p><strong>稀疏专家模型 (MoE)</strong></p>
+<ul>
+<li>通过多个专家网络实现大规模参数扩展</li>
+<li>被 Mixture-of-Experts, Switch Transformer 等采用</li>
+</ul>
+</li>
+</ul>
+<h3><strong>上下文长度扩展</strong></h3>
+<ul>
+<li><p><strong>滑动窗口注意力</strong></p>
+<ul>
+<li>局部注意力机制, 减少内存使用, 支持更长序列处理</li>
+<li>被 Longformer, BigBird 等采用</li>
+</ul>
+</li>
+<li><p><strong>稀疏注意力</strong></p>
+<ul>
+<li>只关注重要的 token, 降低计算复杂度, 提高处理长序列的能力</li>
+<li>被 Sparse Transformer, Reformer, Longformer 等采用</li>
+</ul>
+</li>
+</ul>
+<h3><strong>内存优化</strong></h3>
+<ul>
+<li><strong>参数共享</strong><ul>
+<li>跨层参数复用, 减少模型参数量, 降低内存需求</li>
+<li>被 ALBERT, T5 等采用</li>
+</ul>
+</li>
+</ul>
+<h3><strong>训练优化</strong></h3>
+<ul>
+<li><p><strong>混合精度训练</strong></p>
+<ul>
+<li>FP16/BF16 混合精度训练广泛应用于大模型训练</li>
+<li>FP8 目前主要用于推理阶段（如 NVIDIA H100）, 但 DeepSeek-V3 使用了 FP8 训练, 带来了巨大的成本优势, 甚至最新的论文还尝试了 FP4 训练</li>
+<li>大多数现代大模型使用 BF16 训练</li>
+</ul>
+</li>
+<li><p><strong>梯度检查点</strong></p>
+<ul>
+<li>训练时动态重计算, 节省显存, 略微增加计算时间</li>
+<li>被大模型训练普遍采用</li>
+</ul>
+</li>
+</ul>
+<h3><strong>推理优化</strong></h3>
+<ul>
+<li><p><strong>KV Cache</strong></p>
+<ul>
+<li>通过缓存历史 token 的 Key/Value 矩阵实现：<ol>
+<li>避免重复计算历史 token 的注意力结果</li>
+<li>减少解码时的计算量（复杂度从 O(n²) 降为 O(n)）</li>
+<li>降低内存带宽需求，提升推理速度</li>
+<li>支持更长的上下文处理</li>
+</ol>
+</li>
+<li>内存管理策略：<ul>
+<li>预分配固定长度内存</li>
+<li>动态扩展机制（如 vLLM 的 PagedAttention）</li>
+</ul>
+</li>
+<li>被 Llama 系列、GPT 系列、PaLM、Gemini、Qwen 等主流模型采用</li>
+</ul>
+</li>
+<li><p><strong>量化技术</strong></p>
+<ul>
+<li>INT8/INT4 量化, 减少模型大小和内存占用, 加快推理速度</li>
+<li>主流量化方法包括 GPTQ, AWQ 等</li>
+<li>支持 per-tensor 和 per-channel 量化粒度</li>
+<li>被 LLaMA-2, ChatGLM, Qwen, Mistral, Yi 等采用</li>
+</ul>
+</li>
+<li><p><strong>推理加速技术</strong></p>
+<ul>
+<li>推测解码 (Speculative Decoding)</li>
+<li>连续批处理 (Continuous Batching)</li>
+<li>动态批处理, 提高 GPU 利用率</li>
+</ul>
+</li>
+</ul>
+<h3><strong>特定硬件优化</strong></h3>
+<ul>
+<li><strong>GPU 特化</strong><ul>
+<li>CUDA 核心优化</li>
+<li>Tensor Core 利用</li>
+<li>显存访问优化</li>
+<li>算子融合</li>
+<li>内存布局优化</li>
+</ul>
+</li>
+</ul>
+<p>这些优化方案通常会组合使用，不同的模型会根据自己的具体需求选择合适的优化方案。比如：</p>
+<ul>
+<li><strong>Llama2</strong>: 采用 GQA + RoPE + Flash Attention</li>
+<li><strong>PaLM2</strong>: 使用 GQA + 并行计算优化</li>
+<li><strong>Qwen</strong>: 采用 Flash Attention + RoPE</li>
+</ul>
+<p>接下来几期我会详细介绍这些优化方案的技术细节, 以及它们在不同模型中的应用.</p>
+
+</article>
+<nav class="pager"><a class="prev" href="/one-small-step/20250126-what-is-transformer/"><div class="pager-label">← 上一篇</div><div class="pager-title">什么是 Transformer</div></a><a class="next" href="/one-small-step/20250129-what-is-quantization-in-LLM/"><div class="pager-label">下一篇 →</div><div class="pager-title">什么是大语言模型量化</div></a></nav>
+<footer style="margin-top:48px;padding-top:24px;border-top:1px solid var(--border);color:var(--muted);font-size:13px;">
+  <p>原文作者：<a href="https://github.com/karminski" target="_blank" rel="noopener" style="color:var(--accent);">@karminski-牙医</a> · MIT License · <a href="https://github.com/karminski/one-small-step/tree/master/20250127-how-to-optimize-transformer" target="_blank" rel="noopener" style="color:var(--accent);">查看仓库</a></p>
+</footer>
+</div>
+</body>
+</html>

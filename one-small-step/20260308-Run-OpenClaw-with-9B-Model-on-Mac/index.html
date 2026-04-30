@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>9B大模型也能玩转OpenClaw? Mac 部署全教程 · One Small Step · Fan's Notes</title>
+<style>
+:root {
+  --bg: #fafaf7; --surface: #ffffff; --surface-2: #f5f5f0;
+  --text: #1a1a1a; --muted: #6b7280; --border: #e5e7eb;
+  --accent: #b45309; --tech: #0369a1; --tech-soft: #f0f9ff;
+  --code-bg: #f6f7f8; --code-text: #24292e;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f0f0e; --surface: #1a1a18; --surface-2: #14140f;
+    --text: #e5e5e0; --muted: #9ca3af; --border: #2d2d2a;
+    --accent: #fbbf24; --tech: #38bdf8; --tech-soft: #0c1e2e;
+    --code-bg: #1e1e1c; --code-text: #d4d4d4;
+  }
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB",
+               "Microsoft YaHei", "Source Han Sans CN", sans-serif;
+  font-size: 16px; line-height: 1.78;
+  -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+}
+.layout { max-width: 760px; margin: 0 auto; padding: 48px 24px 80px; }
+.crumb {
+  font-size: 13px; color: var(--muted);
+  margin-bottom: 24px; display: flex; align-items: center;
+  gap: 8px; flex-wrap: wrap;
+}
+.crumb a { color: var(--muted); text-decoration: none; border-bottom: 1px solid var(--border); }
+.crumb a:hover { color: var(--accent); border-color: var(--accent); }
+.crumb .sep { color: var(--border); }
+.chapter-meta {
+  font-family: "SF Mono", Monaco, monospace;
+  font-size: 11px; letter-spacing: 0.1em;
+  color: var(--tech); font-weight: 700; margin-bottom: 8px;
+}
+.content h1 {
+  font-size: 32px; line-height: 1.25; margin: 0 0 32px;
+  font-weight: 700; letter-spacing: -0.015em;
+  padding-bottom: 16px; border-bottom: 2px solid var(--text);
+}
+.content h2 { font-size: 24px; margin: 48px 0 14px; line-height: 1.3; font-weight: 600; }
+.content h3 { font-size: 18px; margin: 32px 0 12px; font-weight: 600; color: var(--accent); }
+.content h4 { font-size: 16px; margin: 24px 0 10px; font-weight: 600; }
+.content p { margin: 0 0 18px; }
+.content a { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--border); transition: border-color 0.15s; }
+.content a:hover { border-color: var(--accent); }
+.content ul, .content ol { padding-left: 24px; margin: 0 0 18px; }
+.content li { margin-bottom: 6px; }
+.content li > ul, .content li > ol { margin-top: 6px; }
+.content strong { font-weight: 600; }
+.content em { font-style: italic; }
+.content blockquote { margin: 20px 0; padding: 4px 0 4px 16px; border-left: 3px solid var(--border); color: var(--muted); font-style: italic; }
+.content hr { border: 0; height: 1px; background: var(--border); margin: 40px 0; }
+.content code {
+  font-family: "SF Mono", Monaco, Consolas, "Liberation Mono", monospace;
+  background: var(--code-bg); color: var(--code-text);
+  padding: 2px 6px; border-radius: 4px; font-size: 0.88em;
+  border: 1px solid var(--border);
+}
+.content pre {
+  margin: 20px 0; background: var(--code-bg); border: 1px solid var(--border);
+  border-radius: 8px; padding: 14px 18px; overflow-x: auto;
+  font-size: 13px; line-height: 1.65;
+}
+.content pre code { background: transparent; border: 0; padding: 0; font-size: inherit; color: var(--code-text); }
+.hljs-comment, .hljs-quote { color: #708090; font-style: italic; }
+.hljs-keyword, .hljs-selector-tag, .hljs-built_in { color: #d73a49; }
+.hljs-string, .hljs-attr { color: #032f62; }
+.hljs-number, .hljs-literal { color: #005cc5; }
+.hljs-title, .hljs-function { color: #6f42c1; }
+.hljs-variable, .hljs-tag { color: #e36209; }
+@media (prefers-color-scheme: dark) {
+  .hljs-comment, .hljs-quote { color: #6a737d; }
+  .hljs-keyword, .hljs-selector-tag, .hljs-built_in { color: #f97583; }
+  .hljs-string, .hljs-attr { color: #9ecbff; }
+  .hljs-number, .hljs-literal { color: #79b8ff; }
+  .hljs-title, .hljs-function { color: #b392f0; }
+  .hljs-variable, .hljs-tag { color: #ffab70; }
+}
+.content img {
+  max-width: 100%; height: auto; display: block;
+  margin: 28px auto; border-radius: 6px;
+  border: 1px solid var(--border); background: var(--surface);
+}
+.content img.cover { max-width: 320px; }
+@media (prefers-color-scheme: dark) {
+  .content img:not(.cover) { background: #fff; padding: 8px; }
+}
+.content table {
+  width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14.5px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; overflow: hidden;
+}
+.content th, .content td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); }
+.content th { background: var(--code-bg); font-weight: 600; font-size: 13px; color: var(--muted); }
+.content tr:last-child td { border-bottom: 0; }
+.pager {
+  margin-top: 64px; padding-top: 24px; border-top: 1px solid var(--border);
+  display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+}
+.pager a {
+  display: block; padding: 16px 20px; background: var(--surface);
+  border: 1px solid var(--border); border-radius: 10px;
+  text-decoration: none; color: inherit; transition: all 0.15s;
+}
+.pager a:hover { border-color: var(--accent); transform: translateY(-1px); }
+.pager .pager-label { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+.pager .pager-title { font-size: 14px; font-weight: 600; line-height: 1.4; }
+.pager .next { text-align: right; }
+.pager .prev:empty, .pager .next:empty { background: transparent; border: 0; }
+@media (max-width: 600px) {
+  .layout { padding: 32px 18px 64px; }
+  .content h1 { font-size: 26px; }
+  .content h2 { font-size: 21px; }
+  body { font-size: 15.5px; }
+  .pager { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="layout">
+<nav class="crumb">
+  <a href="/">Fan's Notes</a><span class="sep">/</span>
+  <a href="/one-small-step/">One Small Step</a><span class="sep">/</span>
+  <span>9B大模型也能玩转OpenClaw? Mac 部署全教程</span>
+</nav>
+<div class="chapter-meta">OSS · 2026-03-08</div>
+<article class="content">
+<h1>9B大模型也能玩转 OpenClaw? Mac 部署全教程</h1>
+<p>简单来讲, Qwen 新推出的 Qwen3.5 9B, 35B-A3B, 27B 模型都支持一定程度的工具调用, 且模型能力对于日常任务来说也够用, 那么作为 OpenClaw 使用的模型也是可以的.</p>
+<p>我也验证了一下, 测试在 OpenClaw 接入的情况下, 无论是多模态的图片输入还是工具调用都挺流畅的. 而复杂场景 (比如连续工具调用), 更推荐 GLM-4.7-flash (全能型) 或者 kimi-linear (特别适合处理长文本, 线性注意力速度很快, 且模型召回能力好).</p>
+<p>这篇文章准确的来讲是给你的AI看的, 如果你配置卡住了, 让 AI 看这篇文章, 然后帮你配置就可以了, 甚至如果你本地没有 OpenClaw, 你可以本地开一个 claude code, 让 claude code 参考我这篇文章帮你在 Mac 上部署.</p>
+<h2>背景</h2>
+<p>OpenClaw 是个人 AI 助手框架, 可以接各种大模型 API. 我想让它接我 Mac 上用 mlx_vlm 跑的本地模型 (Qwen3.5 系列), 这样不用花钱, 也不用担心隐私.</p>
+<p>推理框架用的是 mlx_lm 或 mlx_vlm (Qwen3.5系列), 它提供了一个 OpenAI 兼容的 HTTP API. 理论上配个 baseUrl 就能用. </p>
+<h2>模型选型</h2>
+<table>
+<thead>
+<tr>
+<th>模型</th>
+<th>参数量-激活参数量</th>
+<th>优势</th>
+<th>劣势</th>
+<th>建议量化版本</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>GLM-4.7-flash</td>
+<td>30B-A3B</td>
+<td>全能型, 且Agent能力突出, 特别适合搭配 OpenClaw 使用</td>
+<td>长文本召回能力会比 kimi-linear 差一些</td>
+<td>8bit, 不要低于4bit</td>
+</tr>
+<tr>
+<td>kimi-linear</td>
+<td>48B-A3B</td>
+<td>线性注意力, prefill 和推理速度巨快, 且长文本召回能力很强, 很适合处理大量文本的工作</td>
+<td>Agent 能力较 GLM-4.7-flash 差一些</td>
+<td>8bit, 不要低于4bit</td>
+</tr>
+<tr>
+<td>Qwen3.5-35B-A3B</td>
+<td>35B-A3B</td>
+<td>支持多模态输入, 激活参数量小, 所以速度很快</td>
+<td>Agent 能力适中, 另外 mlx_vlm 的 prefill 速度很慢, 而 mlx 没有提供 mlx_lm 直接使用的版本</td>
+<td>8bit, 不要低于4bit</td>
+</tr>
+<tr>
+<td>Qwen3.5-27B</td>
+<td>27B</td>
+<td>支持多模态输入,  Agent 能力体感比 Qwen3.5-35B-A3B 好一些</td>
+<td>dense 模型, 会慢一些, 另外 mlx_vlm 的 prefill 速度很慢, 而 mlx 没有提供 mlx_lm 直接使用的版本</td>
+<td>5bit</td>
+</tr>
+<tr>
+<td>Qwen3.5-9B</td>
+<td>9B</td>
+<td>支持多模态输入, 显存/统一内存占用小</td>
+<td>Agent 能力是这几个里面垫底的, 另外 mlx_vlm 的 prefill 速度很慢, 而 mlx 没有提供 mlx_lm 直接使用的版本</td>
+<td>8bit, 不要低于5bit</td>
+</tr>
+</tbody></table>
+<h2>第零步: 下载模型</h2>
+<p>直接去huggingface 下载模型, 比如 <a href="https://huggingface.co/mlx-community/Qwen3.5-9B-8bit">https://huggingface.co/mlx-community/Qwen3.5-9B-8bit</a>, 如果你的 Mac 内存比较小也可以考虑 4bit 版本. 如果你是 windows 或者 linux, 可以用 GGUF 搭配 llama.cpp.</p>
+<h2>第一步: 创建共享 venv</h2>
+<p>多个 Qwen3.5 模型可以共用一个 venv, 不用把 20G 的依赖复制三份. venv 里装的是推理框架, 模型权重是独立的文件, 通过 <code>--model</code> 参数指定就行.</p>
+<pre><code class="hljs language-bash"><span class="hljs-comment"># 我的模型放在了 /Volumes/WORK_2/models, 可以根据你自己的的实际情况调整</span>
+python3 -m venv /Volumes/WORK_2/models/Qwen3.5-venv
+<span class="hljs-built_in">source</span> /Volumes/WORK_2/models/Qwen3.5-venv/bin/activate
+pip install git+https://github.com/Blaizzy/mlx-vlm.git@main <span class="hljs-comment"># 这里一定要用 github 上的最新版本, Pypi 上的版本还不支持 tool call.</span>
+pip install torch torchvision <span class="hljs-comment"># 这两个都要装, 是 mlx-vlm 必须的库</span></code></pre><p><strong>踩坑: venv 不能复制!</strong> Python venv 里的脚本 (pip, python3 等) 都硬编码了原始路径的 shebang. 你把 <code>.venv</code> 文件夹复制到别的地方, 里面的 pip 还是指向旧路径, 装的包全装到旧位置去了. 表面上 <code>(.venv)</code> 提示符亮着, 实际上 <code>which pip</code> 指向的是系统 Python. 解决办法: 永远在目标位置重新 <code>python3 -m venv</code> 创建, 别复制.</p>
+<h2>第二步: 用 pm2 管理模型服务</h2>
+<p>先检查是否安装了 node.js 环境, 如果没有先安装 node.js.</p>
+<p>关键技巧: 不需要 <code>source activate</code>, 直接用 venv 里的 Python 完整路径:</p>
+<pre><code class="hljs language-bash">pm2 start /Volumes/WORK_2/models/Qwen3.5-venv/bin/python3 \
+  --name <span class="hljs-string">&quot;qwen3.5-api&quot;</span> \
+  --interpreter none \
+  -- -m mlx_vlm.server \
+  --model /Volumes/WORK_2/models/Qwen3.5-9B-8bit \
+  --host 0.0.0.0 --port 10012 --trust-remote-code</code></pre><p><code>source activate</code> 本质就是把 venv 的 bin 目录加到 PATH 前面, 直接用完整路径调 Python 效果完全一样.</p>
+<h2>第三步: 配置 OpenClaw</h2>
+<p>在 OpenClaw 的 <code>config.json</code> 里添加 local provider:</p>
+<pre><code class="hljs language-json"><span class="hljs-punctuation">{</span>
+  <span class="hljs-attr">&quot;models&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span>
+    <span class="hljs-attr">&quot;mode&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;merge&quot;</span><span class="hljs-punctuation">,</span>
+    <span class="hljs-attr">&quot;providers&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span>
+      <span class="hljs-attr">&quot;local&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span>
+        <span class="hljs-attr">&quot;baseUrl&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;http://10.0.6.26:10012&quot;</span><span class="hljs-punctuation">,</span>
+        <span class="hljs-attr">&quot;apiKey&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;DEADBEEF&quot;</span><span class="hljs-punctuation">,</span>
+        <span class="hljs-attr">&quot;api&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;openai-completions&quot;</span><span class="hljs-punctuation">,</span>
+        <span class="hljs-attr">&quot;models&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span>
+          <span class="hljs-punctuation">{</span>
+            <span class="hljs-attr">&quot;id&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;/Volumes/WORK_2/models/Qwen3.5-9B-8bit&quot;</span><span class="hljs-punctuation">,</span>
+            <span class="hljs-attr">&quot;name&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;Qwen 3.5 9B&quot;</span><span class="hljs-punctuation">,</span>
+            <span class="hljs-attr">&quot;reasoning&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-literal"><span class="hljs-keyword">false</span></span><span class="hljs-punctuation">,</span>
+            <span class="hljs-attr">&quot;input&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span><span class="hljs-string">&quot;text&quot;</span><span class="hljs-punctuation">,</span> <span class="hljs-string">&quot;image&quot;</span><span class="hljs-punctuation">]</span><span class="hljs-punctuation">,</span>
+            <span class="hljs-attr">&quot;cost&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span> <span class="hljs-attr">&quot;input&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">0</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;output&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">0</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;cacheRead&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">0</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;cacheWrite&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">0</span> <span class="hljs-punctuation">}</span><span class="hljs-punctuation">,</span>
+            <span class="hljs-attr">&quot;contextWindow&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">262144</span><span class="hljs-punctuation">,</span>
+            <span class="hljs-attr">&quot;maxTokens&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">32768</span>
+          <span class="hljs-punctuation">}</span>
+        <span class="hljs-punctuation">]</span>
+      <span class="hljs-punctuation">}</span>
+    <span class="hljs-punctuation">}</span>
+  <span class="hljs-punctuation">}</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">&quot;agents&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span>
+    <span class="hljs-attr">&quot;defaults&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span>
+      <span class="hljs-attr">&quot;models&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span>
+        <span class="hljs-attr">&quot;local//Volumes/WORK_2/models/Qwen3.5-9B-8bit&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span>
+          <span class="hljs-attr">&quot;alias&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;qwen3.5-9b&quot;</span><span class="hljs-punctuation">,</span>
+          <span class="hljs-attr">&quot;streaming&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-literal"><span class="hljs-keyword">false</span></span>
+        <span class="hljs-punctuation">}</span>
+      <span class="hljs-punctuation">}</span><span class="hljs-punctuation">,</span>
+      <span class="hljs-attr">&quot;timeoutSeconds&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">600</span>
+    <span class="hljs-punctuation">}</span>
+  <span class="hljs-punctuation">}</span>
+<span class="hljs-punctuation">}</span></code></pre><p>几个注意点:</p>
+<ul>
+<li><code>apiKey</code> 设成 <code>&quot;DEADBEEF&quot;</code> 或其他的什么随机字符串, 本地模型不需要鉴权, 以防 OpenClaw 不兼容留空.</li>
+<li>model id 就是模型权重的完整路径, 因为 mlx_vlm 的 API 用路径来区分模型.</li>
+<li><code>&quot;streaming&quot;: false</code> 关掉流式传输, 避免 SSE 兼容性问题导致超时. (打开应该也没事)</li>
+<li><code>&quot;timeoutSeconds&quot;: 600</code> 给本地模型 10 分钟响应时间.</li>
+<li>模型引用格式是 <code>local//Volumes/...</code>, 第一个 <code>/</code> 是 provider 和 model id 的分隔符, 第二个 <code>/</code> 是路径本身.</li>
+</ul>
+<h2>第四步: 使用代理脚本过滤掉 mlx 不支持的字段</h2>
+<p>由于 OpenClaw 发起的请求有很多字段是特殊的, 而 mlx_lm/lmx_vlm 不支持这些字段, 所以我准备了<a href="./mlx-proxy.py">代理脚本</a>, 可以让 OpenClaw 请求这个脚本, 然后脚本 rewrite 或者 strip 掉特殊字段, 来让推理引擎正常运行.</p>
+<p>对于Qwen3.5系列使用 mlx_vlm 推理引擎的模型, 使用默认参数启动即可:</p>
+<pre><code class="hljs language-plaintext">python3 mlx-proxy.py --host 0.0.0.0 --port 10012 --upstream http://127.0.0.1:10002</code></pre><p>当然你可以使用 pm2 管理服务:</p>
+<pre><code class="hljs language-plaintext">pm2 start /Volumes/WORK_2/models/mlx-venv/bin/python3 \
+  --name &quot;mlx-vlm-proxy&quot; \
+  --interpreter none \
+  -- mlx-proxy.py \
+  --host 0.0.0.0 --port 10012 \
+  --upstream http://127.0.0.1:10002</code></pre><p>对于 GLM-4.7-flash 或 kimi-linear 等使用 mlx_lm 推理引擎的模型, 需要去除掉 model 字段:</p>
+<pre><code class="hljs language-plaintext">python3 mlx-proxy.py --host 0.0.0.0 --port 10014 --upstream http://127.0.0.1:10004 --strip-model</code></pre><p>当然同样可以用 pm2 管理服务:</p>
+<pre><code class="hljs language-plaintext">pm2 start /Volumes/WORK_2/models/mlx-venv/bin/python3 \
+  --name &quot;mlx-lm-proxy-glm-4.7-flash&quot; \
+  --interpreter none \
+  -- mlx-proxy.py \
+  --host 0.0.0.0 --port 10014 \
+  --upstream http://127.0.0.1:10004 \
+  --strip-model</code></pre><h2>第五步: 可能的 Discord 权限配置问题</h2>
+<p><strong>如果你运行: <code>/model</code> 命令返回 &quot;You are not authorized to use this command&quot;</strong></p>
+<p>这不是 Discord Bot 权限问题, 是 OpenClaw 的鉴权. 即使 <code>groupPolicy</code> 设成 <code>&quot;open&quot;</code>, slash 命令仍然需要在 guild 配置里明确授权你的 User ID:</p>
+<pre><code class="hljs language-json"><span class="hljs-punctuation">{</span>
+  <span class="hljs-attr">&quot;channels&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span>
+    <span class="hljs-attr">&quot;discord&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span>
+      <span class="hljs-attr">&quot;groupPolicy&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;open&quot;</span><span class="hljs-punctuation">,</span>
+      <span class="hljs-attr">&quot;guilds&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span>
+        <span class="hljs-attr">&quot;你的SERVER_ID&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span>
+          <span class="hljs-attr">&quot;requireMention&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-literal"><span class="hljs-keyword">false</span></span><span class="hljs-punctuation">,</span>
+          <span class="hljs-attr">&quot;users&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span><span class="hljs-string">&quot;你的USER_ID&quot;</span><span class="hljs-punctuation">]</span>
+        <span class="hljs-punctuation">}</span>
+      <span class="hljs-punctuation">}</span>
+    <span class="hljs-punctuation">}</span>
+  <span class="hljs-punctuation">}</span>
+<span class="hljs-punctuation">}</span></code></pre><p>User ID 和 Server ID 在 Discord 开启开发者模式后右键复制.</p>
+<h2>调试技巧</h2>
+<p>如果报错 HTTP 422 大概率是你用的 mlx-vlm 不够新, 请使用 github 版本而不是 pip 安装的旧版, 如果不知道是什么问题可以按照下面的思路 debug:</p>
+<p><strong>用 socat 抓 OpenClaw 发出的原始请求:</strong></p>
+<pre><code class="hljs language-bash">pm2 stop qwen3.5-api  <span class="hljs-comment"># 先释放端口</span>
+socat -v TCP-LISTEN:10012,reuseaddr,fork \
+  SYSTEM:<span class="hljs-string">&#x27;cat; echo -e &quot;HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n{\&quot;choices\&quot;:[{\&quot;message\&quot;:{\&quot;role\&quot;:\&quot;assistant\&quot;,\&quot;content\&quot;:\&quot;ok\&quot;}}]}&quot;&#x27;</span></code></pre><p><strong>用 curl 逐个字段排查哪个触发 422:</strong></p>
+<pre><code class="hljs language-bash"><span class="hljs-comment"># 基础测试</span>
+curl -X POST http://10.0.6.26:10012/chat/completions \
+  -H <span class="hljs-string">&quot;Content-Type: application/json&quot;</span> \
+  -d <span class="hljs-string">&#x27;{&quot;model&quot;:&quot;...&quot;,&quot;messages&quot;:[{&quot;role&quot;:&quot;user&quot;,&quot;content&quot;:&quot;hi&quot;}],&quot;stream&quot;:false}&#x27;</span>
+
+<span class="hljs-comment"># 加上 tools 测试</span>
+curl -X POST ... -d <span class="hljs-string">&#x27;{&quot;model&quot;:&quot;...&quot;,&quot;messages&quot;:[...],&quot;stream&quot;:false,&quot;tools&quot;:[]}&#x27;</span>
+
+<span class="hljs-comment"># 加上 content 数组格式测试</span>
+curl -X POST ... -d <span class="hljs-string">&#x27;{&quot;model&quot;:&quot;...&quot;,&quot;messages&quot;:[{&quot;role&quot;:&quot;user&quot;,&quot;content&quot;:[{&quot;type&quot;:&quot;text&quot;,&quot;text&quot;:&quot;hi&quot;}]}],&quot;stream&quot;:false}&#x27;</span></code></pre><h2>总结</h2>
+<p>总之不要自己动手解决问题, 尽量让AI帮你搞, 省时间. </p>
+
+</article>
+<nav class="pager"><a class="prev" href="/one-small-step/20251110-Parameter-Precision-Formats-for-LLMs/"><div class="pager-label">← 上一篇</div><div class="pager-title">大模型精度格式一览</div></a><a class="next" href="/one-small-step/20250227-what-is-rank-in-matrix/"><div class="pager-label">下一篇 →</div><div class="pager-title">什么是矩阵的秩？什么是低秩矩阵？</div></a></nav>
+<footer style="margin-top:48px;padding-top:24px;border-top:1px solid var(--border);color:var(--muted);font-size:13px;">
+  <p>原文作者：<a href="https://github.com/karminski" target="_blank" rel="noopener" style="color:var(--accent);">@karminski-牙医</a> · MIT License · <a href="https://github.com/karminski/one-small-step/tree/master/20260308-Run-OpenClaw-with-9B-Model-on-Mac" target="_blank" rel="noopener" style="color:var(--accent);">查看仓库</a></p>
+</footer>
+</div>
+</body>
+</html>

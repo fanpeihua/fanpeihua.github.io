@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>什么是 LLM 的困惑度 · One Small Step · Fan's Notes</title>
+<style>
+:root {
+  --bg: #fafaf7; --surface: #ffffff; --surface-2: #f5f5f0;
+  --text: #1a1a1a; --muted: #6b7280; --border: #e5e7eb;
+  --accent: #b45309; --tech: #0369a1; --tech-soft: #f0f9ff;
+  --code-bg: #f6f7f8; --code-text: #24292e;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f0f0e; --surface: #1a1a18; --surface-2: #14140f;
+    --text: #e5e5e0; --muted: #9ca3af; --border: #2d2d2a;
+    --accent: #fbbf24; --tech: #38bdf8; --tech-soft: #0c1e2e;
+    --code-bg: #1e1e1c; --code-text: #d4d4d4;
+  }
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB",
+               "Microsoft YaHei", "Source Han Sans CN", sans-serif;
+  font-size: 16px; line-height: 1.78;
+  -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+}
+.layout { max-width: 760px; margin: 0 auto; padding: 48px 24px 80px; }
+.crumb {
+  font-size: 13px; color: var(--muted);
+  margin-bottom: 24px; display: flex; align-items: center;
+  gap: 8px; flex-wrap: wrap;
+}
+.crumb a { color: var(--muted); text-decoration: none; border-bottom: 1px solid var(--border); }
+.crumb a:hover { color: var(--accent); border-color: var(--accent); }
+.crumb .sep { color: var(--border); }
+.chapter-meta {
+  font-family: "SF Mono", Monaco, monospace;
+  font-size: 11px; letter-spacing: 0.1em;
+  color: var(--tech); font-weight: 700; margin-bottom: 8px;
+}
+.content h1 {
+  font-size: 32px; line-height: 1.25; margin: 0 0 32px;
+  font-weight: 700; letter-spacing: -0.015em;
+  padding-bottom: 16px; border-bottom: 2px solid var(--text);
+}
+.content h2 { font-size: 24px; margin: 48px 0 14px; line-height: 1.3; font-weight: 600; }
+.content h3 { font-size: 18px; margin: 32px 0 12px; font-weight: 600; color: var(--accent); }
+.content h4 { font-size: 16px; margin: 24px 0 10px; font-weight: 600; }
+.content p { margin: 0 0 18px; }
+.content a { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--border); transition: border-color 0.15s; }
+.content a:hover { border-color: var(--accent); }
+.content ul, .content ol { padding-left: 24px; margin: 0 0 18px; }
+.content li { margin-bottom: 6px; }
+.content li > ul, .content li > ol { margin-top: 6px; }
+.content strong { font-weight: 600; }
+.content em { font-style: italic; }
+.content blockquote { margin: 20px 0; padding: 4px 0 4px 16px; border-left: 3px solid var(--border); color: var(--muted); font-style: italic; }
+.content hr { border: 0; height: 1px; background: var(--border); margin: 40px 0; }
+.content code {
+  font-family: "SF Mono", Monaco, Consolas, "Liberation Mono", monospace;
+  background: var(--code-bg); color: var(--code-text);
+  padding: 2px 6px; border-radius: 4px; font-size: 0.88em;
+  border: 1px solid var(--border);
+}
+.content pre {
+  margin: 20px 0; background: var(--code-bg); border: 1px solid var(--border);
+  border-radius: 8px; padding: 14px 18px; overflow-x: auto;
+  font-size: 13px; line-height: 1.65;
+}
+.content pre code { background: transparent; border: 0; padding: 0; font-size: inherit; color: var(--code-text); }
+.hljs-comment, .hljs-quote { color: #708090; font-style: italic; }
+.hljs-keyword, .hljs-selector-tag, .hljs-built_in { color: #d73a49; }
+.hljs-string, .hljs-attr { color: #032f62; }
+.hljs-number, .hljs-literal { color: #005cc5; }
+.hljs-title, .hljs-function { color: #6f42c1; }
+.hljs-variable, .hljs-tag { color: #e36209; }
+@media (prefers-color-scheme: dark) {
+  .hljs-comment, .hljs-quote { color: #6a737d; }
+  .hljs-keyword, .hljs-selector-tag, .hljs-built_in { color: #f97583; }
+  .hljs-string, .hljs-attr { color: #9ecbff; }
+  .hljs-number, .hljs-literal { color: #79b8ff; }
+  .hljs-title, .hljs-function { color: #b392f0; }
+  .hljs-variable, .hljs-tag { color: #ffab70; }
+}
+.content img {
+  max-width: 100%; height: auto; display: block;
+  margin: 28px auto; border-radius: 6px;
+  border: 1px solid var(--border); background: var(--surface);
+}
+.content img.cover { max-width: 320px; }
+@media (prefers-color-scheme: dark) {
+  .content img:not(.cover) { background: #fff; padding: 8px; }
+}
+.content table {
+  width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14.5px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; overflow: hidden;
+}
+.content th, .content td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); }
+.content th { background: var(--code-bg); font-weight: 600; font-size: 13px; color: var(--muted); }
+.content tr:last-child td { border-bottom: 0; }
+.pager {
+  margin-top: 64px; padding-top: 24px; border-top: 1px solid var(--border);
+  display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+}
+.pager a {
+  display: block; padding: 16px 20px; background: var(--surface);
+  border: 1px solid var(--border); border-radius: 10px;
+  text-decoration: none; color: inherit; transition: all 0.15s;
+}
+.pager a:hover { border-color: var(--accent); transform: translateY(-1px); }
+.pager .pager-label { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+.pager .pager-title { font-size: 14px; font-weight: 600; line-height: 1.4; }
+.pager .next { text-align: right; }
+.pager .prev:empty, .pager .next:empty { background: transparent; border: 0; }
+@media (max-width: 600px) {
+  .layout { padding: 32px 18px 64px; }
+  .content h1 { font-size: 26px; }
+  .content h2 { font-size: 21px; }
+  body { font-size: 15.5px; }
+  .pager { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="layout">
+<nav class="crumb">
+  <a href="/">Fan's Notes</a><span class="sep">/</span>
+  <a href="/one-small-step/">One Small Step</a><span class="sep">/</span>
+  <span>什么是 LLM 的困惑度</span>
+</nav>
+<div class="chapter-meta">OSS · 2025-04-03</div>
+<article class="content">
+<h2>什么是 LLM 的困惑度 (Perplexity)</h2>
+<p>by @karminski-牙医</p>
+<p><img src="assets/images/k-quantization-vs-perplexity.webp" alt="llm-perplexity" style="max-width:100%;height:auto;display:block;margin:24px auto" loading="lazy"></p>
+<p>困惑度（Perplexity）是评估语言模型（LLM）性能的关键指标。它衡量模型在预测文本序列时的不确定性程度，用于量化模型对未见过的数据的预测能力。</p>
+<h2>困惑度的定义与计算</h2>
+<ul>
+<li><p><strong>数学定义：</strong> 困惑度是模型对测试集的对数概率的负平均值。数学上表示为：
+$$\text{Perplexity} = \exp\left(-\frac{1}{N}\sum_{i=1}^{N}\log p(x_i)\right)$$
+其中 N 是测试集中的标记数量，p(x_i) 是模型对标记 x_i 的预测概率。</p>
+</li>
+<li><p><strong>直观理解：</strong> 困惑度可以理解为模型在每个位置上平均需要考虑的可能选项数量。困惑度越低，说明模型的预测准确性越高。</p>
+</li>
+<li><p><strong>熵的关系：</strong> 困惑度是序列交叉熵的指数，直接反映了模型预测的不确定性。</p>
+</li>
+</ul>
+<h2>困惑度的重要意义</h2>
+<ul>
+<li><p><strong>模型评估：</strong> 困惑度提供了一种客观的方式来比较不同语言模型的性能，是训练过程中的重要监控指标。通常微调或者量化过程中也会使用。</p>
+</li>
+<li><p><strong>过拟合检测：</strong> 通过比较训练集和验证集上的困惑度，可以发现模型是否过拟合。</p>
+</li>
+<li><p><strong>预测质量：</strong> 较低的困惑度通常意味着模型能够生成更流畅、更连贯的文本。</p>
+</li>
+<li><p><strong>领域适应性：</strong> 困惑度可以反映模型在特定领域文本上的表现，帮助评估模型的领域迁移能力。</p>
+</li>
+</ul>
+<h2>困惑度的使用场景</h2>
+<p>困惑度广泛应用于各种 LLM 相关的场景：</p>
+<ul>
+<li><p><strong>模型训练：</strong> 作为训练过程中的优化目标和停止条件。</p>
+</li>
+<li><p><strong>模型选择：</strong> 帮助研究人员在不同架构和参数设置之间做出选择。</p>
+</li>
+<li><p><strong>数据质量评估：</strong> 高质量的训练数据通常会导致模型在相似数据上具有较低的困惑度。</p>
+</li>
+<li><p><strong>生成文本评估：</strong> 虽然不是唯一指标，但困惑度可以作为生成文本质量的参考。</p>
+</li>
+</ul>
+<h2>困惑度的局限性</h2>
+<p>尽管困惑度广泛使用，但它也存在一些局限性：</p>
+<ul>
+<li><p><strong>不完全反映语义理解：</strong> 低困惑度不一定意味着模型真正理解了文本的语义。</p>
+</li>
+<li><p><strong>对于开放式生成任务不够全面：</strong> 在创意写作等任务中，困惑度可能无法完全捕捉输出的质量。</p>
+</li>
+<li><p><strong>与人类评价不完全一致：</strong> 困惑度是一个统计指标，可能与人类对文本质量的主观评价存在差异。</p>
+</li>
+<li><p><strong>模型大小的影响：</strong> 大型模型往往能够达到较低的困惑度，但这并不总是转化为更好的实际应用效果。</p>
+</li>
+</ul>
+<p>总之，困惑度是评估 LLM 性能的重要指标，提供了一种客观测量模型预测能力的方法。然而，它应该与其他评估方法结合使用，以全面了解模型的实际性能。</p>
+<h2>支持困惑度评估的工具</h2>
+<ul>
+<li><a href="https://huggingface.co/docs/evaluate/index">HuggingFace Evaluate</a></li>
+</ul>
+<h2>Reference</h2>
+<ul>
+<li><a href="https://en.wikipedia.org/wiki/Perplexity">https://en.wikipedia.org/wiki/Perplexity</a></li>
+<li><a href="https://huggingface.co/docs/transformers/perplexity">https://huggingface.co/docs/transformers/perplexity</a></li>
+</ul>
+
+</article>
+<nav class="pager"><a class="prev" href="/one-small-step/20250317-what-is-multi-model-llm/"><div class="pager-label">← 上一篇</div><div class="pager-title">什么是多模态模型</div></a><a class="next" href="/one-small-step/20250513-How-to-avoid-KVCache-invalidation/"><div class="pager-label">下一篇 →</div><div class="pager-title">如何避免 KVCache 失效</div></a></nav>
+<footer style="margin-top:48px;padding-top:24px;border-top:1px solid var(--border);color:var(--muted);font-size:13px;">
+  <p>原文作者：<a href="https://github.com/karminski" target="_blank" rel="noopener" style="color:var(--accent);">@karminski-牙医</a> · MIT License · <a href="https://github.com/karminski/one-small-step/tree/master/20250403-what-is-llm-perplexity" target="_blank" rel="noopener" style="color:var(--accent);">查看仓库</a></p>
+</footer>
+</div>
+</body>
+</html>

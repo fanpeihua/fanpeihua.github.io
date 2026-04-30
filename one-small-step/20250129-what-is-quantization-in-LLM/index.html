@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>什么是大语言模型量化 · One Small Step · Fan's Notes</title>
+<style>
+:root {
+  --bg: #fafaf7; --surface: #ffffff; --surface-2: #f5f5f0;
+  --text: #1a1a1a; --muted: #6b7280; --border: #e5e7eb;
+  --accent: #b45309; --tech: #0369a1; --tech-soft: #f0f9ff;
+  --code-bg: #f6f7f8; --code-text: #24292e;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f0f0e; --surface: #1a1a18; --surface-2: #14140f;
+    --text: #e5e5e0; --muted: #9ca3af; --border: #2d2d2a;
+    --accent: #fbbf24; --tech: #38bdf8; --tech-soft: #0c1e2e;
+    --code-bg: #1e1e1c; --code-text: #d4d4d4;
+  }
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB",
+               "Microsoft YaHei", "Source Han Sans CN", sans-serif;
+  font-size: 16px; line-height: 1.78;
+  -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+}
+.layout { max-width: 760px; margin: 0 auto; padding: 48px 24px 80px; }
+.crumb {
+  font-size: 13px; color: var(--muted);
+  margin-bottom: 24px; display: flex; align-items: center;
+  gap: 8px; flex-wrap: wrap;
+}
+.crumb a { color: var(--muted); text-decoration: none; border-bottom: 1px solid var(--border); }
+.crumb a:hover { color: var(--accent); border-color: var(--accent); }
+.crumb .sep { color: var(--border); }
+.chapter-meta {
+  font-family: "SF Mono", Monaco, monospace;
+  font-size: 11px; letter-spacing: 0.1em;
+  color: var(--tech); font-weight: 700; margin-bottom: 8px;
+}
+.content h1 {
+  font-size: 32px; line-height: 1.25; margin: 0 0 32px;
+  font-weight: 700; letter-spacing: -0.015em;
+  padding-bottom: 16px; border-bottom: 2px solid var(--text);
+}
+.content h2 { font-size: 24px; margin: 48px 0 14px; line-height: 1.3; font-weight: 600; }
+.content h3 { font-size: 18px; margin: 32px 0 12px; font-weight: 600; color: var(--accent); }
+.content h4 { font-size: 16px; margin: 24px 0 10px; font-weight: 600; }
+.content p { margin: 0 0 18px; }
+.content a { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--border); transition: border-color 0.15s; }
+.content a:hover { border-color: var(--accent); }
+.content ul, .content ol { padding-left: 24px; margin: 0 0 18px; }
+.content li { margin-bottom: 6px; }
+.content li > ul, .content li > ol { margin-top: 6px; }
+.content strong { font-weight: 600; }
+.content em { font-style: italic; }
+.content blockquote { margin: 20px 0; padding: 4px 0 4px 16px; border-left: 3px solid var(--border); color: var(--muted); font-style: italic; }
+.content hr { border: 0; height: 1px; background: var(--border); margin: 40px 0; }
+.content code {
+  font-family: "SF Mono", Monaco, Consolas, "Liberation Mono", monospace;
+  background: var(--code-bg); color: var(--code-text);
+  padding: 2px 6px; border-radius: 4px; font-size: 0.88em;
+  border: 1px solid var(--border);
+}
+.content pre {
+  margin: 20px 0; background: var(--code-bg); border: 1px solid var(--border);
+  border-radius: 8px; padding: 14px 18px; overflow-x: auto;
+  font-size: 13px; line-height: 1.65;
+}
+.content pre code { background: transparent; border: 0; padding: 0; font-size: inherit; color: var(--code-text); }
+.hljs-comment, .hljs-quote { color: #708090; font-style: italic; }
+.hljs-keyword, .hljs-selector-tag, .hljs-built_in { color: #d73a49; }
+.hljs-string, .hljs-attr { color: #032f62; }
+.hljs-number, .hljs-literal { color: #005cc5; }
+.hljs-title, .hljs-function { color: #6f42c1; }
+.hljs-variable, .hljs-tag { color: #e36209; }
+@media (prefers-color-scheme: dark) {
+  .hljs-comment, .hljs-quote { color: #6a737d; }
+  .hljs-keyword, .hljs-selector-tag, .hljs-built_in { color: #f97583; }
+  .hljs-string, .hljs-attr { color: #9ecbff; }
+  .hljs-number, .hljs-literal { color: #79b8ff; }
+  .hljs-title, .hljs-function { color: #b392f0; }
+  .hljs-variable, .hljs-tag { color: #ffab70; }
+}
+.content img {
+  max-width: 100%; height: auto; display: block;
+  margin: 28px auto; border-radius: 6px;
+  border: 1px solid var(--border); background: var(--surface);
+}
+.content img.cover { max-width: 320px; }
+@media (prefers-color-scheme: dark) {
+  .content img:not(.cover) { background: #fff; padding: 8px; }
+}
+.content table {
+  width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14.5px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; overflow: hidden;
+}
+.content th, .content td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); }
+.content th { background: var(--code-bg); font-weight: 600; font-size: 13px; color: var(--muted); }
+.content tr:last-child td { border-bottom: 0; }
+.pager {
+  margin-top: 64px; padding-top: 24px; border-top: 1px solid var(--border);
+  display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+}
+.pager a {
+  display: block; padding: 16px 20px; background: var(--surface);
+  border: 1px solid var(--border); border-radius: 10px;
+  text-decoration: none; color: inherit; transition: all 0.15s;
+}
+.pager a:hover { border-color: var(--accent); transform: translateY(-1px); }
+.pager .pager-label { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+.pager .pager-title { font-size: 14px; font-weight: 600; line-height: 1.4; }
+.pager .next { text-align: right; }
+.pager .prev:empty, .pager .next:empty { background: transparent; border: 0; }
+@media (max-width: 600px) {
+  .layout { padding: 32px 18px 64px; }
+  .content h1 { font-size: 26px; }
+  .content h2 { font-size: 21px; }
+  body { font-size: 15.5px; }
+  .pager { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="layout">
+<nav class="crumb">
+  <a href="/">Fan's Notes</a><span class="sep">/</span>
+  <a href="/one-small-step/">One Small Step</a><span class="sep">/</span>
+  <span>什么是大语言模型量化</span>
+</nav>
+<div class="chapter-meta">OSS · 2025-01-29</div>
+<article class="content">
+<h2>什么是大语言模型量化? 每个量化精度都代表什么?</h2>
+<ul>
+<li>by @karminski-牙医</li>
+</ul>
+<p><img src="./assets/images/number-representation.png" alt="" style="max-width:100%;height:auto;display:block;margin:24px auto" loading="lazy"></p>
+<p>量化 (Quantization) 是一种通过降低模型参数的数值精度来压缩模型大小的技术. 在深度学习中, 模型参数通常以32位浮点数 (FP32) 存储, 通过量化可以将其转换为更低精度的表示形式, 从而减少模型的内存占用和计算开销. </p>
+<p>如图, FP32 的大小是 4 字节 (每个字节8bit, 4字节 * 8bit = 32bit), 而 FP16 的大小是 2 字节 (每个字节8bit, 2字节 * 8bit = 16bit). </p>
+<p>这也是为什么大家喜欢用 Q4 量化模型的原因, 跟 FP16 (16bit) 的模型相比, Q4 (4bit) 的模型只有 1/4 的大小. 运行起来需要的内存也是1/4.</p>
+<p>现在大多数模型训练都采用 FP16 的精度, 最近出圈的 DeepSeek-V3 采用了 FP8 精度训练, 能显著提升训练速度和降低硬件成本. </p>
+<h2>Q4_K_M 到底是什么意思?</h2>
+<p>所以我们大概了解了 Q4 实际上指的是 4bit 量化, 那么后缀都是什么意思呢？ 于是我整理了常见的量化精度和后缀供大家参考：</p>
+<p>这种命名方式一般是 GGUF &amp; GGML 格式的模型. 他们通常采用 K 量化模型, 格式类似 Q4_K_M, 这里的 Q 后面的数字代表量化精度, K 代表 K 量化方法, M 代表模型在尺寸和 PPL (Perplexity, 困惑度) 之间的平衡度, 有 0, 1, XS, S, M, L 等. </p>
+<p>PPL 是评估语言模型性能的重要指标, 它用来衡量模型对下一个词的预测准确程度</p>
+<p>常见 K 量化版本的PPL对比 (这是一个7B模型): </p>
+<table>
+<thead>
+<tr>
+<th>type</th>
+<th>ppl increase</th>
+<th>ppl 13b to 7b %</th>
+<th>file size</th>
+<th>note</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>q2_k</td>
+<td>0.8698</td>
+<td>&gt;100%</td>
+<td>2.67GB</td>
+<td>超大号的模型想要测试, 可以考虑 Q2 版本, 比如 unsloth 团队的 DeepSeek-V3-Q2_K_M 量化版本, 我测下来实际感觉是可用的</td>
+</tr>
+<tr>
+<td>q4_0</td>
+<td>0.2499</td>
+<td>38.3%</td>
+<td>3.5GB</td>
+<td></td>
+</tr>
+<tr>
+<td>q4_1</td>
+<td>0.1846</td>
+<td>28.3%</td>
+<td>3.9GB</td>
+<td></td>
+</tr>
+<tr>
+<td>q4_ks</td>
+<td>0.1149</td>
+<td>17.6%</td>
+<td>3.56GB</td>
+<td></td>
+</tr>
+<tr>
+<td>q4_km</td>
+<td>0.0535</td>
+<td>8.2%</td>
+<td>3.80GB</td>
+<td>如果没有提供 Q5 量化版本, 那么 Q4 量化版本也可以考虑, 建议至少 Q4_K_M 版本</td>
+</tr>
+<tr>
+<td>q5_0</td>
+<td>0.0796</td>
+<td>12.2%</td>
+<td>4.3GB</td>
+<td></td>
+</tr>
+<tr>
+<td>q5_1</td>
+<td>0.0415</td>
+<td>6.36%</td>
+<td>4.7GB</td>
+<td></td>
+</tr>
+<tr>
+<td>q5_ks</td>
+<td>0.0353</td>
+<td>5.41%</td>
+<td>4.33GB</td>
+<td></td>
+</tr>
+<tr>
+<td>q5_km</td>
+<td>0.0142</td>
+<td>2.18%</td>
+<td>4.45GB</td>
+<td>目前我最推荐的量化大小, 实际体验下来各种模型量化中这个版本是最理想的</td>
+</tr>
+<tr>
+<td>q6_k</td>
+<td>0.0044</td>
+<td>0.67%</td>
+<td>5.15GB</td>
+<td></td>
+</tr>
+<tr>
+<td>k8_0</td>
+<td>0.0004</td>
+<td>0.061%</td>
+<td>6.7GB</td>
+<td>如果您显存十分富裕, 当然推荐这个</td>
+</tr>
+</tbody></table>
+<p>(数据来自: <a href="https://github.com/ggerganov/llama.cpp/pull/1684">llama.cpp PR 1684</a>)<br>(具体全部量化选项可以看 llama.cpp 的源代码 <a href="https://github.com/ggerganov/llama.cpp/blob/a38b884c6c4b0c256583acfaaabdf556c62fabea/ggml/src/ggml-quants.h">ggml-quants.h</a>)</p>
+<h2>那 bf16, 4bit, int4, fp8 这种呢?</h2>
+<p>这种常见于其它量化格式的模型. 有了上面的经验我们很容易猜出来 bf16 是 16bit 的精度, 4bit 是 4bit 的精度. 同样也建议至少使用 4bit 量化的模型, 除非模型特别大 200B+.</p>
+
+</article>
+<nav class="pager"><a class="prev" href="/one-small-step/20250127-how-to-optimize-transformer/"><div class="pager-label">← 上一篇</div><div class="pager-title">如何优化 Transformer</div></a><a class="next" href="/one-small-step/20250201-what-is-flash-attention/"><div class="pager-label">下一篇 →</div><div class="pager-title">什么是 Flash Attention</div></a></nav>
+<footer style="margin-top:48px;padding-top:24px;border-top:1px solid var(--border);color:var(--muted);font-size:13px;">
+  <p>原文作者：<a href="https://github.com/karminski" target="_blank" rel="noopener" style="color:var(--accent);">@karminski-牙医</a> · MIT License · <a href="https://github.com/karminski/one-small-step/tree/master/20250129-what-is-quantization-in-LLM" target="_blank" rel="noopener" style="color:var(--accent);">查看仓库</a></p>
+</footer>
+</div>
+</body>
+</html>

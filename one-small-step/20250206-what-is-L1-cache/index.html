@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>什么是 L1 缓存 · One Small Step · Fan's Notes</title>
+<style>
+:root {
+  --bg: #fafaf7; --surface: #ffffff; --surface-2: #f5f5f0;
+  --text: #1a1a1a; --muted: #6b7280; --border: #e5e7eb;
+  --accent: #b45309; --tech: #0369a1; --tech-soft: #f0f9ff;
+  --code-bg: #f6f7f8; --code-text: #24292e;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f0f0e; --surface: #1a1a18; --surface-2: #14140f;
+    --text: #e5e5e0; --muted: #9ca3af; --border: #2d2d2a;
+    --accent: #fbbf24; --tech: #38bdf8; --tech-soft: #0c1e2e;
+    --code-bg: #1e1e1c; --code-text: #d4d4d4;
+  }
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB",
+               "Microsoft YaHei", "Source Han Sans CN", sans-serif;
+  font-size: 16px; line-height: 1.78;
+  -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+}
+.layout { max-width: 760px; margin: 0 auto; padding: 48px 24px 80px; }
+.crumb {
+  font-size: 13px; color: var(--muted);
+  margin-bottom: 24px; display: flex; align-items: center;
+  gap: 8px; flex-wrap: wrap;
+}
+.crumb a { color: var(--muted); text-decoration: none; border-bottom: 1px solid var(--border); }
+.crumb a:hover { color: var(--accent); border-color: var(--accent); }
+.crumb .sep { color: var(--border); }
+.chapter-meta {
+  font-family: "SF Mono", Monaco, monospace;
+  font-size: 11px; letter-spacing: 0.1em;
+  color: var(--tech); font-weight: 700; margin-bottom: 8px;
+}
+.content h1 {
+  font-size: 32px; line-height: 1.25; margin: 0 0 32px;
+  font-weight: 700; letter-spacing: -0.015em;
+  padding-bottom: 16px; border-bottom: 2px solid var(--text);
+}
+.content h2 { font-size: 24px; margin: 48px 0 14px; line-height: 1.3; font-weight: 600; }
+.content h3 { font-size: 18px; margin: 32px 0 12px; font-weight: 600; color: var(--accent); }
+.content h4 { font-size: 16px; margin: 24px 0 10px; font-weight: 600; }
+.content p { margin: 0 0 18px; }
+.content a { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--border); transition: border-color 0.15s; }
+.content a:hover { border-color: var(--accent); }
+.content ul, .content ol { padding-left: 24px; margin: 0 0 18px; }
+.content li { margin-bottom: 6px; }
+.content li > ul, .content li > ol { margin-top: 6px; }
+.content strong { font-weight: 600; }
+.content em { font-style: italic; }
+.content blockquote { margin: 20px 0; padding: 4px 0 4px 16px; border-left: 3px solid var(--border); color: var(--muted); font-style: italic; }
+.content hr { border: 0; height: 1px; background: var(--border); margin: 40px 0; }
+.content code {
+  font-family: "SF Mono", Monaco, Consolas, "Liberation Mono", monospace;
+  background: var(--code-bg); color: var(--code-text);
+  padding: 2px 6px; border-radius: 4px; font-size: 0.88em;
+  border: 1px solid var(--border);
+}
+.content pre {
+  margin: 20px 0; background: var(--code-bg); border: 1px solid var(--border);
+  border-radius: 8px; padding: 14px 18px; overflow-x: auto;
+  font-size: 13px; line-height: 1.65;
+}
+.content pre code { background: transparent; border: 0; padding: 0; font-size: inherit; color: var(--code-text); }
+.hljs-comment, .hljs-quote { color: #708090; font-style: italic; }
+.hljs-keyword, .hljs-selector-tag, .hljs-built_in { color: #d73a49; }
+.hljs-string, .hljs-attr { color: #032f62; }
+.hljs-number, .hljs-literal { color: #005cc5; }
+.hljs-title, .hljs-function { color: #6f42c1; }
+.hljs-variable, .hljs-tag { color: #e36209; }
+@media (prefers-color-scheme: dark) {
+  .hljs-comment, .hljs-quote { color: #6a737d; }
+  .hljs-keyword, .hljs-selector-tag, .hljs-built_in { color: #f97583; }
+  .hljs-string, .hljs-attr { color: #9ecbff; }
+  .hljs-number, .hljs-literal { color: #79b8ff; }
+  .hljs-title, .hljs-function { color: #b392f0; }
+  .hljs-variable, .hljs-tag { color: #ffab70; }
+}
+.content img {
+  max-width: 100%; height: auto; display: block;
+  margin: 28px auto; border-radius: 6px;
+  border: 1px solid var(--border); background: var(--surface);
+}
+.content img.cover { max-width: 320px; }
+@media (prefers-color-scheme: dark) {
+  .content img:not(.cover) { background: #fff; padding: 8px; }
+}
+.content table {
+  width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14.5px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; overflow: hidden;
+}
+.content th, .content td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); }
+.content th { background: var(--code-bg); font-weight: 600; font-size: 13px; color: var(--muted); }
+.content tr:last-child td { border-bottom: 0; }
+.pager {
+  margin-top: 64px; padding-top: 24px; border-top: 1px solid var(--border);
+  display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+}
+.pager a {
+  display: block; padding: 16px 20px; background: var(--surface);
+  border: 1px solid var(--border); border-radius: 10px;
+  text-decoration: none; color: inherit; transition: all 0.15s;
+}
+.pager a:hover { border-color: var(--accent); transform: translateY(-1px); }
+.pager .pager-label { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+.pager .pager-title { font-size: 14px; font-weight: 600; line-height: 1.4; }
+.pager .next { text-align: right; }
+.pager .prev:empty, .pager .next:empty { background: transparent; border: 0; }
+@media (max-width: 600px) {
+  .layout { padding: 32px 18px 64px; }
+  .content h1 { font-size: 26px; }
+  .content h2 { font-size: 21px; }
+  body { font-size: 15.5px; }
+  .pager { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="layout">
+<nav class="crumb">
+  <a href="/">Fan's Notes</a><span class="sep">/</span>
+  <a href="/one-small-step/">One Small Step</a><span class="sep">/</span>
+  <span>什么是 L1 缓存</span>
+</nav>
+<div class="chapter-meta">OSS · 2025-02-06</div>
+<article class="content">
+<h2>什么是 L1 缓存?</h2>
+<ul>
+<li>by @karminski-牙医</li>
+</ul>
+<p><img src="./assets/images/Motherboard_Intel_386.jpg" alt="Motherboard_Intel_386" style="max-width:100%;height:auto;display:block;margin:24px auto" loading="lazy"></p>
+<p>(图片来自 wikipedia)</p>
+<p>CPU 的 L1 Cache (一级缓存) 是集成在 CPU 芯片上的高速 SRAM, 用于存储经常访问的数据或指令, 以达到降低访问内存成本的目的. </p>
+<p>如图, 是一个 Intel i386 主板, 其中 L1 Cache 集成到了左上角 CPU 内部, 而左下角的 ISSI 芯片则是 L2 缓存. </p>
+<p>没错, 在这个时代 L2缓存还是外置的. 所以当时 L2 坏掉导致电脑无法启动是很正常的现象. </p>
+<h2>基本概念</h2>
+<p>简单来讲 CPU 在内存中读取或写入时, 会检查该位置的数据是否已经在缓存中. 如果存在, 则CPU将从高速缓存中读取或写入, 而不是较慢的主内存. </p>
+<p>那么数据是怎么同步的呢？通常我们把内存和缓存中互相传输的数据分成固定大小, 他们的学名叫做 <strong>cache lines</strong> 或者 <strong>cache blocks</strong>.  </p>
+<h3>Cache Entry</h3>
+<p><strong>cache line</strong> 从内存复制到缓存时, 会创建一个 <strong>cache entry</strong>, <strong>cache entry</strong> 包含复制的数据和内存位置 (叫做<strong>tag</strong>) . </p>
+<h3>Cache Hit</h3>
+<p>当CPU需要读取或者写入数据时, CPU先检查 <strong>cache entry</strong> 是否存在, 如果 <strong>cache entry</strong> 的 <strong>tag</strong> (即内存位置)在缓存中, 则意味着缓存命中 <strong>cache hit</strong>, CPU从 <strong>cache entry</strong> 中读取或者写入. </p>
+<h3>Cache Miss</h3>
+<p>当如果 <strong>cache entry</strong> 的 <strong>tag</strong> 不在缓存中, 则意味着缓存未命中, 即 <strong>cache miss</strong>, CPU 会分配一个新的 cache entry 若缓存已满需根据替换策略淘汰旧条目)  并从内存中读取数据. 然后再从 cache entry 中读取或者写入. </p>
+<h2>✅ 优点</h2>
+<ul>
+<li>速度比主内存快100倍左右 (AMD 9800x3D 的 L1 访问 latency 是 0.7ns, 使用 DDR5-6200 内存的 latency 是 65.9 ns)</li>
+<li>降低内存访问功耗</li>
+<li>缓解冯·诺伊曼瓶颈</li>
+</ul>
+<h2>❌ 局限</h2>
+<ul>
+<li>硅片面积成本高</li>
+<li>容量限制导致缓存颠簸 (cache thrashing) </li>
+<li>一致性维护开销 (MESI协议)</li>
+</ul>
+<h2>架构差异比较</h2>
+<table>
+<thead>
+<tr>
+<th>特性</th>
+<th>x86 (Intel Core)</th>
+<th>ARM (Cortex-X)</th>
+<th>RISC-V (SiFive)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>典型容量</td>
+<td>32KB+32KB</td>
+<td>64KB+64KB</td>
+<td>可配置 (16-128KB)</td>
+</tr>
+<tr>
+<td>关联度</td>
+<td>8-way</td>
+<td>2-way L1 指令, 4-way L1 数据</td>
+<td>2-8 way可选</td>
+</tr>
+<tr>
+<td>替换策略</td>
+<td>LRU</td>
+<td>伪随机</td>
+<td>可编程策略</td>
+</tr>
+<tr>
+<td>预取器</td>
+<td>自适应</td>
+<td>静态模式</td>
+<td>可选模块</td>
+</tr>
+<tr>
+<td>延迟</td>
+<td>4-5 cycles (Intel i7-6700 (Skylake))</td>
+<td>3 cycles (ARM Cortex-A53)</td>
+<td>3-5 cycles (SiFive Freedom U740)</td>
+</tr>
+</tbody></table>
+<h2>Refs</h2>
+<ul>
+<li><a href="https://igoro.com/archive/gallery-of-processor-cache-effects/">Gallery of Processor Cache Effects</a></li>
+<li><a href="https://en.wikipedia.org/wiki/CPU_cache">CPU Cache</a></li>
+<li><a href="https://developer.arm.com/documentation/ddi0500/e/level-1-memory-system/about-the-l1-memory-system">Cortex A53 Documents</a></li>
+<li><a href="https://www.7-cpu.com/cpu/Skylake.html">Intel i7-6700 (Skylake), 4.0 GHz (Turbo Boost), 14 nm. RAM: 16 GB, dual DDR4-2400 CL15 (PC-19200).</a></li>
+<li><a href="https://www.7-cpu.com/cpu/Cortex-A53.html">Amlogic S905 (ARM Cortex-A53), 1536 MHz, (28 nm). 4 cores. 2 GB DDR3-1824 (13-13-13) (32-bit). ODROID-C2 board.</a></li>
+<li><a href="https://www.7-cpu.com/cpu/SiFive_U74.html">SiFive Freedom U740 (U74 core), 1200 MHz, (28 nm). 4 cores. 16 GB (DDR4). SiFive HiFive Unmatched.</a></li>
+</ul>
+
+</article>
+<nav class="pager"><a class="prev" href="/one-small-step/20250131-what-is-1DPC/"><div class="pager-label">← 上一篇</div><div class="pager-title">什么是 1DPC</div></a><span class="next"></span></nav>
+<footer style="margin-top:48px;padding-top:24px;border-top:1px solid var(--border);color:var(--muted);font-size:13px;">
+  <p>原文作者：<a href="https://github.com/karminski" target="_blank" rel="noopener" style="color:var(--accent);">@karminski-牙医</a> · MIT License · <a href="https://github.com/karminski/one-small-step/tree/master/20250206-what-is-L1-cache" target="_blank" rel="noopener" style="color:var(--accent);">查看仓库</a></p>
+</footer>
+</div>
+</body>
+</html>

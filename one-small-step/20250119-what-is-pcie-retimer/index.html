@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>什么是 PCIe Retimer · One Small Step · Fan's Notes</title>
+<style>
+:root {
+  --bg: #fafaf7; --surface: #ffffff; --surface-2: #f5f5f0;
+  --text: #1a1a1a; --muted: #6b7280; --border: #e5e7eb;
+  --accent: #b45309; --tech: #0369a1; --tech-soft: #f0f9ff;
+  --code-bg: #f6f7f8; --code-text: #24292e;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f0f0e; --surface: #1a1a18; --surface-2: #14140f;
+    --text: #e5e5e0; --muted: #9ca3af; --border: #2d2d2a;
+    --accent: #fbbf24; --tech: #38bdf8; --tech-soft: #0c1e2e;
+    --code-bg: #1e1e1c; --code-text: #d4d4d4;
+  }
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB",
+               "Microsoft YaHei", "Source Han Sans CN", sans-serif;
+  font-size: 16px; line-height: 1.78;
+  -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+}
+.layout { max-width: 760px; margin: 0 auto; padding: 48px 24px 80px; }
+.crumb {
+  font-size: 13px; color: var(--muted);
+  margin-bottom: 24px; display: flex; align-items: center;
+  gap: 8px; flex-wrap: wrap;
+}
+.crumb a { color: var(--muted); text-decoration: none; border-bottom: 1px solid var(--border); }
+.crumb a:hover { color: var(--accent); border-color: var(--accent); }
+.crumb .sep { color: var(--border); }
+.chapter-meta {
+  font-family: "SF Mono", Monaco, monospace;
+  font-size: 11px; letter-spacing: 0.1em;
+  color: var(--tech); font-weight: 700; margin-bottom: 8px;
+}
+.content h1 {
+  font-size: 32px; line-height: 1.25; margin: 0 0 32px;
+  font-weight: 700; letter-spacing: -0.015em;
+  padding-bottom: 16px; border-bottom: 2px solid var(--text);
+}
+.content h2 { font-size: 24px; margin: 48px 0 14px; line-height: 1.3; font-weight: 600; }
+.content h3 { font-size: 18px; margin: 32px 0 12px; font-weight: 600; color: var(--accent); }
+.content h4 { font-size: 16px; margin: 24px 0 10px; font-weight: 600; }
+.content p { margin: 0 0 18px; }
+.content a { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--border); transition: border-color 0.15s; }
+.content a:hover { border-color: var(--accent); }
+.content ul, .content ol { padding-left: 24px; margin: 0 0 18px; }
+.content li { margin-bottom: 6px; }
+.content li > ul, .content li > ol { margin-top: 6px; }
+.content strong { font-weight: 600; }
+.content em { font-style: italic; }
+.content blockquote { margin: 20px 0; padding: 4px 0 4px 16px; border-left: 3px solid var(--border); color: var(--muted); font-style: italic; }
+.content hr { border: 0; height: 1px; background: var(--border); margin: 40px 0; }
+.content code {
+  font-family: "SF Mono", Monaco, Consolas, "Liberation Mono", monospace;
+  background: var(--code-bg); color: var(--code-text);
+  padding: 2px 6px; border-radius: 4px; font-size: 0.88em;
+  border: 1px solid var(--border);
+}
+.content pre {
+  margin: 20px 0; background: var(--code-bg); border: 1px solid var(--border);
+  border-radius: 8px; padding: 14px 18px; overflow-x: auto;
+  font-size: 13px; line-height: 1.65;
+}
+.content pre code { background: transparent; border: 0; padding: 0; font-size: inherit; color: var(--code-text); }
+.hljs-comment, .hljs-quote { color: #708090; font-style: italic; }
+.hljs-keyword, .hljs-selector-tag, .hljs-built_in { color: #d73a49; }
+.hljs-string, .hljs-attr { color: #032f62; }
+.hljs-number, .hljs-literal { color: #005cc5; }
+.hljs-title, .hljs-function { color: #6f42c1; }
+.hljs-variable, .hljs-tag { color: #e36209; }
+@media (prefers-color-scheme: dark) {
+  .hljs-comment, .hljs-quote { color: #6a737d; }
+  .hljs-keyword, .hljs-selector-tag, .hljs-built_in { color: #f97583; }
+  .hljs-string, .hljs-attr { color: #9ecbff; }
+  .hljs-number, .hljs-literal { color: #79b8ff; }
+  .hljs-title, .hljs-function { color: #b392f0; }
+  .hljs-variable, .hljs-tag { color: #ffab70; }
+}
+.content img {
+  max-width: 100%; height: auto; display: block;
+  margin: 28px auto; border-radius: 6px;
+  border: 1px solid var(--border); background: var(--surface);
+}
+.content img.cover { max-width: 320px; }
+@media (prefers-color-scheme: dark) {
+  .content img:not(.cover) { background: #fff; padding: 8px; }
+}
+.content table {
+  width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14.5px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; overflow: hidden;
+}
+.content th, .content td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); }
+.content th { background: var(--code-bg); font-weight: 600; font-size: 13px; color: var(--muted); }
+.content tr:last-child td { border-bottom: 0; }
+.pager {
+  margin-top: 64px; padding-top: 24px; border-top: 1px solid var(--border);
+  display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+}
+.pager a {
+  display: block; padding: 16px 20px; background: var(--surface);
+  border: 1px solid var(--border); border-radius: 10px;
+  text-decoration: none; color: inherit; transition: all 0.15s;
+}
+.pager a:hover { border-color: var(--accent); transform: translateY(-1px); }
+.pager .pager-label { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+.pager .pager-title { font-size: 14px; font-weight: 600; line-height: 1.4; }
+.pager .next { text-align: right; }
+.pager .prev:empty, .pager .next:empty { background: transparent; border: 0; }
+@media (max-width: 600px) {
+  .layout { padding: 32px 18px 64px; }
+  .content h1 { font-size: 26px; }
+  .content h2 { font-size: 21px; }
+  body { font-size: 15.5px; }
+  .pager { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="layout">
+<nav class="crumb">
+  <a href="/">Fan's Notes</a><span class="sep">/</span>
+  <a href="/one-small-step/">One Small Step</a><span class="sep">/</span>
+  <span>什么是 PCIe Retimer</span>
+</nav>
+<div class="chapter-meta">OSS · 2025-01-19</div>
+<article class="content">
+<h2>什么是 PCIe Retimer？</h2>
+<p>by @karminski-牙医</p>
+<p><img src="assets/images/pcie-retimer.webp" alt="pcie-retimer image from asteralabs" style="max-width:100%;height:auto;display:block;margin:24px auto" loading="lazy"></p>
+<p>(图中的是 Aries PCIe®/CXL® Smart DSP Retimers)</p>
+<p>PCIe Retimer 是一种用于改善 PCIe 信号质量的硬件设备。在高速数据传输过程中，信号会因为传输距离、电路板走线等因素出现衰减和失真，Retimer 的作用就是接收这些衰减的信号，进行放大、均衡和重整时序，以恢复信号的完整性和质量，保证数据传输的可靠性。</p>
+<h2>具体来说，PCIe Retimer 的功能包括：</h2>
+<ul>
+<li><strong>时钟恢复 (Clock Recovery) 和重整时序 (Retiming)：</strong> 提取信号中的时钟信息，并根据该时钟信息重新生成新的信号，消除时钟抖动 (Jitter)，保证数据传输的同步性。</li>
+<li><strong>信号放大 (Amplification)：</strong> 补偿信号在传输过程中的衰减，增强信号强度。</li>
+<li><strong>信号均衡 (Equalization)：</strong> 补偿信号在高频传输中产生的失真，例如码间干扰 (ISI)。</li>
+</ul>
+<h2>PCIe Retimer 的应用场景</h2>
+<ul>
+<li><strong>服务器和数据中心：</strong> 在服务器和数据中心中，需要进行大量高速数据传输，例如连接 CPU、GPU、网卡和存储设备等。由于服务器内部空间有限，电路板走线较长，信号衰减较为严重，因此需要使用 PCIe Retimer 来保证信号质量。</li>
+<li><strong>存储设备：</strong> 例如 NVMe 固态硬盘 (SSD)，其数据传输速度非常快，对信号质量要求很高，因此一些高端 NVMe SSD 或扩展卡上也会使用 PCIe Retimer。</li>
+<li><strong>扩展卡和背板：</strong> 为了扩展 PCIe 插槽的数量或连接距离，会使用扩展卡或背板，这些设备通常需要使用 PCIe Retimer 来保证信号质量。</li>
+</ul>
+<p>个人目前接触到的 PCIe Retimer 主要用于多卡服务器 (大多都是插多PCIe显卡或SXM显卡用来跑大语言模型的) ，以及一些高端的存储设备 (超大容量的NVMe存储) 。剩下就是垃圾佬自己搓的各种板卡了。</p>
+<h2>PCIe Retimer 与 Redriver 的区别：</h2>
+<p>在 PCIe 信号增强领域，还有一种叫做 Redriver 的器件。Redriver 是一种模拟信号放大器，主要用于补偿信号的衰减，功能相对简单。而 Retimer 则集成了信号放大、均衡和重整时序等功能，功能更加强大，可以更好地恢复信号质量。简单来说，Redriver 就像一个“扩音器”，而 Retimer 则像一个“信号再生器”。</p>
+<h2>总结</h2>
+<p>PCIe Retimer 是一种重要的信号完整性解决方案，它可以有效提高 PCIe 信号的传输距离和质量，保证高速数据传输的可靠性。但其实这是由于目前各个总线的速度越来越快，导致信号衰减越来越严重，所以需要使用 Retimer 来保证信号质量。目前不但 PCIe 需要 Retimer，其他的设备也有类似的 Retimer 器件，例如DDR CKD (Client Clock Driver ) 。</p>
+
+</article>
+<nav class="pager"><a class="prev" href="/one-small-step/20250128-rammap-description/"><div class="pager-label">← 上一篇</div><div class="pager-title">RAMMap 使用解析</div></a><a class="next" href="/one-small-step/20250124-why-some-NVMe-SSD-have-DRAM-and-some-are-not/"><div class="pager-label">下一篇 →</div><div class="pager-title">为什么有的 NVMe SSD 有 DRAM, 有的没有?</div></a></nav>
+<footer style="margin-top:48px;padding-top:24px;border-top:1px solid var(--border);color:var(--muted);font-size:13px;">
+  <p>原文作者：<a href="https://github.com/karminski" target="_blank" rel="noopener" style="color:var(--accent);">@karminski-牙医</a> · MIT License · <a href="https://github.com/karminski/one-small-step/tree/master/20250119-what-is-pcie-retimer" target="_blank" rel="noopener" style="color:var(--accent);">查看仓库</a></p>
+</footer>
+</div>
+</body>
+</html>

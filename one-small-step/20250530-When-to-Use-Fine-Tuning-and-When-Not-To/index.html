@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>什么时候应该微调, 什么时候不应该微调? · One Small Step · Fan's Notes</title>
+<style>
+:root {
+  --bg: #fafaf7; --surface: #ffffff; --surface-2: #f5f5f0;
+  --text: #1a1a1a; --muted: #6b7280; --border: #e5e7eb;
+  --accent: #b45309; --tech: #0369a1; --tech-soft: #f0f9ff;
+  --code-bg: #f6f7f8; --code-text: #24292e;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f0f0e; --surface: #1a1a18; --surface-2: #14140f;
+    --text: #e5e5e0; --muted: #9ca3af; --border: #2d2d2a;
+    --accent: #fbbf24; --tech: #38bdf8; --tech-soft: #0c1e2e;
+    --code-bg: #1e1e1c; --code-text: #d4d4d4;
+  }
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB",
+               "Microsoft YaHei", "Source Han Sans CN", sans-serif;
+  font-size: 16px; line-height: 1.78;
+  -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+}
+.layout { max-width: 760px; margin: 0 auto; padding: 48px 24px 80px; }
+.crumb {
+  font-size: 13px; color: var(--muted);
+  margin-bottom: 24px; display: flex; align-items: center;
+  gap: 8px; flex-wrap: wrap;
+}
+.crumb a { color: var(--muted); text-decoration: none; border-bottom: 1px solid var(--border); }
+.crumb a:hover { color: var(--accent); border-color: var(--accent); }
+.crumb .sep { color: var(--border); }
+.chapter-meta {
+  font-family: "SF Mono", Monaco, monospace;
+  font-size: 11px; letter-spacing: 0.1em;
+  color: var(--tech); font-weight: 700; margin-bottom: 8px;
+}
+.content h1 {
+  font-size: 32px; line-height: 1.25; margin: 0 0 32px;
+  font-weight: 700; letter-spacing: -0.015em;
+  padding-bottom: 16px; border-bottom: 2px solid var(--text);
+}
+.content h2 { font-size: 24px; margin: 48px 0 14px; line-height: 1.3; font-weight: 600; }
+.content h3 { font-size: 18px; margin: 32px 0 12px; font-weight: 600; color: var(--accent); }
+.content h4 { font-size: 16px; margin: 24px 0 10px; font-weight: 600; }
+.content p { margin: 0 0 18px; }
+.content a { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--border); transition: border-color 0.15s; }
+.content a:hover { border-color: var(--accent); }
+.content ul, .content ol { padding-left: 24px; margin: 0 0 18px; }
+.content li { margin-bottom: 6px; }
+.content li > ul, .content li > ol { margin-top: 6px; }
+.content strong { font-weight: 600; }
+.content em { font-style: italic; }
+.content blockquote { margin: 20px 0; padding: 4px 0 4px 16px; border-left: 3px solid var(--border); color: var(--muted); font-style: italic; }
+.content hr { border: 0; height: 1px; background: var(--border); margin: 40px 0; }
+.content code {
+  font-family: "SF Mono", Monaco, Consolas, "Liberation Mono", monospace;
+  background: var(--code-bg); color: var(--code-text);
+  padding: 2px 6px; border-radius: 4px; font-size: 0.88em;
+  border: 1px solid var(--border);
+}
+.content pre {
+  margin: 20px 0; background: var(--code-bg); border: 1px solid var(--border);
+  border-radius: 8px; padding: 14px 18px; overflow-x: auto;
+  font-size: 13px; line-height: 1.65;
+}
+.content pre code { background: transparent; border: 0; padding: 0; font-size: inherit; color: var(--code-text); }
+.hljs-comment, .hljs-quote { color: #708090; font-style: italic; }
+.hljs-keyword, .hljs-selector-tag, .hljs-built_in { color: #d73a49; }
+.hljs-string, .hljs-attr { color: #032f62; }
+.hljs-number, .hljs-literal { color: #005cc5; }
+.hljs-title, .hljs-function { color: #6f42c1; }
+.hljs-variable, .hljs-tag { color: #e36209; }
+@media (prefers-color-scheme: dark) {
+  .hljs-comment, .hljs-quote { color: #6a737d; }
+  .hljs-keyword, .hljs-selector-tag, .hljs-built_in { color: #f97583; }
+  .hljs-string, .hljs-attr { color: #9ecbff; }
+  .hljs-number, .hljs-literal { color: #79b8ff; }
+  .hljs-title, .hljs-function { color: #b392f0; }
+  .hljs-variable, .hljs-tag { color: #ffab70; }
+}
+.content img {
+  max-width: 100%; height: auto; display: block;
+  margin: 28px auto; border-radius: 6px;
+  border: 1px solid var(--border); background: var(--surface);
+}
+.content img.cover { max-width: 320px; }
+@media (prefers-color-scheme: dark) {
+  .content img:not(.cover) { background: #fff; padding: 8px; }
+}
+.content table {
+  width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14.5px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; overflow: hidden;
+}
+.content th, .content td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); }
+.content th { background: var(--code-bg); font-weight: 600; font-size: 13px; color: var(--muted); }
+.content tr:last-child td { border-bottom: 0; }
+.pager {
+  margin-top: 64px; padding-top: 24px; border-top: 1px solid var(--border);
+  display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+}
+.pager a {
+  display: block; padding: 16px 20px; background: var(--surface);
+  border: 1px solid var(--border); border-radius: 10px;
+  text-decoration: none; color: inherit; transition: all 0.15s;
+}
+.pager a:hover { border-color: var(--accent); transform: translateY(-1px); }
+.pager .pager-label { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+.pager .pager-title { font-size: 14px; font-weight: 600; line-height: 1.4; }
+.pager .next { text-align: right; }
+.pager .prev:empty, .pager .next:empty { background: transparent; border: 0; }
+@media (max-width: 600px) {
+  .layout { padding: 32px 18px 64px; }
+  .content h1 { font-size: 26px; }
+  .content h2 { font-size: 21px; }
+  body { font-size: 15.5px; }
+  .pager { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="layout">
+<nav class="crumb">
+  <a href="/">Fan's Notes</a><span class="sep">/</span>
+  <a href="/one-small-step/">One Small Step</a><span class="sep">/</span>
+  <span>什么时候应该微调, 什么时候不应该微调?</span>
+</nav>
+<div class="chapter-meta">OSS · 2025-05-30</div>
+<article class="content">
+<h2>什么时候应该微调, 什么时候不应该微调?</h2>
+<p>by @karminski-牙医</p>
+<p><img src="assets/images/fine-tuning-op-flow.jfif" alt="Fine-tuning, image from www.linkedin.com/pulse/customizing-llm-your-corporate-use-case-aziz-lookman-ph-d--lzk4e" style="max-width:100%;height:auto;display:block;margin:24px auto" loading="lazy"> </p>
+<p><strong>核心：微调主要教会 LLM &quot;模式&quot;, 而非&quot;知识&quot;.</strong></p>
+<p>理解这一点至关重要.微调调整的是模型的顶层参数, 使其能够识别和复制特定的文本模式, 而不是向模型灌输新的事实性知识.</p>
+<h2>什么时候应该考虑微调？</h2>
+<p><strong>1. 输出特定格式或风格</strong></p>
+<ul>
+<li><strong>需求场景</strong>: 需要模型严格按照某种格式输出, 例如生成特定结构的 JSON、XML, 或者模仿某种独特的写作风格（如莎士比亚戏剧腔调）, 或者控制输出文本的长度火模式（例如, 总是输出单一句子的品牌口号,  输出固定词牌名格式的诗词等等）.</li>
+</ul>
+<p><strong>2. 映射特定的输入到特定的输出</strong></p>
+<ul>
+<li><strong>需求场景</strong>: 您希望模型能够稳定地将某一特定类型的输入信息, 转化为另一种特定类型的输出信息.比如格式转换器.</li>
+</ul>
+<p><strong>3. 专门化模型以执行狭窄、定义明确的任务</strong></p>
+<ul>
+<li><strong>需求场景</strong>: 您需要一个在某个特定、垂直领域或任务上表现卓越的模型, 而不是一个&quot;万金油&quot;式的通用模型.比如医学模型.</li>
+</ul>
+<p><strong>4. 当提示工程</strong></p>
+<ul>
+<li><strong>需求场景</strong>: 您已经投入了大量精力进行提示词设计和优化, 但模型输出的稳定性、格式一致性或风格符合度仍旧无法达到预期.</li>
+</ul>
+<h2>什么时候不应该（或者优先不考虑）微调？</h2>
+<p><strong>1. 试图教授模型新的知识或事实</strong></p>
+<ul>
+<li><strong>原因</strong>: 微调主要影响模型的表层行为模式, 并不能有效地让模型&quot;记住&quot;或&quot;理解&quot;新的事实性信息.模型的知识主要来源于其大规模的预训练阶段.</li>
+<li><strong>替代方案</strong>: 对于需要模型掌握并运用最新知识的场景, 应优先考虑**检索增强生成 ** 等技术.RAG 允许模型在生成文本时, 动态地从外部知识库（如数据库、文档集）中检索相关信息并融入到回答中.</li>
+<li><strong>例子</strong>:<ul>
+<li>试图通过微调让模型记住您公司最新的产品规格参数.</li>
+<li>期望模型通过微调学习并回答关于最近发生的全球新闻事件的问题.</li>
+</ul>
+</li>
+</ul>
+<p><strong>2. 期望模型获得复杂的推理能力</strong></p>
+<ul>
+<li><strong>原因</strong>: 微调通常不会显著提升模型的基础逻辑推理、数学计算或复杂问题解决能力.这些核心能力更多地是在预训练阶段形成的.</li>
+<li><strong>例子</strong>: 期望通过微调使模型能够解决复杂的数学定理证明或进行多步骤的逻辑演绎.</li>
+</ul>
+<p><strong>3. 训练数据集质量低下或缺乏多样性</strong></p>
+<ul>
+<li><strong>原因</strong>: 微调的效果高度依赖于训练数据的质量和多样性.如果您的数据集规模过小、包含大量错误、或者样本间的差异性不足（即所谓的&quot;数据聚类&quot;, 所有样本都高度相似）, 那么微调很可能无法达到预期效果, 甚至可能损害模型原有的性能.结果就是 &quot;垃圾进, 垃圾出&quot; .</li>
+<li><strong>例子</strong>: 使用少量高度同质化的邮件样本去微调一个通用邮件回复模型, 结果可能导致模型只会生成非常单一和刻板的回复.</li>
+</ul>
+<p><strong>4. 任务目标可以通过提示工程轻松实现</strong></p>
+<ul>
+<li><strong>原因</strong>: 如果通过精心设计和优化的提示词, 模型已经能够很好地完成您的任务, 那么进行微调可能是一种不必要的资源投入（包括时间、计算资源和数据标注成本）.</li>
+<li><strong>例子</strong>: 只需要模型进行简单的文本改写、总结或回答基于上下文的简单问题, 这些通常通过提示工程就能解决.</li>
+</ul>
+<h2>微调的最佳实践总结</h2>
+<p>成功的微调遵循以下关键原则：</p>
+<ol>
+<li><strong>明确目标：微调重在模式, 而非知识</strong> 清楚微调的强项是学习和复制文本的结构、风格和格式, 而不是记忆事实.</li>
+<li><strong>定义清晰的输入-输出映射</strong> 您的训练数据应该清晰地展示您期望模型如何从给定的输入转换到期望的输出.</li>
+<li><strong>拥抱数据多样性</strong> 训练样本应尽可能覆盖各种文体、风格、格式、长度和主题, 这能促使模型学习到更具泛化能力的模式.</li>
+<li><strong>包含对抗性/边缘案例</strong> 引入一些格式错误、内容异常或可能触发非预期行为的样本, 可以增强模型在真实场景中的鲁棒性.</li>
+<li><strong>警惕数据聚类</strong> 确保您的训练数据不是仅仅集中在某一非常狭窄的子集上, 除非您的目标就是创建一个针对该子集的超专用工具.广泛分布的数据能带来更灵活的生成能力.</li>
+<li><strong>专注专门化任务</strong> 一次微调解决一个定义明确的问题.微调旨在打造&quot;专科医生&quot;, 而非&quot;全科医生&quot;.</li>
+<li><strong>知识获取靠整合, 而非灌输</strong> 对于需要外部知识的任务, 应采用 RAG 等方法, 而不是试图通过微调将知识&quot;塞进&quot;模型.</li>
+</ol>
+<h2>参考</h2>
+<ul>
+<li><a href="https://www.reddit.com/r/LocalLLaMA/comments/1kyeo4z/when_to_finetune_llms_and_when_not_to_a_practical/">When to finetune LLMs and when NOT to (a practical guide from a pro who has finetuned hundreds of models)</a> by David Shapiro</li>
+<li><a href="www.linkedin.com/pulse/customizing-llm-your-corporate-use-case-aziz-lookman-ph-d--lzk4e">Improve LLM performance for financial services use cases</a></li>
+<li><a href="arxiv.org/html/2408.13296v1">The Ultimate Guide to Fine-Tuning LLMs from Basics to Breakthroughs</a></li>
+</ul>
+
+</article>
+<nav class="pager"><a class="prev" href="/one-small-step/20250522-what-is-sliding-window-attention/"><div class="pager-label">← 上一篇</div><div class="pager-title">什么是 Sliding Window Attention</div></a><a class="next" href="/one-small-step/20250611-what-is-vibe-coding/"><div class="pager-label">下一篇 →</div><div class="pager-title">什么是vibe coding?</div></a></nav>
+<footer style="margin-top:48px;padding-top:24px;border-top:1px solid var(--border);color:var(--muted);font-size:13px;">
+  <p>原文作者：<a href="https://github.com/karminski" target="_blank" rel="noopener" style="color:var(--accent);">@karminski-牙医</a> · MIT License · <a href="https://github.com/karminski/one-small-step/tree/master/20250530-When-to-Use-Fine-Tuning-and-When-Not-To" target="_blank" rel="noopener" style="color:var(--accent);">查看仓库</a></p>
+</footer>
+</div>
+</body>
+</html>

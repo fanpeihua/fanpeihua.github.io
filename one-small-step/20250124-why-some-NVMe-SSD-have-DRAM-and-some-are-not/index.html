@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>为什么有的 NVMe SSD 有 DRAM, 有的没有? · One Small Step · Fan's Notes</title>
+<style>
+:root {
+  --bg: #fafaf7; --surface: #ffffff; --surface-2: #f5f5f0;
+  --text: #1a1a1a; --muted: #6b7280; --border: #e5e7eb;
+  --accent: #b45309; --tech: #0369a1; --tech-soft: #f0f9ff;
+  --code-bg: #f6f7f8; --code-text: #24292e;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f0f0e; --surface: #1a1a18; --surface-2: #14140f;
+    --text: #e5e5e0; --muted: #9ca3af; --border: #2d2d2a;
+    --accent: #fbbf24; --tech: #38bdf8; --tech-soft: #0c1e2e;
+    --code-bg: #1e1e1c; --code-text: #d4d4d4;
+  }
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB",
+               "Microsoft YaHei", "Source Han Sans CN", sans-serif;
+  font-size: 16px; line-height: 1.78;
+  -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+}
+.layout { max-width: 760px; margin: 0 auto; padding: 48px 24px 80px; }
+.crumb {
+  font-size: 13px; color: var(--muted);
+  margin-bottom: 24px; display: flex; align-items: center;
+  gap: 8px; flex-wrap: wrap;
+}
+.crumb a { color: var(--muted); text-decoration: none; border-bottom: 1px solid var(--border); }
+.crumb a:hover { color: var(--accent); border-color: var(--accent); }
+.crumb .sep { color: var(--border); }
+.chapter-meta {
+  font-family: "SF Mono", Monaco, monospace;
+  font-size: 11px; letter-spacing: 0.1em;
+  color: var(--tech); font-weight: 700; margin-bottom: 8px;
+}
+.content h1 {
+  font-size: 32px; line-height: 1.25; margin: 0 0 32px;
+  font-weight: 700; letter-spacing: -0.015em;
+  padding-bottom: 16px; border-bottom: 2px solid var(--text);
+}
+.content h2 { font-size: 24px; margin: 48px 0 14px; line-height: 1.3; font-weight: 600; }
+.content h3 { font-size: 18px; margin: 32px 0 12px; font-weight: 600; color: var(--accent); }
+.content h4 { font-size: 16px; margin: 24px 0 10px; font-weight: 600; }
+.content p { margin: 0 0 18px; }
+.content a { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--border); transition: border-color 0.15s; }
+.content a:hover { border-color: var(--accent); }
+.content ul, .content ol { padding-left: 24px; margin: 0 0 18px; }
+.content li { margin-bottom: 6px; }
+.content li > ul, .content li > ol { margin-top: 6px; }
+.content strong { font-weight: 600; }
+.content em { font-style: italic; }
+.content blockquote { margin: 20px 0; padding: 4px 0 4px 16px; border-left: 3px solid var(--border); color: var(--muted); font-style: italic; }
+.content hr { border: 0; height: 1px; background: var(--border); margin: 40px 0; }
+.content code {
+  font-family: "SF Mono", Monaco, Consolas, "Liberation Mono", monospace;
+  background: var(--code-bg); color: var(--code-text);
+  padding: 2px 6px; border-radius: 4px; font-size: 0.88em;
+  border: 1px solid var(--border);
+}
+.content pre {
+  margin: 20px 0; background: var(--code-bg); border: 1px solid var(--border);
+  border-radius: 8px; padding: 14px 18px; overflow-x: auto;
+  font-size: 13px; line-height: 1.65;
+}
+.content pre code { background: transparent; border: 0; padding: 0; font-size: inherit; color: var(--code-text); }
+.hljs-comment, .hljs-quote { color: #708090; font-style: italic; }
+.hljs-keyword, .hljs-selector-tag, .hljs-built_in { color: #d73a49; }
+.hljs-string, .hljs-attr { color: #032f62; }
+.hljs-number, .hljs-literal { color: #005cc5; }
+.hljs-title, .hljs-function { color: #6f42c1; }
+.hljs-variable, .hljs-tag { color: #e36209; }
+@media (prefers-color-scheme: dark) {
+  .hljs-comment, .hljs-quote { color: #6a737d; }
+  .hljs-keyword, .hljs-selector-tag, .hljs-built_in { color: #f97583; }
+  .hljs-string, .hljs-attr { color: #9ecbff; }
+  .hljs-number, .hljs-literal { color: #79b8ff; }
+  .hljs-title, .hljs-function { color: #b392f0; }
+  .hljs-variable, .hljs-tag { color: #ffab70; }
+}
+.content img {
+  max-width: 100%; height: auto; display: block;
+  margin: 28px auto; border-radius: 6px;
+  border: 1px solid var(--border); background: var(--surface);
+}
+.content img.cover { max-width: 320px; }
+@media (prefers-color-scheme: dark) {
+  .content img:not(.cover) { background: #fff; padding: 8px; }
+}
+.content table {
+  width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14.5px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; overflow: hidden;
+}
+.content th, .content td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); }
+.content th { background: var(--code-bg); font-weight: 600; font-size: 13px; color: var(--muted); }
+.content tr:last-child td { border-bottom: 0; }
+.pager {
+  margin-top: 64px; padding-top: 24px; border-top: 1px solid var(--border);
+  display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+}
+.pager a {
+  display: block; padding: 16px 20px; background: var(--surface);
+  border: 1px solid var(--border); border-radius: 10px;
+  text-decoration: none; color: inherit; transition: all 0.15s;
+}
+.pager a:hover { border-color: var(--accent); transform: translateY(-1px); }
+.pager .pager-label { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+.pager .pager-title { font-size: 14px; font-weight: 600; line-height: 1.4; }
+.pager .next { text-align: right; }
+.pager .prev:empty, .pager .next:empty { background: transparent; border: 0; }
+@media (max-width: 600px) {
+  .layout { padding: 32px 18px 64px; }
+  .content h1 { font-size: 26px; }
+  .content h2 { font-size: 21px; }
+  body { font-size: 15.5px; }
+  .pager { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="layout">
+<nav class="crumb">
+  <a href="/">Fan's Notes</a><span class="sep">/</span>
+  <a href="/one-small-step/">One Small Step</a><span class="sep">/</span>
+  <span>为什么有的 NVMe SSD 有 DRAM, 有的没有?</span>
+</nav>
+<div class="chapter-meta">OSS · 2025-01-24</div>
+<article class="content">
+<h2>为什么有的 NVMe SSD 有 DRAM, 有的没有?</h2>
+<p>by @karminski-牙医</p>
+<p><img src="./assets/images/samsung-NVMe-PM9A3-with-DRAM.jpg" alt="" style="max-width:100%;height:auto;display:block;margin:24px auto" loading="lazy"></p>
+<p>(图片来自 Samsung Newsroom)</p>
+<p>有的同学可能会有疑问, SSD 明明是存储器件, 为什么有的 NVMe SSD 有 DRAM, 有的没有? </p>
+<p>如图, 是 samsung 的企业级 NVMe SSD PM9A3, 可以看到它单面就有 3 个 DRAM. </p>
+<h2>NVMe SSD 上的 DRAM 是做什么的？</h2>
+<p><strong>数据映射缓存</strong>：DRAM用于存储数据映射表 (也称为Flash Transition Layer) , 帮助控制器快速找到数据的物理位置, 从而提高读写速度. </p>
+<p><strong>读/写缓存和缓冲</strong>：DRAM作为写缓冲区 (由DMA操作), 临时存储即将写入 NAND Flash 的数据, 减少写放大效应, 通过合并写操作提高写入速度. 同时, DRAM也用于存储常用数据 (热数据) , 减少读取延迟. </p>
+<p><strong>算法运行支持</strong>：DRAM帮助进行垃圾回收和磨损均衡算法的运行, 存储元数据如错误校正码和坏块信息. </p>
+<h2>有 DRAM 的 SSD 的好处</h2>
+<p><strong>性能提升</strong>：由于DRAM的高速缓存功能, SSD的读写速度更快, 特别是在随机读写操作中. </p>
+<p><strong>降低延迟</strong>：DRAM的存在减少了数据访问的延迟, 因为控制器可以快速访问数据映射表. </p>
+<p><strong>更好的耐久性</strong>：通过减少写放大效应和更有效的磨损均衡, DRAM SSD 的耐久性更好. </p>
+<p><strong>更高的可靠性</strong>：由于更好的错误校正和缓存机制, DRAM SSD 在高负载场景下更可靠. </p>
+<h2>有 DRAM 的 SSD 的劣势</h2>
+<p><strong>成本较高</strong>：DRAM芯片的成本较高, 因此有DRAM的SSD通常比无DRAM的SSD更贵. </p>
+<p><strong>功耗增加</strong>：DRAM需要额外的电力来运行, 虽然差异不大, 但在移动设备中可能会影响电池寿命. </p>
+<p><strong>发热量增加</strong>：DRAM是SSD中主要的发热源之一, 尽管其性能提升值得, 但会导致SSD的整体温度上升. </p>
+<h2>那么有没有没有 DRAM 的 SSD 吗?</h2>
+<p>有的, 一些入门级 SSD 比如三星的 PM9C1a 就没有 DRAM. </p>
+<p><img src="./assets/images/Samsung-PM9C1a-SSD-without-DRAM.jpg" alt="" style="max-width:100%;height:auto;display:block;margin:24px auto" loading="lazy"></p>
+<p>这类 SSD 通常使用系统的 RAM 进行缓存 (即 HBM, 主机内存缓冲区) , 但与驱动器自己的 DRAM 相比, 性能会受到影响. </p>
+<p>(图片来自 Samsung Newsroom)</p>
+
+</article>
+<nav class="pager"><a class="prev" href="/one-small-step/20250119-what-is-pcie-retimer/"><div class="pager-label">← 上一篇</div><div class="pager-title">什么是 PCIe Retimer</div></a><a class="next" href="/one-small-step/20250125-does-CXL-will-be-LLM-memory-solution/"><div class="pager-label">下一篇 →</div><div class="pager-title">CLX 会是大语言模型的内存解决方案吗?</div></a></nav>
+<footer style="margin-top:48px;padding-top:24px;border-top:1px solid var(--border);color:var(--muted);font-size:13px;">
+  <p>原文作者：<a href="https://github.com/karminski" target="_blank" rel="noopener" style="color:var(--accent);">@karminski-牙医</a> · MIT License · <a href="https://github.com/karminski/one-small-step/tree/master/20250124-why-some-NVMe-SSD-have-DRAM-and-some-are-not" target="_blank" rel="noopener" style="color:var(--accent);">查看仓库</a></p>
+</footer>
+</div>
+</body>
+</html>

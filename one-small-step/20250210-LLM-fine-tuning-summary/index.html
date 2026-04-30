@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>大模型微调最佳实践指南 · One Small Step · Fan's Notes</title>
+<style>
+:root {
+  --bg: #fafaf7; --surface: #ffffff; --surface-2: #f5f5f0;
+  --text: #1a1a1a; --muted: #6b7280; --border: #e5e7eb;
+  --accent: #b45309; --tech: #0369a1; --tech-soft: #f0f9ff;
+  --code-bg: #f6f7f8; --code-text: #24292e;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f0f0e; --surface: #1a1a18; --surface-2: #14140f;
+    --text: #e5e5e0; --muted: #9ca3af; --border: #2d2d2a;
+    --accent: #fbbf24; --tech: #38bdf8; --tech-soft: #0c1e2e;
+    --code-bg: #1e1e1c; --code-text: #d4d4d4;
+  }
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB",
+               "Microsoft YaHei", "Source Han Sans CN", sans-serif;
+  font-size: 16px; line-height: 1.78;
+  -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+}
+.layout { max-width: 760px; margin: 0 auto; padding: 48px 24px 80px; }
+.crumb {
+  font-size: 13px; color: var(--muted);
+  margin-bottom: 24px; display: flex; align-items: center;
+  gap: 8px; flex-wrap: wrap;
+}
+.crumb a { color: var(--muted); text-decoration: none; border-bottom: 1px solid var(--border); }
+.crumb a:hover { color: var(--accent); border-color: var(--accent); }
+.crumb .sep { color: var(--border); }
+.chapter-meta {
+  font-family: "SF Mono", Monaco, monospace;
+  font-size: 11px; letter-spacing: 0.1em;
+  color: var(--tech); font-weight: 700; margin-bottom: 8px;
+}
+.content h1 {
+  font-size: 32px; line-height: 1.25; margin: 0 0 32px;
+  font-weight: 700; letter-spacing: -0.015em;
+  padding-bottom: 16px; border-bottom: 2px solid var(--text);
+}
+.content h2 { font-size: 24px; margin: 48px 0 14px; line-height: 1.3; font-weight: 600; }
+.content h3 { font-size: 18px; margin: 32px 0 12px; font-weight: 600; color: var(--accent); }
+.content h4 { font-size: 16px; margin: 24px 0 10px; font-weight: 600; }
+.content p { margin: 0 0 18px; }
+.content a { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--border); transition: border-color 0.15s; }
+.content a:hover { border-color: var(--accent); }
+.content ul, .content ol { padding-left: 24px; margin: 0 0 18px; }
+.content li { margin-bottom: 6px; }
+.content li > ul, .content li > ol { margin-top: 6px; }
+.content strong { font-weight: 600; }
+.content em { font-style: italic; }
+.content blockquote { margin: 20px 0; padding: 4px 0 4px 16px; border-left: 3px solid var(--border); color: var(--muted); font-style: italic; }
+.content hr { border: 0; height: 1px; background: var(--border); margin: 40px 0; }
+.content code {
+  font-family: "SF Mono", Monaco, Consolas, "Liberation Mono", monospace;
+  background: var(--code-bg); color: var(--code-text);
+  padding: 2px 6px; border-radius: 4px; font-size: 0.88em;
+  border: 1px solid var(--border);
+}
+.content pre {
+  margin: 20px 0; background: var(--code-bg); border: 1px solid var(--border);
+  border-radius: 8px; padding: 14px 18px; overflow-x: auto;
+  font-size: 13px; line-height: 1.65;
+}
+.content pre code { background: transparent; border: 0; padding: 0; font-size: inherit; color: var(--code-text); }
+.hljs-comment, .hljs-quote { color: #708090; font-style: italic; }
+.hljs-keyword, .hljs-selector-tag, .hljs-built_in { color: #d73a49; }
+.hljs-string, .hljs-attr { color: #032f62; }
+.hljs-number, .hljs-literal { color: #005cc5; }
+.hljs-title, .hljs-function { color: #6f42c1; }
+.hljs-variable, .hljs-tag { color: #e36209; }
+@media (prefers-color-scheme: dark) {
+  .hljs-comment, .hljs-quote { color: #6a737d; }
+  .hljs-keyword, .hljs-selector-tag, .hljs-built_in { color: #f97583; }
+  .hljs-string, .hljs-attr { color: #9ecbff; }
+  .hljs-number, .hljs-literal { color: #79b8ff; }
+  .hljs-title, .hljs-function { color: #b392f0; }
+  .hljs-variable, .hljs-tag { color: #ffab70; }
+}
+.content img {
+  max-width: 100%; height: auto; display: block;
+  margin: 28px auto; border-radius: 6px;
+  border: 1px solid var(--border); background: var(--surface);
+}
+.content img.cover { max-width: 320px; }
+@media (prefers-color-scheme: dark) {
+  .content img:not(.cover) { background: #fff; padding: 8px; }
+}
+.content table {
+  width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14.5px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; overflow: hidden;
+}
+.content th, .content td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); }
+.content th { background: var(--code-bg); font-weight: 600; font-size: 13px; color: var(--muted); }
+.content tr:last-child td { border-bottom: 0; }
+.pager {
+  margin-top: 64px; padding-top: 24px; border-top: 1px solid var(--border);
+  display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+}
+.pager a {
+  display: block; padding: 16px 20px; background: var(--surface);
+  border: 1px solid var(--border); border-radius: 10px;
+  text-decoration: none; color: inherit; transition: all 0.15s;
+}
+.pager a:hover { border-color: var(--accent); transform: translateY(-1px); }
+.pager .pager-label { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+.pager .pager-title { font-size: 14px; font-weight: 600; line-height: 1.4; }
+.pager .next { text-align: right; }
+.pager .prev:empty, .pager .next:empty { background: transparent; border: 0; }
+@media (max-width: 600px) {
+  .layout { padding: 32px 18px 64px; }
+  .content h1 { font-size: 26px; }
+  .content h2 { font-size: 21px; }
+  body { font-size: 15.5px; }
+  .pager { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="layout">
+<nav class="crumb">
+  <a href="/">Fan's Notes</a><span class="sep">/</span>
+  <a href="/one-small-step/">One Small Step</a><span class="sep">/</span>
+  <span>大模型微调最佳实践指南</span>
+</nav>
+<div class="chapter-meta">OSS · 2025-02-10</div>
+<article class="content">
+<h2>大模型微调最佳实践指南 (超简洁版)</h2>
+<p>by @karminski-牙医</p>
+<p><img src="assets/images/fine-tuning.webp" alt="" style="max-width:100%;height:auto;display:block;margin:24px auto" loading="lazy"></p>
+<p>(图片来自 unstructured.io)</p>
+<h2>1. 决策阶段（ROI最高）</h2>
+<p>✅ <strong>建议</strong>：</p>
+<ul>
+<li>优先使用prompt工程解决简单模式匹配需求 (例如修改文本格式, 大小写转换等)</li>
+<li>评估是否需要知识更新 → 优先考虑RAG方案</li>
+<li>确认数据量是否足够（数学推理任务可尝试小一些的数据, 但大量数据带来的优势仍然是显著的）</li>
+</ul>
+<p>❌ <strong>不建议</strong>：</p>
+<ul>
+<li>用微调解决简单响应模式问题（大炮打蚊子）</li>
+<li>试图通过微调注入新知识 (请使用RAG)</li>
+<li>在数据量&lt;500条时强行微调</li>
+</ul>
+<h2>2. 数据准备（占80%时间投入）</h2>
+<p>✅ <strong>建议</strong>：</p>
+<ul>
+<li>构建多样化样本（覆盖边缘案例）</li>
+<li>确保输入输出格式明确统一</li>
+<li>使用LLM生成增强数据</li>
+<li>按任务类型结构化数据（指令/对话/开放式）</li>
+</ul>
+<p>❌ <strong>不建议</strong>：</p>
+<ul>
+<li>堆砌同质化数据</li>
+<li>保留未清洗的脏数据</li>
+<li>忽略数据去重</li>
+</ul>
+<h2>3. 模型选择（中高ROI）</h2>
+<p>✅ <strong>建议</strong>：</p>
+<ul>
+<li>优先选择1-13B实用模型（如Llama-3.x-8B）</li>
+<li>严格检查商业使用许可</li>
+<li>根据任务复杂度选择尺寸</li>
+</ul>
+<p>❌ <strong>不建议</strong>：</p>
+<ul>
+<li>盲目使用100B+大模型</li>
+<li>忽略许可证限制</li>
+<li>为简单任务过度配置</li>
+</ul>
+<h2>4. 评估体系（常被忽视的高ROI）</h2>
+<p>✅ <strong>建议</strong>：</p>
+<ul>
+<li>建立量化评估基准</li>
+<li>对比不同超参数效果</li>
+<li>定期验证模型退化</li>
+</ul>
+<p>❌ <strong>不建议</strong>：</p>
+<ul>
+<li>仅凭主观感受评估</li>
+<li>忽略baseline对比</li>
+<li>训练后不做回归测试</li>
+</ul>
+<h2>5. 微调策略（中ROI）</h2>
+<p>✅ <strong>建议</strong>：</p>
+<ul>
+<li>优先尝试LoRA及其变种（DoRA/AdaLoRA）</li>
+<li>领域适配时结合剪枝+微调</li>
+<li>使用SGD+学习率调度器</li>
+</ul>
+<p>❌ <strong>不建议</strong>：</p>
+<ul>
+<li>默认使用QLoRA（仅在显存不足时使用）</li>
+<li>设置过高lora_alpha值（建议从2×rank开始）</li>
+<li>盲目相信论文报告的训练时间</li>
+</ul>
+<h2>6. 训练优化（技术细节）</h2>
+<p>✅ <strong>建议</strong>：</p>
+<ul>
+<li>混合精度+量化节省显存</li>
+<li>梯度累积模拟大批量</li>
+<li>定期保存检查点</li>
+</ul>
+<p>❌ <strong>不建议</strong>：</p>
+<ul>
+<li>在单卡上强推大batch_size</li>
+<li>忽略模型并行化选项</li>
+<li>训练中断后从头开始</li>
+</ul>
+<h2>7. 资源分配建议</h2>
+<ul>
+<li>80%时间：数据工程</li>
+<li>15%时间：评估体系构建</li>
+<li>5%时间：实际训练配置</li>
+</ul>
+<h2>版本注意</h2>
+<ul>
+<li>保持对LoRA生态的跟踪（每月新变种出现）</li>
+<li>关注Sophia优化器等新进展</li>
+<li>定期验证不同量化方案效果</li>
+</ul>
+
+</article>
+<nav class="pager"><a class="prev" href="/one-small-step/20250211-what-is-onnx/"><div class="pager-label">← 上一篇</div><div class="pager-title">什么是 ONNX</div></a><a class="next" href="/one-small-step/20250217-what-is-MoE/"><div class="pager-label">下一篇 →</div><div class="pager-title">什么是 MoE 模型</div></a></nav>
+<footer style="margin-top:48px;padding-top:24px;border-top:1px solid var(--border);color:var(--muted);font-size:13px;">
+  <p>原文作者：<a href="https://github.com/karminski" target="_blank" rel="noopener" style="color:var(--accent);">@karminski-牙医</a> · MIT License · <a href="https://github.com/karminski/one-small-step/tree/master/20250210-LLM-fine-tuning-summary" target="_blank" rel="noopener" style="color:var(--accent);">查看仓库</a></p>
+</footer>
+</div>
+</body>
+</html>

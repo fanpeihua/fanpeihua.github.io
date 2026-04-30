@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>什么是表示空间 · One Small Step · Fan's Notes</title>
+<style>
+:root {
+  --bg: #fafaf7; --surface: #ffffff; --surface-2: #f5f5f0;
+  --text: #1a1a1a; --muted: #6b7280; --border: #e5e7eb;
+  --accent: #b45309; --tech: #0369a1; --tech-soft: #f0f9ff;
+  --code-bg: #f6f7f8; --code-text: #24292e;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f0f0e; --surface: #1a1a18; --surface-2: #14140f;
+    --text: #e5e5e0; --muted: #9ca3af; --border: #2d2d2a;
+    --accent: #fbbf24; --tech: #38bdf8; --tech-soft: #0c1e2e;
+    --code-bg: #1e1e1c; --code-text: #d4d4d4;
+  }
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB",
+               "Microsoft YaHei", "Source Han Sans CN", sans-serif;
+  font-size: 16px; line-height: 1.78;
+  -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+}
+.layout { max-width: 760px; margin: 0 auto; padding: 48px 24px 80px; }
+.crumb {
+  font-size: 13px; color: var(--muted);
+  margin-bottom: 24px; display: flex; align-items: center;
+  gap: 8px; flex-wrap: wrap;
+}
+.crumb a { color: var(--muted); text-decoration: none; border-bottom: 1px solid var(--border); }
+.crumb a:hover { color: var(--accent); border-color: var(--accent); }
+.crumb .sep { color: var(--border); }
+.chapter-meta {
+  font-family: "SF Mono", Monaco, monospace;
+  font-size: 11px; letter-spacing: 0.1em;
+  color: var(--tech); font-weight: 700; margin-bottom: 8px;
+}
+.content h1 {
+  font-size: 32px; line-height: 1.25; margin: 0 0 32px;
+  font-weight: 700; letter-spacing: -0.015em;
+  padding-bottom: 16px; border-bottom: 2px solid var(--text);
+}
+.content h2 { font-size: 24px; margin: 48px 0 14px; line-height: 1.3; font-weight: 600; }
+.content h3 { font-size: 18px; margin: 32px 0 12px; font-weight: 600; color: var(--accent); }
+.content h4 { font-size: 16px; margin: 24px 0 10px; font-weight: 600; }
+.content p { margin: 0 0 18px; }
+.content a { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--border); transition: border-color 0.15s; }
+.content a:hover { border-color: var(--accent); }
+.content ul, .content ol { padding-left: 24px; margin: 0 0 18px; }
+.content li { margin-bottom: 6px; }
+.content li > ul, .content li > ol { margin-top: 6px; }
+.content strong { font-weight: 600; }
+.content em { font-style: italic; }
+.content blockquote { margin: 20px 0; padding: 4px 0 4px 16px; border-left: 3px solid var(--border); color: var(--muted); font-style: italic; }
+.content hr { border: 0; height: 1px; background: var(--border); margin: 40px 0; }
+.content code {
+  font-family: "SF Mono", Monaco, Consolas, "Liberation Mono", monospace;
+  background: var(--code-bg); color: var(--code-text);
+  padding: 2px 6px; border-radius: 4px; font-size: 0.88em;
+  border: 1px solid var(--border);
+}
+.content pre {
+  margin: 20px 0; background: var(--code-bg); border: 1px solid var(--border);
+  border-radius: 8px; padding: 14px 18px; overflow-x: auto;
+  font-size: 13px; line-height: 1.65;
+}
+.content pre code { background: transparent; border: 0; padding: 0; font-size: inherit; color: var(--code-text); }
+.hljs-comment, .hljs-quote { color: #708090; font-style: italic; }
+.hljs-keyword, .hljs-selector-tag, .hljs-built_in { color: #d73a49; }
+.hljs-string, .hljs-attr { color: #032f62; }
+.hljs-number, .hljs-literal { color: #005cc5; }
+.hljs-title, .hljs-function { color: #6f42c1; }
+.hljs-variable, .hljs-tag { color: #e36209; }
+@media (prefers-color-scheme: dark) {
+  .hljs-comment, .hljs-quote { color: #6a737d; }
+  .hljs-keyword, .hljs-selector-tag, .hljs-built_in { color: #f97583; }
+  .hljs-string, .hljs-attr { color: #9ecbff; }
+  .hljs-number, .hljs-literal { color: #79b8ff; }
+  .hljs-title, .hljs-function { color: #b392f0; }
+  .hljs-variable, .hljs-tag { color: #ffab70; }
+}
+.content img {
+  max-width: 100%; height: auto; display: block;
+  margin: 28px auto; border-radius: 6px;
+  border: 1px solid var(--border); background: var(--surface);
+}
+.content img.cover { max-width: 320px; }
+@media (prefers-color-scheme: dark) {
+  .content img:not(.cover) { background: #fff; padding: 8px; }
+}
+.content table {
+  width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14.5px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; overflow: hidden;
+}
+.content th, .content td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); }
+.content th { background: var(--code-bg); font-weight: 600; font-size: 13px; color: var(--muted); }
+.content tr:last-child td { border-bottom: 0; }
+.pager {
+  margin-top: 64px; padding-top: 24px; border-top: 1px solid var(--border);
+  display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+}
+.pager a {
+  display: block; padding: 16px 20px; background: var(--surface);
+  border: 1px solid var(--border); border-radius: 10px;
+  text-decoration: none; color: inherit; transition: all 0.15s;
+}
+.pager a:hover { border-color: var(--accent); transform: translateY(-1px); }
+.pager .pager-label { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+.pager .pager-title { font-size: 14px; font-weight: 600; line-height: 1.4; }
+.pager .next { text-align: right; }
+.pager .prev:empty, .pager .next:empty { background: transparent; border: 0; }
+@media (max-width: 600px) {
+  .layout { padding: 32px 18px 64px; }
+  .content h1 { font-size: 26px; }
+  .content h2 { font-size: 21px; }
+  body { font-size: 15.5px; }
+  .pager { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="layout">
+<nav class="crumb">
+  <a href="/">Fan's Notes</a><span class="sep">/</span>
+  <a href="/one-small-step/">One Small Step</a><span class="sep">/</span>
+  <span>什么是表示空间</span>
+</nav>
+<div class="chapter-meta">OSS · 2025-03-16</div>
+<article class="content">
+<h2>什么是表示空间？</h2>
+<p>by @karminski-牙医</p>
+<p><img src="./assets/images/representation-space.gif" alt="" style="max-width:100%;height:auto;display:block;margin:24px auto" loading="lazy"></p>
+<p>(图片来自 huggingface.co/blog/Borise/law-vision-representation-in-mllms)</p>
+<p>表示空间 (Representation Space) 是多模态人工智能中的核心概念，指不同模态数据（文本、图像、音频等）经过编码后映射到的统一数学空间。该空间使机器能够理解跨模态的语义关联，是实现多模态智能的数学基础。</p>
+<h2>核心定义</h2>
+<p>表示空间本质上是<strong>高维向量空间</strong>，具有以下关键属性：</p>
+<ul>
+<li><strong>跨模态可比性</strong>：不同模态数据在空间中的距离反映语义相似度</li>
+<li><strong>线性组合性</strong>：支持语义向量运算（如 v_程序员 - v_代码 + v_绘画 ≈ v_画家）</li>
+<li><strong>层次语义</strong>：不同维度对应不同抽象级别的特征（低层纹理→高层语义）</li>
+</ul>
+<h2>技术实现</h2>
+<h3>构建方法</h3>
+<pre><code class="hljs language-python"><span class="hljs-comment"># 以对比学习为例</span>
+image_encoder = VisionTransformer()  <span class="hljs-comment"># 视觉编码器</span>
+text_encoder = TextTransformer()     <span class="hljs-comment"># 文本编码器</span>
+
+<span class="hljs-comment"># 映射到统一空间</span>
+img_emb = image_encoder(img)  <span class="hljs-comment"># [batch_size, d]</span>
+txt_emb = text_encoder(text)  <span class="hljs-comment"># [batch_size, d]</span>
+
+<span class="hljs-comment"># 对比损失计算</span>
+similarity = (img_emb @ txt_emb.T) * temperature  <span class="hljs-comment"># 计算图像-文本相似度矩阵</span>
+loss = cross_entropy(similarity, labels)          <span class="hljs-comment"># 对角线为正样本，其余为负样本, 使模型学习跨模态对齐</span></code></pre><h3>数学特性</h3>
+<ul>
+<li><strong>度量学习</strong>：定义距离函数 $d(v_i, v_j) = 1 - \frac{v_i \cdot v_j}{|v_i||v_j|}$</li>
+<li><strong>流形假设</strong>：同类数据在空间中形成连续流形（如所有&quot;狗&quot;图像构成子空间）</li>
+<li><strong>注意力兼容</strong>：支持跨模态注意力计算 $Attention(Q_{text}, K_{image}, V_{image})$</li>
+</ul>
+<h2>应用场景</h2>
+<ul>
+<li><strong>跨模态检索</strong>：<code>text_emb = encode(&quot;火山喷发&quot;)</code> → 查找 <code>argmin(d(v_img, text_emb))</code></li>
+<li><strong>特征融合</strong>：<code>[img_emb; audio_emb] → 融合层 → 联合表示</code></li>
+<li><strong>零样本学习</strong>：通过prompt工程 <code>v_&quot;医疗报告&quot; + v_CT影像 → 诊断建议</code></li>
+<li><strong>内容生成</strong>：文本引导的图像编辑 <code>v_原图 + v_&quot;添加彩虹&quot; → 生成新图</code></li>
+</ul>
+<h2>实现挑战</h2>
+<ul>
+<li><strong>模态鸿沟</strong>：不同模态特征分布差异（如图像特征的L2范数通常大于文本）</li>
+<li><strong>维度灾难</strong>：随着维度增加，数据稀疏性导致相似度度量可靠性下降</li>
+<li><strong>语义泄漏</strong>：图像背景纹理等无关特征被编码到语义维度</li>
+<li><strong>评估困境</strong>：缺乏客观的几何语义评估指标</li>
+</ul>
+<h2>Refs</h2>
+<ul>
+<li><a href="https://openai.com/index/clip/">CLIP: Connecting text and images</a></li>
+</ul>
+
+</article>
+<nav class="pager"><a class="prev" href="/one-small-step/20250315-what-is-modal-encoding/"><div class="pager-label">← 上一篇</div><div class="pager-title">什么是模态编码</div></a><a class="next" href="/one-small-step/20250317-what-is-multi-model-llm/"><div class="pager-label">下一篇 →</div><div class="pager-title">什么是多模态模型</div></a></nav>
+<footer style="margin-top:48px;padding-top:24px;border-top:1px solid var(--border);color:var(--muted);font-size:13px;">
+  <p>原文作者：<a href="https://github.com/karminski" target="_blank" rel="noopener" style="color:var(--accent);">@karminski-牙医</a> · MIT License · <a href="https://github.com/karminski/one-small-step/tree/master/20250316-what-is-representation-space" target="_blank" rel="noopener" style="color:var(--accent);">查看仓库</a></p>
+</footer>
+</div>
+</body>
+</html>

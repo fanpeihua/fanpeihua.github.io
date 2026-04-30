@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>One Small Step · 技术科普短文集 · Fan's Notes</title>
+<style>
+:root {
+  --bg: #fafaf7; --surface: #ffffff; --surface-2: #f5f5f0;
+  --text: #1a1a1a; --muted: #6b7280; --border: #e5e7eb;
+  --accent: #b45309; --tech: #0369a1; --tech-soft: #f0f9ff;
+  --code-bg: #f6f7f8; --code-text: #24292e;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f0f0e; --surface: #1a1a18; --surface-2: #14140f;
+    --text: #e5e5e0; --muted: #9ca3af; --border: #2d2d2a;
+    --accent: #fbbf24; --tech: #38bdf8; --tech-soft: #0c1e2e;
+    --code-bg: #1e1e1c; --code-text: #d4d4d4;
+  }
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB",
+               "Microsoft YaHei", "Source Han Sans CN", sans-serif;
+  font-size: 16px; line-height: 1.78;
+  -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+}
+.layout { max-width: 760px; margin: 0 auto; padding: 48px 24px 80px; }
+.crumb {
+  font-size: 13px; color: var(--muted);
+  margin-bottom: 24px; display: flex; align-items: center;
+  gap: 8px; flex-wrap: wrap;
+}
+.crumb a { color: var(--muted); text-decoration: none; border-bottom: 1px solid var(--border); }
+.crumb a:hover { color: var(--accent); border-color: var(--accent); }
+.crumb .sep { color: var(--border); }
+.chapter-meta {
+  font-family: "SF Mono", Monaco, monospace;
+  font-size: 11px; letter-spacing: 0.1em;
+  color: var(--tech); font-weight: 700; margin-bottom: 8px;
+}
+.content h1 {
+  font-size: 32px; line-height: 1.25; margin: 0 0 32px;
+  font-weight: 700; letter-spacing: -0.015em;
+  padding-bottom: 16px; border-bottom: 2px solid var(--text);
+}
+.content h2 { font-size: 24px; margin: 48px 0 14px; line-height: 1.3; font-weight: 600; }
+.content h3 { font-size: 18px; margin: 32px 0 12px; font-weight: 600; color: var(--accent); }
+.content h4 { font-size: 16px; margin: 24px 0 10px; font-weight: 600; }
+.content p { margin: 0 0 18px; }
+.content a { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--border); transition: border-color 0.15s; }
+.content a:hover { border-color: var(--accent); }
+.content ul, .content ol { padding-left: 24px; margin: 0 0 18px; }
+.content li { margin-bottom: 6px; }
+.content li > ul, .content li > ol { margin-top: 6px; }
+.content strong { font-weight: 600; }
+.content em { font-style: italic; }
+.content blockquote { margin: 20px 0; padding: 4px 0 4px 16px; border-left: 3px solid var(--border); color: var(--muted); font-style: italic; }
+.content hr { border: 0; height: 1px; background: var(--border); margin: 40px 0; }
+.content code {
+  font-family: "SF Mono", Monaco, Consolas, "Liberation Mono", monospace;
+  background: var(--code-bg); color: var(--code-text);
+  padding: 2px 6px; border-radius: 4px; font-size: 0.88em;
+  border: 1px solid var(--border);
+}
+.content pre {
+  margin: 20px 0; background: var(--code-bg); border: 1px solid var(--border);
+  border-radius: 8px; padding: 14px 18px; overflow-x: auto;
+  font-size: 13px; line-height: 1.65;
+}
+.content pre code { background: transparent; border: 0; padding: 0; font-size: inherit; color: var(--code-text); }
+.hljs-comment, .hljs-quote { color: #708090; font-style: italic; }
+.hljs-keyword, .hljs-selector-tag, .hljs-built_in { color: #d73a49; }
+.hljs-string, .hljs-attr { color: #032f62; }
+.hljs-number, .hljs-literal { color: #005cc5; }
+.hljs-title, .hljs-function { color: #6f42c1; }
+.hljs-variable, .hljs-tag { color: #e36209; }
+@media (prefers-color-scheme: dark) {
+  .hljs-comment, .hljs-quote { color: #6a737d; }
+  .hljs-keyword, .hljs-selector-tag, .hljs-built_in { color: #f97583; }
+  .hljs-string, .hljs-attr { color: #9ecbff; }
+  .hljs-number, .hljs-literal { color: #79b8ff; }
+  .hljs-title, .hljs-function { color: #b392f0; }
+  .hljs-variable, .hljs-tag { color: #ffab70; }
+}
+.content img {
+  max-width: 100%; height: auto; display: block;
+  margin: 28px auto; border-radius: 6px;
+  border: 1px solid var(--border); background: var(--surface);
+}
+.content img.cover { max-width: 320px; }
+@media (prefers-color-scheme: dark) {
+  .content img:not(.cover) { background: #fff; padding: 8px; }
+}
+.content table {
+  width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14.5px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; overflow: hidden;
+}
+.content th, .content td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); }
+.content th { background: var(--code-bg); font-weight: 600; font-size: 13px; color: var(--muted); }
+.content tr:last-child td { border-bottom: 0; }
+.pager {
+  margin-top: 64px; padding-top: 24px; border-top: 1px solid var(--border);
+  display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+}
+.pager a {
+  display: block; padding: 16px 20px; background: var(--surface);
+  border: 1px solid var(--border); border-radius: 10px;
+  text-decoration: none; color: inherit; transition: all 0.15s;
+}
+.pager a:hover { border-color: var(--accent); transform: translateY(-1px); }
+.pager .pager-label { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+.pager .pager-title { font-size: 14px; font-weight: 600; line-height: 1.4; }
+.pager .next { text-align: right; }
+.pager .prev:empty, .pager .next:empty { background: transparent; border: 0; }
+@media (max-width: 600px) {
+  .layout { padding: 32px 18px 64px; }
+  .content h1 { font-size: 26px; }
+  .content h2 { font-size: 21px; }
+  body { font-size: 15.5px; }
+  .pager { grid-template-columns: 1fr; }
+}
+
+.hero-bar {
+  display: flex; align-items: center; gap: 16px;
+  padding-bottom: 16px; border-bottom: 1px solid var(--border);
+  margin-bottom: 32px; flex-wrap: wrap;
+}
+.eyebrow {
+  color: var(--accent); font-size: 12px;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  font-weight: 600;
+}
+.hero-bar h1 { font-size: 32px; margin: 0; letter-spacing: -0.02em; font-weight: 700; }
+.subtitle { color: var(--muted); font-size: 15.5px; margin: 6px 0 24px; }
+.cat-section { margin-top: 40px; }
+.cat-title {
+  font-size: 13px; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--muted);
+  margin-bottom: 12px; font-weight: 600;
+  padding-bottom: 8px; border-bottom: 1px solid var(--border);
+}
+.subhead {
+  font-size: 12px; color: var(--accent);
+  margin: 14px 0 6px; font-weight: 600;
+  letter-spacing: 0.04em;
+}
+ul.posts { list-style: none; padding: 0; margin: 0; }
+ul.posts li {
+  border-bottom: 1px dashed var(--border);
+  padding: 0;
+}
+ul.posts li:last-child { border-bottom: 0; }
+ul.posts a {
+  display: block; padding: 14px 0;
+  text-decoration: none; color: inherit;
+  transition: padding-left 0.15s;
+}
+ul.posts a:hover { padding-left: 8px; color: var(--accent); }
+.post-title { font-size: 15.5px; font-weight: 500; line-height: 1.5; }
+.post-desc { font-size: 13px; color: var(--muted); margin-top: 4px; line-height: 1.5; }
+.post-date { font-family: "SF Mono", Monaco, monospace; font-size: 11px; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="layout">
+<nav class="crumb">
+  <a href="/">← Fan's Notes</a>
+  <span class="sep">/</span>
+  <span>One Small Step</span>
+</nav>
+
+<div class="hero-bar">
+  <div>
+    <div class="eyebrow">技术科普 · 5 分钟系列</div>
+    <h1>One Small Step</h1>
+  </div>
+</div>
+<p class="subtitle">技术科普短文集，原作者 <a href="https://github.com/karminski" target="_blank" rel="noopener">@karminski-牙医</a>。每篇约 5 分钟读完，适合通勤、碎片时间。共 45 篇。</p>
+<section class="cat-section">
+  <div class="cat-title">人工智能</div>
+  <ul class="posts"><li><a href="/one-small-step/20250113-what-is-gguf/">
+      <div class="post-title">什么是 GGUF</div>
+      <div class="post-desc">介绍 GGUF 文件格式及其在大语言模型部署中的应用</div>
+      <div class="post-date">2025-01-13</div>
+    </a></li><li><a href="/one-small-step/20250116-what-is-speculative-decoding/">
+      <div class="post-title">什么是推测性解码</div>
+      <div class="post-desc">解释推测性解码技术如何提升大语言模型的推理性能</div>
+      <div class="post-date">2025-01-16</div>
+    </a></li><li><a href="/one-small-step/20250117-what-is-pythonic-function-call/">
+      <div class="post-title">什么是 Pythonic 函数调用</div>
+      <div class="post-desc">为什么 Pythonic 函数调用 比 function call 效果好?</div>
+      <div class="post-date">2025-01-17</div>
+    </a></li><li><a href="/one-small-step/20250122-how-to-run-gguf-LLM-model/">
+      <div class="post-title">如何本地运行 GGUF 格式的 LLM 模型</div>
+      <div class="post-desc">如何本地运行 GGUF 格式的 LLM 模型?</div>
+      <div class="post-date">2025-01-22</div>
+    </a></li><li><a href="/one-small-step/20250123-what-is-LLM-distill/">
+      <div class="post-title">什么是 LLM 蒸馏技术</div>
+      <div class="post-desc">什么是 LLM 蒸馏技术?</div>
+      <div class="post-date">2025-01-23</div>
+    </a></li><li><a href="/one-small-step/20250126-what-is-transformer/">
+      <div class="post-title">什么是 Transformer</div>
+      <div class="post-desc">什么是 Transformer?</div>
+      <div class="post-date">2025-01-26</div>
+    </a></li><li><a href="/one-small-step/20250127-how-to-optimize-transformer/">
+      <div class="post-title">如何优化 Transformer</div>
+      <div class="post-desc">Transformer 的优化方案都有哪些?</div>
+      <div class="post-date">2025-01-27</div>
+    </a></li><li><a href="/one-small-step/20250129-what-is-quantization-in-LLM/">
+      <div class="post-title">什么是大语言模型量化</div>
+      <div class="post-desc">什么是大语言模型量化? 每个量化精度都代表什么?</div>
+      <div class="post-date">2025-01-29</div>
+    </a></li><li><a href="/one-small-step/20250201-what-is-flash-attention/">
+      <div class="post-title">什么是 Flash Attention</div>
+      <div class="post-desc">什么是 Flash Attention? 为什么能将大语言模型推理速度提升3倍?</div>
+      <div class="post-date">2025-02-01</div>
+    </a></li><li><a href="/one-small-step/20250202-what-is-multi-head-attention/">
+      <div class="post-title">什么是 Multi-Head Attention</div>
+      <div class="post-desc">什么是 Multi-Head Attention? Attention Is All You Need 论文精读</div>
+      <div class="post-date">2025-02-02</div>
+    </a></li><li><a href="/one-small-step/20250204-what-is-multi-query-attention/">
+      <div class="post-title">什么是 Multi-Query Attention</div>
+      <div class="post-desc">什么是 Multi-Query Attention?</div>
+      <div class="post-date">2025-02-04</div>
+    </a></li><li><a href="/one-small-step/20250205-what-is-gropued-query-attention/">
+      <div class="post-title">什么是 Grouped Query Attention</div>
+      <div class="post-desc">什么是 Grouped Query Attention?</div>
+      <div class="post-date">2025-02-05</div>
+    </a></li><li><a href="/one-small-step/20250208-what-is-LLM-fine-tuning/">
+      <div class="post-title">什么是 LLM 微调技术</div>
+      <div class="post-desc">什么是 LLM 微调技术?</div>
+      <div class="post-date">2025-02-08</div>
+    </a></li><li><a href="/one-small-step/20250209-what-is-RAG/">
+      <div class="post-title">什么是 RAG 技术</div>
+      <div class="post-desc">什么是 RAG 技术?</div>
+      <div class="post-date">2025-02-09</div>
+    </a></li><li><a href="/one-small-step/20250210-what-is-safetensors/">
+      <div class="post-title">什么是 Safetensors</div>
+      <div class="post-desc">什么是 Safetensors?</div>
+      <div class="post-date">2025-02-10</div>
+    </a></li><li><a href="/one-small-step/20250211-what-is-onnx/">
+      <div class="post-title">什么是 ONNX</div>
+      <div class="post-desc">什么是 ONNX?</div>
+      <div class="post-date">2025-02-11</div>
+    </a></li><li><a href="/one-small-step/20250210-LLM-fine-tuning-summary/">
+      <div class="post-title">大模型微调最佳实践指南</div>
+      <div class="post-desc">大模型微调最佳实践指南</div>
+      <div class="post-date">2025-02-10</div>
+    </a></li><li><a href="/one-small-step/20250217-what-is-MoE/">
+      <div class="post-title">什么是 MoE 模型</div>
+      <div class="post-desc">什么是 MoE 模型?</div>
+      <div class="post-date">2025-02-17</div>
+    </a></li><li><a href="/one-small-step/20250218-how-are-tokens-calculated-in-LLMs/">
+      <div class="post-title">LLM 中的 Token 是如何计算的</div>
+      <div class="post-desc">LLM 中的 Token 是如何计算的?</div>
+      <div class="post-date">2025-02-18</div>
+    </a></li><li><a href="/one-small-step/20250220-what-is-AI-Agent/">
+      <div class="post-title">什么是 AI Agent</div>
+      <div class="post-desc">什么是 AI Agent?</div>
+      <div class="post-date">2025-02-20</div>
+    </a></li><li><a href="/one-small-step/20250228-what-is-LoRA/">
+      <div class="post-title">什么是 LoRA</div>
+      <div class="post-desc">什么是 LoRA? 为什么用 LoRA 微调大模型更高效?</div>
+      <div class="post-date">2025-02-28</div>
+    </a></li><li><a href="/one-small-step/20250307-what-is-vector-embedding/">
+      <div class="post-title">什么是向量嵌入</div>
+      <div class="post-desc">什么是向量嵌入? </div>
+      <div class="post-date">2025-03-07</div>
+    </a></li><li><a href="/one-small-step/20250308-what-is-vector-database/">
+      <div class="post-title">什么是向量数据库</div>
+      <div class="post-desc">什么是向量数据库?</div>
+      <div class="post-date">2025-03-08</div>
+    </a></li><li><a href="/one-small-step/20250309-what-is-AI-Hallucination/">
+      <div class="post-title">什么是 AI 幻觉</div>
+      <div class="post-desc">什么是 AI 幻觉?</div>
+      <div class="post-date">2025-03-09</div>
+    </a></li><li><a href="/one-small-step/20250315-what-is-modal-encoding/">
+      <div class="post-title">什么是模态编码</div>
+      <div class="post-desc">什么是模态编码?</div>
+      <div class="post-date">2025-03-15</div>
+    </a></li><li><a href="/one-small-step/20250316-what-is-representation-space/">
+      <div class="post-title">什么是表示空间</div>
+      <div class="post-desc">什么是表示空间?</div>
+      <div class="post-date">2025-03-16</div>
+    </a></li><li><a href="/one-small-step/20250317-what-is-multi-model-llm/">
+      <div class="post-title">什么是多模态模型</div>
+      <div class="post-desc">什么是多模态模型?</div>
+      <div class="post-date">2025-03-17</div>
+    </a></li><li><a href="/one-small-step/20250403-what-is-llm-perplexity/">
+      <div class="post-title">什么是 LLM 的困惑度</div>
+      <div class="post-desc">什么是大模型的困惑度? 为什么量化版本要用困惑度来评价量化质量?</div>
+      <div class="post-date">2025-04-03</div>
+    </a></li><li><a href="/one-small-step/20250513-How-to-avoid-KVCache-invalidation/">
+      <div class="post-title">如何避免 KVCache 失效</div>
+      <div class="post-desc">当心动态内容, 会导致 KVCache 失效</div>
+      <div class="post-date">2025-05-13</div>
+    </a></li><li><a href="/one-small-step/20250522-what-is-sliding-window-attention/">
+      <div class="post-title">什么是 Sliding Window Attention</div>
+      <div class="post-desc">什么是滑动窗口注意力</div>
+      <div class="post-date">2025-05-22</div>
+    </a></li><li><a href="/one-small-step/20250530-When-to-Use-Fine-Tuning-and-When-Not-To/">
+      <div class="post-title">什么时候应该微调, 什么时候不应该微调?</div>
+      <div class="post-desc">微调和RAG还如何选择?</div>
+      <div class="post-date">2025-05-30</div>
+    </a></li><li><a href="/one-small-step/20250611-what-is-vibe-coding/">
+      <div class="post-title">什么是vibe coding?</div>
+      <div class="post-desc">什么是氛围编码?</div>
+      <div class="post-date">2025-06-11</div>
+    </a></li><li><a href="/one-small-step/20250809-What-is-Dual-Chunk-Attention/">
+      <div class="post-title">Qwen3 扩展到 1M 上下文是如何做到的?</div>
+      <div class="post-desc">什么是 DCA?</div>
+      <div class="post-date">2025-08-09</div>
+    </a></li><li><a href="/one-small-step/20250812-What-is-Recall/">
+      <div class="post-title">什么是召回</div>
+      <div class="post-desc">召回影响大模型哪些方面的性能?</div>
+      <div class="post-date">2025-08-12</div>
+    </a></li><li><a href="/one-small-step/20251110-Parameter-Precision-Formats-for-LLMs/">
+      <div class="post-title">大模型精度格式一览</div>
+      <div class="post-desc">大模型常用训练精度都有哪些?</div>
+      <div class="post-date">2025-11-10</div>
+    </a></li><li><div class="subhead">OpenClaw 教程专题</div></li><li><a href="/one-small-step/20260308-Run-OpenClaw-with-9B-Model-on-Mac/">
+      <div class="post-title">9B大模型也能玩转OpenClaw? Mac 部署全教程</div>
+      <div class="post-desc">![For AI Reading](https://img.shields.io/badge/For%20AI%20Reading-8A2BE2)</div>
+      <div class="post-date">2026-03-08</div>
+    </a></li></ul></section>
+<section class="cat-section">
+  <div class="cat-title">数学</div>
+  <ul class="posts"><li><a href="/one-small-step/20250227-what-is-rank-in-matrix/">
+      <div class="post-title">什么是矩阵的秩？什么是低秩矩阵？</div>
+      <div class="post-desc">什么是矩阵的秩？什么是低秩矩阵？</div>
+      <div class="post-date">2025-02-27</div>
+    </a></li><li><a href="/one-small-step/20250301-what-is-fitting-and-overfitting/">
+      <div class="post-title">什么是拟合与过拟合</div>
+      <div class="post-desc">什么是拟合与过拟合?</div>
+      <div class="post-date">2025-03-01</div>
+    </a></li></ul></section>
+<section class="cat-section">
+  <div class="cat-title">系统</div>
+  <ul class="posts"><li><a href="/one-small-step/20250104-windows-task-manager-memory-tab-description/">
+      <div class="post-title">Windows 任务管理器内存标签说明</div>
+      <div class="post-desc">详解 Windows 任务管理器中各个内存指标的含义</div>
+      <div class="post-date">2025-01-04</div>
+    </a></li><li><a href="/one-small-step/20250128-rammap-description/">
+      <div class="post-title">RAMMap 使用解析</div>
+      <div class="post-desc">详解 RAMMap 的使用方法</div>
+      <div class="post-date">2025-01-28</div>
+    </a></li></ul></section>
+<section class="cat-section">
+  <div class="cat-title">硬件</div>
+  <ul class="posts"><li><a href="/one-small-step/20250119-what-is-pcie-retimer/">
+      <div class="post-title">什么是 PCIe Retimer</div>
+      <div class="post-desc">详解 PCIe Retimer 的原理和应用</div>
+      <div class="post-date">2025-01-19</div>
+    </a></li><li><a href="/one-small-step/20250124-why-some-NVMe-SSD-have-DRAM-and-some-are-not/">
+      <div class="post-title">为什么有的 NVMe SSD 有 DRAM, 有的没有?</div>
+      <div class="post-desc">为什么有的 NVMe SSD 有 DRAM, 有的没有?</div>
+      <div class="post-date">2025-01-24</div>
+    </a></li><li><a href="/one-small-step/20250125-does-CXL-will-be-LLM-memory-solution/">
+      <div class="post-title">CLX 会是大语言模型的内存解决方案吗?</div>
+      <div class="post-desc">什么? PCIe 上能插内存了?</div>
+      <div class="post-date">2025-01-25</div>
+    </a></li><li><a href="/one-small-step/20250131-what-is-1DPC/">
+      <div class="post-title">什么是 1DPC</div>
+      <div class="post-desc">什么是 1DPC? 为什么内存条要插在远端插槽?</div>
+      <div class="post-date">2025-01-31</div>
+    </a></li><li><a href="/one-small-step/20250206-what-is-L1-cache/">
+      <div class="post-title">什么是 L1 缓存</div>
+      <div class="post-desc">什么是 L1 缓存? 它的工作原理是什么?</div>
+      <div class="post-date">2025-02-06</div>
+    </a></li></ul></section>
+<footer style="margin-top:80px;padding-top:32px;border-top:1px solid var(--border);color:var(--muted);font-size:13px;">
+  <p>原始仓库：<a href="https://github.com/karminski/one-small-step" target="_blank" rel="noopener" style="color:var(--accent);">karminski/one-small-step</a> · MIT License · 内容版权归原作者所有</p>
+</footer>
+</div>
+</body>
+</html>

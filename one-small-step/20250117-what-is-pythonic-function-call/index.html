@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>什么是 Pythonic 函数调用 · One Small Step · Fan's Notes</title>
+<style>
+:root {
+  --bg: #fafaf7; --surface: #ffffff; --surface-2: #f5f5f0;
+  --text: #1a1a1a; --muted: #6b7280; --border: #e5e7eb;
+  --accent: #b45309; --tech: #0369a1; --tech-soft: #f0f9ff;
+  --code-bg: #f6f7f8; --code-text: #24292e;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f0f0e; --surface: #1a1a18; --surface-2: #14140f;
+    --text: #e5e5e0; --muted: #9ca3af; --border: #2d2d2a;
+    --accent: #fbbf24; --tech: #38bdf8; --tech-soft: #0c1e2e;
+    --code-bg: #1e1e1c; --code-text: #d4d4d4;
+  }
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB",
+               "Microsoft YaHei", "Source Han Sans CN", sans-serif;
+  font-size: 16px; line-height: 1.78;
+  -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+}
+.layout { max-width: 760px; margin: 0 auto; padding: 48px 24px 80px; }
+.crumb {
+  font-size: 13px; color: var(--muted);
+  margin-bottom: 24px; display: flex; align-items: center;
+  gap: 8px; flex-wrap: wrap;
+}
+.crumb a { color: var(--muted); text-decoration: none; border-bottom: 1px solid var(--border); }
+.crumb a:hover { color: var(--accent); border-color: var(--accent); }
+.crumb .sep { color: var(--border); }
+.chapter-meta {
+  font-family: "SF Mono", Monaco, monospace;
+  font-size: 11px; letter-spacing: 0.1em;
+  color: var(--tech); font-weight: 700; margin-bottom: 8px;
+}
+.content h1 {
+  font-size: 32px; line-height: 1.25; margin: 0 0 32px;
+  font-weight: 700; letter-spacing: -0.015em;
+  padding-bottom: 16px; border-bottom: 2px solid var(--text);
+}
+.content h2 { font-size: 24px; margin: 48px 0 14px; line-height: 1.3; font-weight: 600; }
+.content h3 { font-size: 18px; margin: 32px 0 12px; font-weight: 600; color: var(--accent); }
+.content h4 { font-size: 16px; margin: 24px 0 10px; font-weight: 600; }
+.content p { margin: 0 0 18px; }
+.content a { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--border); transition: border-color 0.15s; }
+.content a:hover { border-color: var(--accent); }
+.content ul, .content ol { padding-left: 24px; margin: 0 0 18px; }
+.content li { margin-bottom: 6px; }
+.content li > ul, .content li > ol { margin-top: 6px; }
+.content strong { font-weight: 600; }
+.content em { font-style: italic; }
+.content blockquote { margin: 20px 0; padding: 4px 0 4px 16px; border-left: 3px solid var(--border); color: var(--muted); font-style: italic; }
+.content hr { border: 0; height: 1px; background: var(--border); margin: 40px 0; }
+.content code {
+  font-family: "SF Mono", Monaco, Consolas, "Liberation Mono", monospace;
+  background: var(--code-bg); color: var(--code-text);
+  padding: 2px 6px; border-radius: 4px; font-size: 0.88em;
+  border: 1px solid var(--border);
+}
+.content pre {
+  margin: 20px 0; background: var(--code-bg); border: 1px solid var(--border);
+  border-radius: 8px; padding: 14px 18px; overflow-x: auto;
+  font-size: 13px; line-height: 1.65;
+}
+.content pre code { background: transparent; border: 0; padding: 0; font-size: inherit; color: var(--code-text); }
+.hljs-comment, .hljs-quote { color: #708090; font-style: italic; }
+.hljs-keyword, .hljs-selector-tag, .hljs-built_in { color: #d73a49; }
+.hljs-string, .hljs-attr { color: #032f62; }
+.hljs-number, .hljs-literal { color: #005cc5; }
+.hljs-title, .hljs-function { color: #6f42c1; }
+.hljs-variable, .hljs-tag { color: #e36209; }
+@media (prefers-color-scheme: dark) {
+  .hljs-comment, .hljs-quote { color: #6a737d; }
+  .hljs-keyword, .hljs-selector-tag, .hljs-built_in { color: #f97583; }
+  .hljs-string, .hljs-attr { color: #9ecbff; }
+  .hljs-number, .hljs-literal { color: #79b8ff; }
+  .hljs-title, .hljs-function { color: #b392f0; }
+  .hljs-variable, .hljs-tag { color: #ffab70; }
+}
+.content img {
+  max-width: 100%; height: auto; display: block;
+  margin: 28px auto; border-radius: 6px;
+  border: 1px solid var(--border); background: var(--surface);
+}
+.content img.cover { max-width: 320px; }
+@media (prefers-color-scheme: dark) {
+  .content img:not(.cover) { background: #fff; padding: 8px; }
+}
+.content table {
+  width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14.5px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; overflow: hidden;
+}
+.content th, .content td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); }
+.content th { background: var(--code-bg); font-weight: 600; font-size: 13px; color: var(--muted); }
+.content tr:last-child td { border-bottom: 0; }
+.pager {
+  margin-top: 64px; padding-top: 24px; border-top: 1px solid var(--border);
+  display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+}
+.pager a {
+  display: block; padding: 16px 20px; background: var(--surface);
+  border: 1px solid var(--border); border-radius: 10px;
+  text-decoration: none; color: inherit; transition: all 0.15s;
+}
+.pager a:hover { border-color: var(--accent); transform: translateY(-1px); }
+.pager .pager-label { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+.pager .pager-title { font-size: 14px; font-weight: 600; line-height: 1.4; }
+.pager .next { text-align: right; }
+.pager .prev:empty, .pager .next:empty { background: transparent; border: 0; }
+@media (max-width: 600px) {
+  .layout { padding: 32px 18px 64px; }
+  .content h1 { font-size: 26px; }
+  .content h2 { font-size: 21px; }
+  body { font-size: 15.5px; }
+  .pager { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="layout">
+<nav class="crumb">
+  <a href="/">Fan's Notes</a><span class="sep">/</span>
+  <a href="/one-small-step/">One Small Step</a><span class="sep">/</span>
+  <span>什么是 Pythonic 函数调用</span>
+</nav>
+<div class="chapter-meta">OSS · 2025-01-17</div>
+<article class="content">
+<h2>什么是 Pythonic 函数调用</h2>
+<p>by @karminski-牙医</p>
+<p>Pythonic function call 是一种新的工具调用方式，它允许 LLM 通过生成 Python 代码来调用函数，而不是传统的 JSON schema 方式。</p>
+<h2>主要优势：</h2>
+<ol>
+<li>更接近自然语言和人类思维方式</li>
+<li>能够在单次对话中处理复杂的多步骤任务</li>
+<li>支持更灵活的逻辑控制（如条件判断、循环等）</li>
+<li>充分利用了 LLM 在预训练中获得的程序性知识</li>
+</ol>
+<h2>如何使用</h2>
+<p>以下是一个典型的使用示例：</p>
+<p><strong>首先定义可用的函数：</strong></p>
+<pre><code class="hljs language-python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">check_availability</span>(<span class="hljs-params">day: <span class="hljs-built_in">str</span>, start_time: <span class="hljs-built_in">str</span>, end_time: <span class="hljs-built_in">str</span></span>) -&gt; <span class="hljs-built_in">bool</span>:
+    <span class="hljs-string">&quot;&quot;&quot;检查某个时间段是否可用&quot;&quot;&quot;</span>
+    <span class="hljs-keyword">pass</span>
+
+<span class="hljs-keyword">def</span> <span class="hljs-title function_">make_appointment</span>(<span class="hljs-params">day: <span class="hljs-built_in">str</span>, start_time: <span class="hljs-built_in">str</span>, end_time: <span class="hljs-built_in">str</span></span>) -&gt; <span class="hljs-built_in">dict</span>:
+    <span class="hljs-string">&quot;&quot;&quot;预约会议&quot;&quot;&quot;</span>
+    <span class="hljs-keyword">pass</span>
+
+<span class="hljs-keyword">def</span> <span class="hljs-title function_">add_to_reminders</span>(<span class="hljs-params">reminder_text: <span class="hljs-built_in">str</span></span>) -&gt; <span class="hljs-built_in">bool</span>:
+    <span class="hljs-string">&quot;&quot;&quot;添加提醒&quot;&quot;&quot;</span>
+    <span class="hljs-keyword">pass</span></code></pre><p><strong>当用户提出请求时，LLM 会生成完整的 Python 代码来解决问题：</strong></p>
+<pre><code class="hljs language-python"><span class="hljs-comment"># 计算明天的日期</span>
+<span class="hljs-keyword">from</span> datetime <span class="hljs-keyword">import</span> datetime, timedelta
+today = datetime.now()
+tomorrow = (today + timedelta(days=<span class="hljs-number">1</span>)).strftime(<span class="hljs-string">&quot;%Y-%m-%d&quot;</span>)
+
+<span class="hljs-comment"># 定义时间段</span>
+start_time = <span class="hljs-string">&quot;10:00&quot;</span>
+end_time = <span class="hljs-string">&quot;12:00&quot;</span>
+
+<span class="hljs-comment"># 检查可用性</span>
+is_available = check_availability(tomorrow, start_time, end_time)
+
+<span class="hljs-comment"># 如果时间段可用，则预约会议</span>
+appointment_result = (
+    make_appointment(
+        day=tomorrow,
+        start_time=start_time,
+        end_time=end_time,
+        title=<span class="hljs-string">&quot;Meeting with Thesis Supervisor&quot;</span>
+    )
+    <span class="hljs-keyword">if</span> is_available
+    <span class="hljs-keyword">else</span> {<span class="hljs-string">&quot;appointment_made&quot;</span>: <span class="hljs-literal">False</span>}
+)
+
+<span class="hljs-comment"># 如果预约成功，添加提醒</span>
+<span class="hljs-keyword">if</span> appointment_result[<span class="hljs-string">&quot;appointment_made&quot;</span>]:
+    add_to_reminders(<span class="hljs-string">&quot;Meeting with Thesis Supervisor scheduled for 10:00 AM tomorrow&quot;</span>)</code></pre><h2>执行过程</h2>
+<p>代码执行通过 exec-python 包来完成，它会：</p>
+<ol>
+<li>解析模型生成的代码</li>
+<li>在安全的环境中执行代码</li>
+<li>跟踪函数调用和变量状态</li>
+<li>返回结构化的执行结果</li>
+</ol>
+<p>根据基准测试结果（DPAB-α），使用 Pythonic function call 的模型在复杂任务处理上通常比使用 JSON-based function call 的模型表现更好。例如，Claude 3.5 Sonnet 在 Pythonic 方式下得分为 87，而在 JSON 方式下仅为 45。</p>
+<table>
+<thead>
+<tr>
+<th>Model Name</th>
+<th>Pythonic</th>
+<th>JSON</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Closed Models</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>Claude 3.5 Sonnet</td>
+<td>87</td>
+<td>45</td>
+</tr>
+<tr>
+<td>o1-preview-2024-09-12</td>
+<td>55</td>
+<td>39</td>
+</tr>
+<tr>
+<td>o1-mini-2024-09-12</td>
+<td>59</td>
+<td>35</td>
+</tr>
+<tr>
+<td>gpt-4o-2024-11-20</td>
+<td>60</td>
+<td>30</td>
+</tr>
+<tr>
+<td>Open Models</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>&gt; 100B Parameters</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>DeepSeek V3 (685B)</td>
+<td>63</td>
+<td>33</td>
+</tr>
+<tr>
+<td>MiniMax-01</td>
+<td>62</td>
+<td>40</td>
+</tr>
+<tr>
+<td>Llama-3.1-405B-Instruct</td>
+<td>60</td>
+<td>38</td>
+</tr>
+<tr>
+<td>&gt; 30B Parameters</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>Qwen-2.5-Coder-32b-Instruct</td>
+<td>68</td>
+<td>32</td>
+</tr>
+<tr>
+<td>Qwen-2.5-72b-instruct</td>
+<td>65</td>
+<td>39</td>
+</tr>
+<tr>
+<td>Llama-3.3-70b-Instruct</td>
+<td>59</td>
+<td>40</td>
+</tr>
+<tr>
+<td>QwQ-32b-Preview</td>
+<td>47</td>
+<td>21</td>
+</tr>
+<tr>
+<td>&lt; 20B Parameters</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>Dria-Agent-a-7B</td>
+<td>70</td>
+<td>38</td>
+</tr>
+<tr>
+<td>Qwen2.5-Coder-7B-Instruct</td>
+<td>44</td>
+<td>39</td>
+</tr>
+<tr>
+<td>Dria-Agent-a-3B</td>
+<td>72</td>
+<td>31</td>
+</tr>
+<tr>
+<td>Qwen2.5-Coder-3B-Instruct</td>
+<td>26</td>
+<td>37</td>
+</tr>
+<tr>
+<td>Qwen-2.5-7B-Instruct</td>
+<td>47</td>
+<td>34</td>
+</tr>
+<tr>
+<td>Phi-4 (14B)</td>
+<td>55</td>
+<td>35</td>
+</tr>
+</tbody></table>
+<h2>参考资料</h2>
+<ul>
+<li><a href="https://huggingface.co/blog/andthattoo/dria-agent-a">Python Is All You Need? Introducing Dria-Agent-α</a></li>
+<li><a href="https://huggingface.co/blog/andthattoo/dpab-a">Dria Pythonic Agent Benchmark (DPAB)</a></li>
+</ul>
+
+</article>
+<nav class="pager"><a class="prev" href="/one-small-step/20250116-what-is-speculative-decoding/"><div class="pager-label">← 上一篇</div><div class="pager-title">什么是推测性解码</div></a><a class="next" href="/one-small-step/20250122-how-to-run-gguf-LLM-model/"><div class="pager-label">下一篇 →</div><div class="pager-title">如何本地运行 GGUF 格式的 LLM 模型</div></a></nav>
+<footer style="margin-top:48px;padding-top:24px;border-top:1px solid var(--border);color:var(--muted);font-size:13px;">
+  <p>原文作者：<a href="https://github.com/karminski" target="_blank" rel="noopener" style="color:var(--accent);">@karminski-牙医</a> · MIT License · <a href="https://github.com/karminski/one-small-step/tree/master/20250117-what-is-pythonic-function-call" target="_blank" rel="noopener" style="color:var(--accent);">查看仓库</a></p>
+</footer>
+</div>
+</body>
+</html>

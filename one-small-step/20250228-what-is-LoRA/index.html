@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>什么是 LoRA · One Small Step · Fan's Notes</title>
+<style>
+:root {
+  --bg: #fafaf7; --surface: #ffffff; --surface-2: #f5f5f0;
+  --text: #1a1a1a; --muted: #6b7280; --border: #e5e7eb;
+  --accent: #b45309; --tech: #0369a1; --tech-soft: #f0f9ff;
+  --code-bg: #f6f7f8; --code-text: #24292e;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f0f0e; --surface: #1a1a18; --surface-2: #14140f;
+    --text: #e5e5e0; --muted: #9ca3af; --border: #2d2d2a;
+    --accent: #fbbf24; --tech: #38bdf8; --tech-soft: #0c1e2e;
+    --code-bg: #1e1e1c; --code-text: #d4d4d4;
+  }
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB",
+               "Microsoft YaHei", "Source Han Sans CN", sans-serif;
+  font-size: 16px; line-height: 1.78;
+  -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+}
+.layout { max-width: 760px; margin: 0 auto; padding: 48px 24px 80px; }
+.crumb {
+  font-size: 13px; color: var(--muted);
+  margin-bottom: 24px; display: flex; align-items: center;
+  gap: 8px; flex-wrap: wrap;
+}
+.crumb a { color: var(--muted); text-decoration: none; border-bottom: 1px solid var(--border); }
+.crumb a:hover { color: var(--accent); border-color: var(--accent); }
+.crumb .sep { color: var(--border); }
+.chapter-meta {
+  font-family: "SF Mono", Monaco, monospace;
+  font-size: 11px; letter-spacing: 0.1em;
+  color: var(--tech); font-weight: 700; margin-bottom: 8px;
+}
+.content h1 {
+  font-size: 32px; line-height: 1.25; margin: 0 0 32px;
+  font-weight: 700; letter-spacing: -0.015em;
+  padding-bottom: 16px; border-bottom: 2px solid var(--text);
+}
+.content h2 { font-size: 24px; margin: 48px 0 14px; line-height: 1.3; font-weight: 600; }
+.content h3 { font-size: 18px; margin: 32px 0 12px; font-weight: 600; color: var(--accent); }
+.content h4 { font-size: 16px; margin: 24px 0 10px; font-weight: 600; }
+.content p { margin: 0 0 18px; }
+.content a { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--border); transition: border-color 0.15s; }
+.content a:hover { border-color: var(--accent); }
+.content ul, .content ol { padding-left: 24px; margin: 0 0 18px; }
+.content li { margin-bottom: 6px; }
+.content li > ul, .content li > ol { margin-top: 6px; }
+.content strong { font-weight: 600; }
+.content em { font-style: italic; }
+.content blockquote { margin: 20px 0; padding: 4px 0 4px 16px; border-left: 3px solid var(--border); color: var(--muted); font-style: italic; }
+.content hr { border: 0; height: 1px; background: var(--border); margin: 40px 0; }
+.content code {
+  font-family: "SF Mono", Monaco, Consolas, "Liberation Mono", monospace;
+  background: var(--code-bg); color: var(--code-text);
+  padding: 2px 6px; border-radius: 4px; font-size: 0.88em;
+  border: 1px solid var(--border);
+}
+.content pre {
+  margin: 20px 0; background: var(--code-bg); border: 1px solid var(--border);
+  border-radius: 8px; padding: 14px 18px; overflow-x: auto;
+  font-size: 13px; line-height: 1.65;
+}
+.content pre code { background: transparent; border: 0; padding: 0; font-size: inherit; color: var(--code-text); }
+.hljs-comment, .hljs-quote { color: #708090; font-style: italic; }
+.hljs-keyword, .hljs-selector-tag, .hljs-built_in { color: #d73a49; }
+.hljs-string, .hljs-attr { color: #032f62; }
+.hljs-number, .hljs-literal { color: #005cc5; }
+.hljs-title, .hljs-function { color: #6f42c1; }
+.hljs-variable, .hljs-tag { color: #e36209; }
+@media (prefers-color-scheme: dark) {
+  .hljs-comment, .hljs-quote { color: #6a737d; }
+  .hljs-keyword, .hljs-selector-tag, .hljs-built_in { color: #f97583; }
+  .hljs-string, .hljs-attr { color: #9ecbff; }
+  .hljs-number, .hljs-literal { color: #79b8ff; }
+  .hljs-title, .hljs-function { color: #b392f0; }
+  .hljs-variable, .hljs-tag { color: #ffab70; }
+}
+.content img {
+  max-width: 100%; height: auto; display: block;
+  margin: 28px auto; border-radius: 6px;
+  border: 1px solid var(--border); background: var(--surface);
+}
+.content img.cover { max-width: 320px; }
+@media (prefers-color-scheme: dark) {
+  .content img:not(.cover) { background: #fff; padding: 8px; }
+}
+.content table {
+  width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14.5px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; overflow: hidden;
+}
+.content th, .content td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); }
+.content th { background: var(--code-bg); font-weight: 600; font-size: 13px; color: var(--muted); }
+.content tr:last-child td { border-bottom: 0; }
+.pager {
+  margin-top: 64px; padding-top: 24px; border-top: 1px solid var(--border);
+  display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+}
+.pager a {
+  display: block; padding: 16px 20px; background: var(--surface);
+  border: 1px solid var(--border); border-radius: 10px;
+  text-decoration: none; color: inherit; transition: all 0.15s;
+}
+.pager a:hover { border-color: var(--accent); transform: translateY(-1px); }
+.pager .pager-label { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+.pager .pager-title { font-size: 14px; font-weight: 600; line-height: 1.4; }
+.pager .next { text-align: right; }
+.pager .prev:empty, .pager .next:empty { background: transparent; border: 0; }
+@media (max-width: 600px) {
+  .layout { padding: 32px 18px 64px; }
+  .content h1 { font-size: 26px; }
+  .content h2 { font-size: 21px; }
+  body { font-size: 15.5px; }
+  .pager { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="layout">
+<nav class="crumb">
+  <a href="/">Fan's Notes</a><span class="sep">/</span>
+  <a href="/one-small-step/">One Small Step</a><span class="sep">/</span>
+  <span>什么是 LoRA</span>
+</nav>
+<div class="chapter-meta">OSS · 2025-02-28</div>
+<article class="content">
+<h2>什么是 LoRA</h2>
+<p>by @karminski-牙医</p>
+<p><img src="assets/images/lora-overview.png" alt="lora-concept" style="max-width:100%;height:auto;display:block;margin:24px auto" loading="lazy"></p>
+<p>(图片来自 Aporia)</p>
+<p>LoRA（Low-Rank Adaptation, 低秩自适应）：由微软于 2021 年提出，是一种高效微调大型语言模型（LLM）的技术。</p>
+<p>注意区分无线通信领域的 LoRa (Long Range).</p>
+<p>它通过在冻结的预训练模型权重旁添加小型可训练的&quot;低秩适应&quot;层，显著降低了微调过程中的计算和内存需求，无需重新训练整个模型。</p>
+<h2>LoRA 的工作原理</h2>
+<p>(如果不知道什么是低秩矩阵, 可以看上一篇内容 <a href="../20250227-what-is-rank-in-matrix/what-is-rank-in-matrix.html">什么是矩阵的秩？什么是低秩矩阵？</a>)</p>
+<p>LoRA 基于这样一个假设：模型微调时的权重更新矩阵 ΔW 具有内在的低秩性质。具体推导过程：</p>
+<ol>
+<li><p><strong>传统微调</strong>：假设原始预训练权重矩阵为 $W \in \mathbb{R}^{d \times k}$，其中：</p>
+<ul>
+<li>d：输入维度（例如 transformer 的 hidden_size）</li>
+<li>k：输出维度
+全参数微调需要更新整个矩阵，参数量为 $d \times k$</li>
+</ul>
+</li>
+<li><p><strong>低秩分解</strong>：引入两个更小的矩阵：</p>
+<ul>
+<li>$W_A \in \mathbb{R}^{d \times r}$（降维矩阵）</li>
+<li>$W_B \in \mathbb{R}^{r \times k}$（升维矩阵）
+其中秩 r ≪ min(d, k)</li>
+</ul>
+</li>
+<li><p><strong>更新机制</strong>：将权重更新表示为：<br>$W_{updated} = W + \Delta W = W + W_A \cdot W_B$
+这相当于用低秩矩阵的乘积来近似全秩更新</p>
+</li>
+<li><p><strong>参数冻结</strong>：原始权重矩阵 W 保持冻结（不更新），只训练 $W_A$ 和 $W_B$</p>
+</li>
+</ol>
+<p><strong>参数效率分析</strong>：</p>
+<ul>
+<li>原始可训练参数：$d \times k$（例如 d=1024, k=1024 → 1,048,576 参数）</li>
+<li>LoRA 参数：$r \times (d + k)$（取 r=8 → 8×(1024+1024)=16,384 参数, 参数减少约 64 倍）</li>
+<li>实际应用中需要权衡：r 值过小可能导致性能下降，r 值过大会降低效率（通常根据模型规模选择 4-128 之间的值）</li>
+</ul>
+<p>这种低秩适应有效的深层原因是：模型在不同任务间的知识迁移主要发生在低维子空间，通过调整这些关键方向就能实现高效适应。</p>
+<h2>LoRA 的主要特点和优势</h2>
+<ul>
+<li><strong>参数高效：</strong> LoRA 仅训练少量额外参数，而不是完整的模型权重。典型场景下可训练参数减少 10-100 倍（具体取决于原模型尺寸和r值）</li>
+<li><strong>训练速度快：</strong> 由于需要更新的参数大幅减少，LoRA 微调比全参数微调速度更快，训练时间更短。</li>
+<li><strong>存储空间小：</strong> LoRA 适配器通常只有几十到几百 MB，而完整的模型可能需要几十 GB。这使得存储和分发多个专门的微调版本变得更加实际。</li>
+<li><strong>推理性能优化：</strong> LoRA 权重可以在推理前合并回原始模型，不会增加推理时的计算开销。</li>
+<li><strong>可组合性：</strong> 多个 LoRA 适配器可以被合并或按不同比例混合，创建具有混合能力的模型。</li>
+<li><strong>质量保持：</strong> 在许多任务中，LoRA 微调的性能与全参数微调相当甚至更好，同时减少了过拟合风险。</li>
+</ul>
+<h2>LoRA 的应用</h2>
+<ul>
+<li><strong>个性化模型：</strong> 为特定领域或任务快速创建专门的模型变体。</li>
+<li><strong>资源受限环境：</strong> 在计算资源有限的环境中实现大型模型的微调。</li>
+<li><strong>多任务学习：</strong> 为不同任务维护单独的 LoRA 适配器，而不是完整的模型副本。</li>
+<li><strong>参数高效迁移学习：</strong> 将通用模型快速适配到专业领域（如医疗、法律、金融等）。</li>
+<li><strong>在线学习：</strong> 持续更新模型以适应新数据，而不需要重新训练完整模型。</li>
+</ul>
+<p>但是要注意, 微调更应针对模型能力上的更新, 而不是知识上的更新. 知识上的更新应该交给 RAG 来完成.</p>
+<p>总结，LoRA 是一种突破性的微调技术，通过显著降低计算需求和存储成本，使得大型语言模型的个性化和专业化变得更加实用和广泛可行。</p>
+<p>随着模型规模不断增长，LoRA 及其变体在 AI 模型部署和适配中的重要性将继续提升。</p>
+<h2>支持 LoRA 的框架</h2>
+<ul>
+<li><a href="https://github.com/huggingface/peft">PEFT</a> (由 Hugging Face 开发的参数高效微调库)</li>
+<li><a href="https://github.com/unslothai/unsloth">unsloth</a> (高效微调框架，显存需求可低至5GB, DeepSeek 几个量化模型的流行版本全是 unsloth 团队的)</li>
+<li><a href="https://github.com/hiyouga/LLaMA-Factory">LLaMA-Factory</a> (用于LLaMA系列模型的流行微调框架)</li>
+</ul>
+<h2>Reference</h2>
+<ul>
+<li><a href="https://arxiv.org/abs/2106.09685">LoRA: Low-Rank Adaptation of Large Language Models</a></li>
+<li><a href="https://www.aporia.com/learn/low-rank-adaptation-lora/">Low-Rank Adaptation: A Closer Look at LoRA</a></li>
+<li><a href="https://huggingface.co/docs/peft/main/en/conceptual_guides/lora">This conceptual guide gives a brief overview of LoRA</a></li>
+<li><a href="https://www.databricks.com/blog/efficient-fine-tuning-lora-guide-llms">Efficient Fine-Tuning of LMs with Low-Rank Adaptation</a></li>
+</ul>
+
+</article>
+<nav class="pager"><a class="prev" href="/one-small-step/20250220-what-is-AI-Agent/"><div class="pager-label">← 上一篇</div><div class="pager-title">什么是 AI Agent</div></a><a class="next" href="/one-small-step/20250307-what-is-vector-embedding/"><div class="pager-label">下一篇 →</div><div class="pager-title">什么是向量嵌入</div></a></nav>
+<footer style="margin-top:48px;padding-top:24px;border-top:1px solid var(--border);color:var(--muted);font-size:13px;">
+  <p>原文作者：<a href="https://github.com/karminski" target="_blank" rel="noopener" style="color:var(--accent);">@karminski-牙医</a> · MIT License · <a href="https://github.com/karminski/one-small-step/tree/master/20250228-what-is-LoRA" target="_blank" rel="noopener" style="color:var(--accent);">查看仓库</a></p>
+</footer>
+</div>
+</body>
+</html>
