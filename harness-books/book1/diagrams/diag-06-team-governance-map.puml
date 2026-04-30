@@ -1,0 +1,59 @@
+@startuml
+title Team Governance Loop - Codify, Inject, Enforce, Observe, Refine
+
+skinparam backgroundColor #F7F1E6
+skinparam shadowing false
+skinparam dpi 130
+skinparam defaultFontName Georgia
+skinparam defaultFontSize 14
+skinparam TitleFontSize 19
+skinparam TitleFontColor #161616
+skinparam NoteFontSize 12
+skinparam ArrowFontSize 12
+skinparam ArrowColor #5E5A53
+skinparam state {
+  BackgroundColor #F2E9D9
+  BorderColor #1D1D1D
+  FontColor #161616
+  ArrowColor #5E5A53
+  StartColor #8C2721
+  EndColor #161616
+}
+skinparam note {
+  BackgroundColor #F5EBDD
+  BorderColor #8C2721
+  FontColor #7B1E1E
+}
+
+state "<b>Codify</b>\nteam CLAUDE.md\nskills\nhooks\nverification rules" as Codify #E8DDD0
+state "<b>Inject</b>\nprompt assembly\nruntime activation\npermission config" as Inject #F2E9D9
+state "<b>Enforce</b>\nask / allow / deny\nhook gates\nsubagent boundaries" as Enforce #EFE6D8
+state "<b>Observe</b>\ntranscript\ntask output\nanalytics" as Observe #EFE6D8
+state "<b>Refine</b>\naudit / replay\npostmortems\nrule edits" as Refine #E8DDD0
+
+Codify --> Inject : versioned\nartifacts
+Inject --> Enforce : active rules\nper turn
+Enforce --> Observe : emits evidence
+Observe --> Refine : patterns / gaps
+Refine --> Codify : updated rules
+
+state "<b>Developer</b>" as Dev #F3E6CD
+Dev --> Inject : session start
+Enforce --> Dev : interactive approval
+Observe --> Dev : live output
+
+note right of Enforce
+  Live governance runs inside
+  the query loop. Rules that
+  cannot reach this state
+  have no teeth.
+end note
+
+note right of Refine
+  Adoption without audit is
+  not governance. The loop
+  only closes if observation
+  drives rule change.
+end note
+
+@enduml

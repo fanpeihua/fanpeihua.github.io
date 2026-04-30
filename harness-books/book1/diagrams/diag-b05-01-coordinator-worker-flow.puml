@@ -1,0 +1,77 @@
+@startuml
+title Coordinator / Worker Flow - Dispatch, Synthesize, Iterate
+
+skinparam backgroundColor #F7F1E6
+skinparam shadowing false
+skinparam dpi 130
+skinparam defaultFontName Georgia
+skinparam defaultFontSize 14
+skinparam TitleFontSize 19
+skinparam TitleFontColor #161616
+skinparam NoteFontSize 12
+skinparam ArrowFontSize 12
+skinparam ArrowColor #5E5A53
+skinparam TitleFontColor #161616
+skinparam sequence {
+  ArrowColor #5E5A53
+  LifeLineBorderColor #1D1D1D
+  LifeLineBackgroundColor #F2E9D9
+  ParticipantBorderColor #1D1D1D
+  ParticipantBackgroundColor #EFE6D8
+  ParticipantFontColor #161616
+}
+skinparam note {
+  BackgroundColor #F5EBDD
+  BorderColor #8C2721
+  FontColor #7B1E1E
+}
+
+actor User as user
+participant Coordinator as coord
+participant Runtime as runtime
+participant "Research\nWorker" as research
+participant "Impl\nWorker" as impl
+participant "Verify\nWorker" as verify
+
+user -> coord : goal
+
+coord -> coord : decompose
+
+loop until enough evidence
+  coord -> runtime : spawn research
+  runtime -> research : isolated context
+  research --> runtime : findings
+  runtime --> coord : result
+  coord -> coord : synthesize\n(gaps? risks?)
+end
+
+coord -> runtime : spawn implementation
+runtime -> impl : isolated context
+impl --> runtime : changes + self-check
+runtime --> coord : result
+
+coord -> runtime : spawn verification
+runtime -> verify : independent context
+verify --> runtime : proof / failure / edges
+runtime --> coord : result
+
+alt verification passes
+  coord --> user : synthesis + next steps
+else verification fails
+  coord -> coord : plan new workers
+  note right
+    Feedback loop closes:
+    failed verification becomes
+    the input to the next
+    research or impl cycle.
+  end note
+end
+
+note left of coord
+  Coordinator owns synthesis,
+  dispatch, and the stopping
+  condition. It is not a
+  relay, it is a controller.
+end note
+
+@enduml

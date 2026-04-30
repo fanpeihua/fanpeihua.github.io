@@ -1,0 +1,77 @@
+@startuml
+title Local Governance Lifecycle - Session-Scoped vs Installed Institutions
+
+skinparam backgroundColor transparent
+skinparam shadowing false
+skinparam dpi 120
+skinparam defaultFontName Georgia
+skinparam defaultFontSize 14
+skinparam TitleFontSize 19
+skinparam TitleFontColor #161616
+skinparam NoteFontSize 12
+skinparam ArrowFontSize 12
+skinparam ArrowColor #5E5A53
+skinparam state {
+  BackgroundColor #F2E9D9
+  BorderColor #1D1D1D
+  FontColor #161616
+  ArrowColor #5E5A53
+  StartColor #8C2721
+  EndColor #161616
+}
+skinparam note {
+  BackgroundColor #F5EBDD
+  BorderColor #8C2721
+  FontColor #7B1E1E
+}
+
+top to bottom direction
+
+state "<b>Claude Code - field-memory governance</b>" as CC {
+  state "Author in repo\nCLAUDE.md / skills /\nhooks / verify rules" as CC_Author #E8DDD0
+  state "Read on session start" as CC_Read
+  state "Active in live loop\nforkedAgent / hooks /\nverification subagents" as CC_Active #EFE6D8
+  state "Transcript / analytics" as CC_Audit
+  state "Edit back in repo" as CC_Edit
+
+  CC_Author -right-> CC_Read : session starts
+  CC_Read -right-> CC_Active : injected
+  CC_Active -down-> CC_Audit : evidence
+  CC_Audit -left-> CC_Edit : find gaps
+  CC_Edit -up-> CC_Author : close loop
+}
+
+state "<b>Codex - institution-mounted governance</b>" as CX {
+  state "Install to CODEX_HOME\nAGENTS.md / skills /\nhooks events" as CX_Install #E8DDD0
+  state "Fingerprint /\n.system marker" as CX_FP
+  state "Mounted assets\nagentsys / threadmgr" as CX_Mount
+  state "Session / thread runtime" as CX_Runtime #EFE6D8
+  state "Thread records /\nhook events" as CX_Records
+  state "Version / re-install" as CX_Version
+
+  CX_Install -right-> CX_FP : stamped
+  CX_FP -right-> CX_Mount : loaded
+  CX_Mount -right-> CX_Runtime : active
+  CX_Runtime -down-> CX_Records : events
+  CX_Records -left-> CX_Version : drive next
+  CX_Version -up-> CX_Install : re-install
+}
+
+CC -[hidden]-> CX
+
+note bottom of CC
+  Governance unit = live session.
+  Rules become active immediately.
+  Fast feedback, weaker version
+  control across machines.
+end note
+
+note bottom of CX
+  Governance unit = installed
+  asset. Rules are stamped,
+  loaded, and emit typed events.
+  Auditable and versionable,
+  slower to change mid-session.
+end note
+
+@enduml

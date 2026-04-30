@@ -1,0 +1,74 @@
+@startuml
+title Query Loop Recovery Branches - Controlled Side Paths
+
+skinparam backgroundColor #F7F1E6
+skinparam shadowing false
+skinparam dpi 130
+skinparam defaultFontName Georgia
+skinparam defaultFontSize 14
+skinparam TitleFontSize 19
+skinparam TitleFontColor #161616
+skinparam NoteFontSize 12
+skinparam ArrowFontSize 12
+skinparam ArrowColor #5E5A53
+skinparam state {
+  BackgroundColor #F2E9D9
+  BorderColor #1D1D1D
+  FontColor #161616
+  ArrowColor #5E5A53
+  StartColor #8C2721
+  EndColor #161616
+}
+skinparam note {
+  BackgroundColor #F5EBDD
+  BorderColor #8C2721
+  FontColor #7B1E1E
+}
+
+[*] --> Trigger
+
+state "Recovery trigger" as Trigger #F5EBDD
+state "PTL: collapse drain" as Drain
+state "PTL: reactive compact" as Compact
+state "MOT: raise cap" as RaiseCap
+state "MOT: inject resume" as Resume
+state "Interrupt: yield pending" as Yield
+state "API/hook: classify\n+ retry policy" as Classify
+state "Post-compact messages" as Post #EFE6D8
+state "Re-enter Prepare" as Reenter #EFE6D8
+state "Surface error" as Surface #F5EBDD
+state "Interruption end" as End #F5EBDD
+
+Trigger --> Drain : prompt too long
+Drain --> Reenter : resolved
+Drain --> Compact : still over budget
+Compact --> Post : summary fits
+Compact --> Surface : compact fails
+Post --> Reenter
+
+Trigger --> RaiseCap : max_output_tokens
+RaiseCap --> Resume : cap not cheap
+RaiseCap --> Reenter : cap raised
+Resume --> Reenter
+
+Trigger --> Yield : user interrupt
+Yield --> End
+
+Trigger --> Classify : api / tool / hook failure
+Classify --> Reenter : retryable
+Classify --> Surface : not retryable
+
+Reenter --> [*]
+Surface --> [*]
+End --> [*]
+
+note right of Reenter
+  Every recoverable branch
+  ends the same way: back
+  into Prepare or a
+  deterministic exit.
+  Recovery is a first-class
+  path, not a patch.
+end note
+
+@enduml

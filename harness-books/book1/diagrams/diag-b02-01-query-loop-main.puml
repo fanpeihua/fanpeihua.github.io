@@ -1,0 +1,63 @@
+@startuml
+title Query Loop Main Cycle - Turn States
+
+skinparam backgroundColor #F7F1E6
+skinparam shadowing false
+skinparam dpi 130
+skinparam defaultFontName Georgia
+skinparam defaultFontSize 14
+skinparam TitleFontSize 19
+skinparam TitleFontColor #161616
+skinparam NoteFontSize 12
+skinparam ArrowFontSize 12
+skinparam ArrowColor #5E5A53
+skinparam state {
+  BackgroundColor #F2E9D9
+  BorderColor #1D1D1D
+  FontColor #161616
+  ArrowColor #5E5A53
+  StartColor #8C2721
+  EndColor #161616
+}
+skinparam note {
+  BackgroundColor #F5EBDD
+  BorderColor #8C2721
+  FontColor #7B1E1E
+}
+
+[*] --> Prepare
+
+state "Prepare\nprefetch / boundary /\nbudget / snip / microcompact" as Prepare #F2E9D9
+state "Blocking Check\nhook / budget / guard" as Blocking #F5EBDD
+state "Stream Model" as Model #EFE6D8
+state "Tool Execution\nStreamingToolExecutor" as Tools #EFE6D8
+state "Append Turn Effects" as Effects #F2E9D9
+state "Stop Hooks" as Stop #E8DDD0
+state "Surface Error" as Error #F5EBDD
+
+Prepare --> Blocking : context ready
+Blocking --> Error : limit hit / hook block
+Blocking --> Model : ok
+Model --> Tools : tool_use
+Model --> Effects : text only
+Tools --> Effects : results merged
+Effects --> Prepare : follow-up turn
+Effects --> Stop : stable completion
+Stop --> [*]
+Error --> [*]
+
+note right of Prepare
+  Every turn starts here.
+  The loop re-enters Prepare
+  after a follow-up turn,
+  after recovery, and after
+  compact rebuilds.
+end note
+
+note right of Tools
+  Tool-result reinjection
+  is what keeps the loop
+  stateful across turns.
+end note
+
+@enduml

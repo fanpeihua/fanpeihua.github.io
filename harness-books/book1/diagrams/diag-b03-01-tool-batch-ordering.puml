@@ -1,0 +1,67 @@
+@startuml
+title Tool Batch Ordering - Concurrency Without Context Reordering
+
+skinparam backgroundColor #F7F1E6
+skinparam shadowing false
+skinparam dpi 130
+skinparam defaultFontName Georgia
+skinparam defaultFontSize 14
+skinparam TitleFontSize 19
+skinparam TitleFontColor #161616
+skinparam NoteFontSize 12
+skinparam ArrowFontSize 12
+skinparam ArrowColor #5E5A53
+skinparam activity {
+  BackgroundColor #F2E9D9
+  BorderColor #1D1D1D
+  FontColor #161616
+  ArrowColor #5E5A53
+  StartColor #8C2721
+  EndColor #161616
+  DiamondBackgroundColor #F5EBDD
+  DiamondBorderColor #8C2721
+}
+skinparam note {
+  BackgroundColor #F5EBDD
+  BorderColor #8C2721
+  FontColor #7B1E1E
+}
+
+start
+
+:Receive tool_use blocks (ordered);
+:partitionToolCalls();
+
+if (batch concurrency-safe?) then (yes)
+  fork
+    :Run tool 1;
+    :Buffer context modifier;
+  fork again
+    :Run tool 2;
+    :Buffer context modifier;
+  fork again
+    :Run tool N;
+    :Buffer context modifier;
+  end fork
+  :Replay modifiers in\noriginal block order;
+else (no)
+  :Run tool 1 serially;
+  :Apply modifier immediately;
+  :Run tool 2 serially;
+  :Apply modifier immediately;
+  :...;
+endif
+
+:Emit tool_results in\nassistant block order;
+stop
+
+note right
+  Invariant: concurrency speeds
+  up I/O; contextual cause-
+  and-effect is always replayed
+  in the original block order.
+  Design principle: never let
+  scheduling leak into semantics.
+end note
+
+@enduml

@@ -1,0 +1,66 @@
+@startuml
+title Query Loop Core - One Iteration Of The While Loop
+
+skinparam backgroundColor #FEFEFE
+skinparam shadowing false
+skinparam dpi 130
+skinparam defaultFontName Georgia
+skinparam defaultFontSize 14
+skinparam TitleFontSize 19
+skinparam TitleFontColor #161616
+skinparam NoteFontSize 12
+skinparam ArrowFontSize 12
+skinparam ArrowColor #5E5A53
+skinparam state {
+  BackgroundColor #F2E9D9
+  BorderColor #1D1D1D
+  FontColor #161616
+  ArrowColor #5E5A53
+  StartColor #8C2721
+  EndColor #161616
+}
+skinparam note {
+  BackgroundColor #F5EBDD
+  BorderColor #8C2721
+  FontColor #7B1E1E
+}
+
+state "<b>Loop State</b>\nmessages\ntoolUseContext\ncompact counters\ntransition reason" as LoopState #E8DDD0
+
+state "Iteration" as Iter {
+  state "Pre-call governance\nbudget / hooks /\nsnip / microcompact" as Pre
+  state "Model stream\ntext / tool_use / usage" as Stream
+  state "Tool work\nplan + execute +\nmerge tool_result" as Tools
+  state "Apply effects" as Apply
+  state "Decide next" as Next
+
+  [*] --> Pre
+  Pre --> Stream : budget ok
+  Pre --> Next : hook / guard blocks
+  Stream --> Tools : tool_use emitted
+  Stream --> Apply : text only
+  Tools --> Apply : results merged
+  Apply --> Next
+}
+
+state "Recoverable\nissue?" as Recover <<choice>>
+state "Turn active?" as Active <<choice>>
+state "Finalize turn" as Final #F2E9D9
+
+LoopState --> Iter : feeds each iteration
+Iter --> Recover : iteration done
+Recover --> Iter : apply compact / retry
+Recover --> Active : stable
+Active --> Iter : yes
+Active --> Final : no
+Final --> [*]
+
+note right of LoopState
+  The loop state is what
+  survives between iterations.
+  Treat it as the real unit
+  of continuity - not the
+  model call itself.
+end note
+
+@enduml

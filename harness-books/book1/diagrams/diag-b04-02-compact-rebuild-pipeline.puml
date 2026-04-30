@@ -1,0 +1,73 @@
+@startuml
+title Compact Rebuild Pipeline - Rebuild The Semantic Floor
+
+skinparam backgroundColor #F7F1E6
+skinparam shadowing false
+skinparam dpi 130
+skinparam defaultFontName Georgia
+skinparam defaultFontSize 14
+skinparam TitleFontSize 19
+skinparam TitleFontColor #161616
+skinparam NoteFontSize 12
+skinparam ArrowFontSize 12
+skinparam ArrowColor #5E5A53
+skinparam activity {
+  BackgroundColor #F2E9D9
+  BorderColor #1D1D1D
+  FontColor #161616
+  ArrowColor #5E5A53
+  StartColor #8C2721
+  EndColor #161616
+  DiamondBackgroundColor #F5EBDD
+  DiamondBorderColor #8C2721
+}
+skinparam note {
+  BackgroundColor #F5EBDD
+  BorderColor #8C2721
+  FontColor #7B1E1E
+}
+
+start
+
+:Strip images /\nreinjected attachments;
+
+:Build summary request;
+
+if (summary request hits PTL?) then (yes)
+  :Trim oldest history groups;
+  :Retry summary request;
+  if (still fails?) then (yes)
+    :Surface PTL\n(circuit breaker);
+    stop
+  else (no)
+  endif
+else (no)
+endif
+
+:Produce summary;
+:Create compact boundary;
+
+fork
+  :Reinject critical files;
+fork again
+  :Reinject active plan;
+fork again
+  :Reinject skills in use;
+fork again
+  :Reinject tool deltas / MCP;
+end fork
+
+:Post-compact working context;
+
+stop
+
+note right
+  Compact does not try to
+  produce one tidy summary.
+  It rebuilds the minimum
+  semantic floor needed for
+  the next turn to keep
+  doing useful work.
+end note
+
+@enduml

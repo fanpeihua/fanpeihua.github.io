@@ -1,0 +1,68 @@
+@startuml
+title Recovery Decision Paths - Cheapest Fix First
+
+skinparam backgroundColor #FEFEFE
+skinparam shadowing false
+skinparam dpi 130
+skinparam defaultFontName Georgia
+skinparam defaultFontSize 14
+skinparam TitleFontSize 19
+skinparam TitleFontColor #161616
+skinparam NoteFontSize 12
+skinparam ArrowFontSize 12
+skinparam ArrowColor #5E5A53
+skinparam activity {
+  BackgroundColor #F2E9D9
+  BorderColor #1D1D1D
+  FontColor #161616
+  ArrowColor #5E5A53
+  StartColor #8C2721
+  EndColor #161616
+  DiamondBackgroundColor #F5EBDD
+  DiamondBorderColor #8C2721
+}
+skinparam note {
+  BackgroundColor #F5EBDD
+  BorderColor #8C2721
+  FontColor #7B1E1E
+}
+
+start
+
+:Recoverable failure observed;
+
+if (prompt too long?) then (yes)
+  :Drain staged collapse\n(local, cheap);
+  if (resolved?) then (yes)
+  else (no)
+    :Reactive compact\n(one shot);
+  endif
+elseif (max_output_tokens?) then (truncate)
+  if (raise cap cheaply?) then (yes)
+    :Raise cap\ncontinue without recap;
+  else (no)
+    :Inject resume meta;
+  endif
+else (api / hook failure)
+  :Classify retry / abort /\nunrecoverable;
+endif
+
+if (budget exhausted\nor guard trips?) then (stop)
+  #F5EBDD:Surface error;
+  end
+else (continue)
+  :Re-enter query loop;
+  stop
+endif
+
+note right
+  Recovery is layered:
+  - local fixes first (collapse)
+  - heavier summarization later
+  - explicit surface only when
+    cheap options are exhausted
+  The same ladder applies to
+  retry and compact paths.
+end note
+
+@enduml

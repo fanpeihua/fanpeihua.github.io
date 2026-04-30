@@ -1,0 +1,77 @@
+@startuml
+title Continuity Comparison - Loop-Resident State vs Recorded Thread
+
+skinparam backgroundColor transparent
+skinparam shadowing false
+skinparam dpi 120
+skinparam defaultFontName Georgia
+skinparam defaultFontSize 14
+skinparam TitleFontSize 19
+skinparam TitleFontColor #161616
+skinparam NoteFontSize 12
+skinparam ArrowFontSize 12
+skinparam ArrowColor #5E5A53
+skinparam state {
+  BackgroundColor #F2E9D9
+  BorderColor #1D1D1D
+  FontColor #161616
+  ArrowColor #5E5A53
+  StartColor #8C2721
+  EndColor #161616
+}
+skinparam note {
+  BackgroundColor #F5EBDD
+  BorderColor #8C2721
+  FontColor #7B1E1E
+}
+
+top to bottom direction
+
+state "<b>Claude Code - continuity in loop state</b>" as CC {
+  state "Loop state\nmessages / toolUseContext /\ncompact counters /\nrecovery counters" as CC_State #E8DDD0
+  state "Turn N" as CC_T1
+  state "Turn N+1" as CC_T2
+  state "Turn N+2" as CC_T3
+  state "Stop / continue?" as CC_Choice <<choice>>
+
+  CC_State -right-> CC_T1 : read / mutate
+  CC_State -right-> CC_T2 : read / mutate
+  CC_State -right-> CC_T3 : read / mutate
+  CC_T1 -down-> CC_Choice
+  CC_T2 -down-> CC_Choice
+  CC_T3 -down-> CC_Choice
+}
+
+state "<b>Codex - continuity as recorded thread</b>" as CX {
+  state "Thread (id)" as CX_Thread #E8DDD0
+  state "Turn runtime" as CX_Turn
+  state "RolloutRecorder" as CX_Rollout #EFE6D8
+  state "state_db_bridge" as CX_StateDb #EFE6D8
+  state "message_history" as CX_Hist #EFE6D8
+  state "Memories pipeline" as CX_Mem
+
+  CX_Thread -right-> CX_Turn : begin turn
+  CX_Turn -right-> CX_Rollout : append
+  CX_Turn -down-> CX_StateDb : write
+  CX_Turn -down-> CX_Hist : write
+  CX_Rollout -down-> CX_Mem : distill
+  CX_Turn -up-> CX_Thread : next turn\n(same id)
+}
+
+CC -[hidden]-> CX
+
+note bottom of CC
+  Continuity = "the loop is
+  still running." Interrupts,
+  compact, and recovery all
+  mutate loop state in place.
+end note
+
+note bottom of CX
+  Continuity = "this thread id
+  has these records." Resume
+  and audit work off indexed
+  evidence, not a live loop.
+end note
+
+@enduml
