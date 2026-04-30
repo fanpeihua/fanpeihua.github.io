@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>心跳放在哪：Query Loop 对照 Thread、Rollout 与 State · Claude Code & Codex 设计哲学比较 · Fan's Notes</title>
+<meta name="description" content="Claude Code & Codex 设计哲学比较 - 心跳放在哪：Query Loop 对照 Thread、Rollout 与 State">
+<style>
+:root {
+  --bg: #fafaf7; --surface: #ffffff; --surface-2: #f5f5f0;
+  --text: #1a1a1a; --muted: #6b7280; --border: #e5e7eb;
+  --accent: #b45309; --tech: #0369a1; --tech-soft: #f0f9ff;
+  --code-bg: #f6f7f8; --code-text: #24292e;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f0f0e; --surface: #1a1a18; --surface-2: #14140f;
+    --text: #e5e5e0; --muted: #9ca3af; --border: #2d2d2a;
+    --accent: #fbbf24; --tech: #38bdf8; --tech-soft: #0c1e2e;
+    --code-bg: #1e1e1c; --code-text: #d4d4d4;
+  }
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB",
+               "Microsoft YaHei", "Source Han Sans CN", sans-serif;
+  font-size: 16px; line-height: 1.78;
+  -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+}
+.layout { max-width: 760px; margin: 0 auto; padding: 48px 24px 80px; }
+
+/* Top crumb */
+.crumb {
+  font-size: 13px; color: var(--muted);
+  margin-bottom: 24px;
+  display: flex; align-items: center; gap: 8px;
+  flex-wrap: wrap;
+}
+.crumb a {
+  color: var(--muted); text-decoration: none;
+  border-bottom: 1px solid var(--border);
+}
+.crumb a:hover { color: var(--accent); border-color: var(--accent); }
+.crumb .sep { color: var(--border); }
+
+/* Chapter header */
+.chapter-meta {
+  font-family: "SF Mono", Monaco, monospace;
+  font-size: 11px; letter-spacing: 0.1em;
+  color: var(--tech); font-weight: 700;
+  margin-bottom: 8px;
+}
+
+/* Markdown content */
+.content h1 {
+  font-size: 32px; line-height: 1.25;
+  margin: 0 0 32px; font-weight: 700;
+  letter-spacing: -0.015em;
+  padding-bottom: 16px;
+  border-bottom: 2px solid var(--text);
+}
+.content h2 {
+  font-size: 24px; margin: 48px 0 14px;
+  line-height: 1.3; font-weight: 600;
+  letter-spacing: -0.005em;
+}
+.content h3 {
+  font-size: 18px; margin: 32px 0 12px;
+  font-weight: 600; color: var(--accent);
+}
+.content h4 {
+  font-size: 16px; margin: 24px 0 10px;
+  font-weight: 600;
+}
+.content p { margin: 0 0 18px; }
+
+.content a {
+  color: var(--accent); text-decoration: none;
+  border-bottom: 1px solid var(--border);
+  transition: border-color 0.15s;
+}
+.content a:hover { border-color: var(--accent); }
+
+.content ul, .content ol { padding-left: 24px; margin: 0 0 18px; }
+.content li { margin-bottom: 6px; }
+.content li > ul, .content li > ol { margin-top: 6px; }
+
+.content strong { font-weight: 600; }
+.content em { font-style: italic; }
+
+.content blockquote {
+  margin: 20px 0; padding: 4px 0 4px 16px;
+  border-left: 3px solid var(--border);
+  color: var(--muted); font-style: italic;
+}
+
+.content hr {
+  border: 0; height: 1px;
+  background: var(--border);
+  margin: 40px 0;
+}
+
+/* Inline code */
+.content code {
+  font-family: "SF Mono", Monaco, Consolas, "Liberation Mono", monospace;
+  background: var(--code-bg); color: var(--code-text);
+  padding: 2px 6px; border-radius: 4px;
+  font-size: 0.88em;
+  border: 1px solid var(--border);
+}
+
+/* Code blocks */
+.content pre {
+  margin: 20px 0;
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 18px;
+  overflow-x: auto;
+  font-size: 13px; line-height: 1.65;
+}
+.content pre code {
+  background: transparent; border: 0;
+  padding: 0; font-size: inherit;
+  color: var(--code-text);
+}
+
+/* Highlight.js minimal theme (works for both light/dark) */
+.hljs-comment, .hljs-quote { color: #708090; font-style: italic; }
+.hljs-keyword, .hljs-selector-tag, .hljs-built_in { color: #d73a49; }
+.hljs-string, .hljs-attr { color: #032f62; }
+.hljs-number, .hljs-literal { color: #005cc5; }
+.hljs-title, .hljs-function { color: #6f42c1; }
+.hljs-variable, .hljs-tag { color: #e36209; }
+@media (prefers-color-scheme: dark) {
+  .hljs-comment, .hljs-quote { color: #6a737d; }
+  .hljs-keyword, .hljs-selector-tag, .hljs-built_in { color: #f97583; }
+  .hljs-string, .hljs-attr { color: #9ecbff; }
+  .hljs-number, .hljs-literal { color: #79b8ff; }
+  .hljs-title, .hljs-function { color: #b392f0; }
+  .hljs-variable, .hljs-tag { color: #ffab70; }
+}
+
+.content table {
+  width: 100%; border-collapse: collapse;
+  margin: 20px 0; font-size: 14.5px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px; overflow: hidden;
+}
+.content th, .content td {
+  padding: 10px 14px; text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+.content th {
+  background: var(--code-bg);
+  font-weight: 600; font-size: 13px;
+  color: var(--muted);
+}
+.content tr:last-child td { border-bottom: 0; }
+
+/* Pager */
+.pager {
+  margin-top: 64px; padding-top: 24px;
+  border-top: 1px solid var(--border);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.pager a {
+  display: block; padding: 16px 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  text-decoration: none; color: inherit;
+  transition: all 0.15s;
+}
+.pager a:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+.pager .pager-label {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+.pager .pager-title {
+  font-size: 14px; font-weight: 600;
+  line-height: 1.4;
+}
+.pager .next { text-align: right; }
+.pager .prev:empty, .pager .next:empty { background: transparent; border: 0; }
+
+@media (max-width: 600px) {
+  .layout { padding: 32px 18px 64px; }
+  .content h1 { font-size: 26px; }
+  .content h2 { font-size: 21px; }
+  body { font-size: 15.5px; }
+  .pager { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="layout">
+<nav class="crumb">
+  <a href="/">Fan's Notes</a><span class="sep">/</span><a href="/harness-books/">Harness Books</a><span class="sep">/</span><span>Book 2: Claude Code & Codex 设计哲学比较</span>
+</nav>
+<div class="chapter-meta">BOOK 2 · 03</div>
+<article class="content">
+<h1>第 3 章 心跳放在哪：Query Loop 对照 Thread、Rollout 与 State</h1>
+<p><img src="diagrams/diag-02-continuity-comparison.png" alt="连续性对比图"></p>
+<h2>3.1 代理系统的核心是连续性</h2>
+<p>把代理系统当成“多轮聊天”，就像把数据库当成“一个比较耐心的记事本”——掩盖了真正的架构难题。代理系统真正难的是连续性：上一轮做了什么这一轮怎么接、工具结果怎么回填、中断后怎么收口、上下文过长怎么整理、失败时要重试还是忠实汇报。这些问题决定系统是不是 agent，而不只是某个”支持工具调用的问答接口”。Claude Code 与 Codex 在这里的差异，比任何功能对照都更有含金量。</p>
+<h2>3.2 Claude Code：把连续性压进主循环</h2>
+<p>Claude Code 的主轴就在 <code>query()</code> 和 <code>queryLoop()</code> 一带。它把很多关键问题都压进循环状态里：当前消息序列、tool use context、compact 跟踪、output token 恢复计数、pending summary、turn count、transition。也就是说，对&quot;代理如何活着&quot;的回答是运行时性的——连续性主要由 loop 维护，系统骨架是一个不断自我校正的会话发动机，而非先有强外部状态模型再驱动执行的体系。优势很现实：工具返回顺序、输出截断、prompt too long、history snip、microcompact、用户插话，这些真实麻烦都发生在 loop 里。它不回避这些问题，而把它们当作 loop 内部的合法状态。设计有工程的粗粝感——不优雅但通常更稳。</p>
+<h2>3.3 Codex：把连续性拆成线程、rollout 与状态桥</h2>
+<p>Codex 更&quot;账本化&quot;。<code>core/src/lib.rs</code> 里连续性被分摊到 <code>codex_thread</code>、<code>thread_manager</code>、<code>rollout</code>、<code>state_db_bridge</code>、<code>state</code>、<code>message_history</code>。</p>
+<p><img src="diagrams/diag-06-codex-thread-state-detail.png" alt="Codex 线程、turn 与状态细节图"></p>
+<p><code>sdk/typescript/src/thread.ts</code> 里 thread 已经是外部开发者可直接操作的一级概念：<code>Thread</code> 持 <code>id</code>，可 <code>runStreamed()</code> 或 <code>run()</code>，<code>thread.started</code> 回填线程 ID；approval policy、working directory、sandbox mode、network access、additional directories 等 turn 级条件都是紧耦合显式参数。&quot;线程主权&quot;很具体——<code>runStreamedInternal()</code> 先做 <code>normalizeInput()</code> 分离文本和图像，调 <code>createOutputSchemaFile()</code> 备 schema，再把 <code>threadId</code>、<code>approvalPolicy</code>、<code>sandboxMode</code>、<code>workingDirectory</code>、<code>networkAccessEnabled</code>、<code>additionalDirectories</code> 一并送进 <code>_exec.run()</code>。收到 <code>thread.started</code> 事件，对象即更新 <code>_id</code>。thread 不是外围包装，是 turn 级执行语义真正经过的一层。连续性不再只是&quot;循环还在继续&quot;，而是&quot;一个线程被一套显式状态结构持续记录和约束&quot;。rollout 的存在尤其说明 Codex 在乎回放、索引、持久化和会话外可见性——系统因此更接近执行记录器，而非现场对话管理器。</p>
+<h2>3.4 差别在于状态安放的位置</h2>
+<p>Claude Code 当然有状态，Codex 当然有循环——差异不在有没有，而在主权在哪。Claude Code 把状态主权更多交给 query loop：系统认为&quot;会话怎么继续&quot;是 runtime 核心问题，许多事情要在 loop 里直接解决。Codex 把状态主权更明确地交给 thread 和 rollout 结构：连续性不该是内部控制流的副产物，而是被线程和状态基础设施承接的显式事实。因此 <code>Thread</code> 在 TypeScript SDK 里已是产品概念，开发者直接围绕它思考 agent turn；Claude Code 的 query loop 则更像发动机室，重要但不一定是用户心智模型的中心。</p>
+<h3>不变式：连续性主权 (invariants)</h3>
+<pre><code class="hljs language-plaintext">// Claude Code (源: src/query.ts)
+assert loop owns {messages, toolUseContext, compactTracking, turnCount}
+assert every loop iteration recomputes &quot;what matters now&quot;
+assert pending tool_use 在同一 loop iteration 内必须被闭合或 synthetic 兜底
+
+// Codex (源: core/src/lib.rs, sdk/typescript/src/thread.ts)
+assert thread.id is stable across runs; rollout records every turn
+assert turn-level {approvalPolicy, sandboxMode, workingDirectory} 在 exec.run() 入参中显式
+assert thread.started 事件先于任何工具调用 emitted
+assert state_db_bridge 持久化早于主循环退出</code></pre><h3>中断与 pending tool_use 的故障矩阵</h3>
+<table>
+<thead>
+<tr>
+<th>事件顺序</th>
+<th>前置状态</th>
+<th>触发</th>
+<th>Claude Code 下一步</th>
+<th>Codex 下一步</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>用户中断 + 工具在飞</td>
+<td>tool_use 未闭合</td>
+<td>用户 abort</td>
+<td>在 loop 内 synthesize tool_result，闭账</td>
+<td>线程层 abort，写 rollout interrupted 事件</td>
+</tr>
+<tr>
+<td>模型输出被截断</td>
+<td>max_output_tokens</td>
+<td>上限触发</td>
+<td>提升 cap 或追加 meta user msg 续写</td>
+<td>线程记录 truncation，由 caller 重启 turn</td>
+</tr>
+<tr>
+<td>prompt too long</td>
+<td>会话过胀</td>
+<td><code>prompt_too_long</code></td>
+<td>loop 内 collapse / reactive compact / surface</td>
+<td>由 thread_manager 裁剪 history 再下一轮</td>
+</tr>
+<tr>
+<td>进程重启</td>
+<td>会话中途崩溃</td>
+<td>crash / kill</td>
+<td>依赖外部 PR / Git 重建，loop 状态易丢</td>
+<td>rollout + state_db_bridge 可按 thread.id 重放</td>
+</tr>
+<tr>
+<td>恢复失败</td>
+<td>连续 compact 失败</td>
+<td>熔断阈值</td>
+<td>跳过 stop hook，faithful 报错</td>
+<td>返回 state bridge 错误，保留 thread 记录</td>
+</tr>
+</tbody></table>
+<h2>3.5 对恢复与可审计性的影响</h2>
+<p>状态安放差异直接影响恢复和审计。Claude Code 的恢复强项在离现场近——很多问题就在 loop 内部被发现和修复（reactive compact、token 上限恢复、工具中断处理），不需要先搬运到更高一层状态模型里再考虑怎么回滚。Codex 的恢复强项体现在状态可追踪性——线程有 ID，rollout 有记录，state bridge 和 message history 提供更清楚的外部结构，系统更容易回答&quot;上一轮到底发生了什么&quot;。<code>core/src/lib.rs</code> 的&quot;档案意识&quot;更明显：不只暴露 <code>CodexThread</code>，还显式导出 <code>ThreadManager</code>、<code>RolloutRecorder</code>、<code>state_db_bridge</code> 和 <code>message_history</code>——一个系统把这些器官放到根模块出口附近，等于承认连续性不是 loop 的副产品而是基础设施本身。简言之：Claude Code 像现场救火队，Codex 像带档案系统的调度中心；前者擅长维持运行，后者擅长说清楚运行是如何被维持的。</p>
+<h2>3.6 对产品和团队接口的影响</h2>
+<p>主权在 loop，团队沿运行时问题组织工作：哪些错误需要恢复、哪些动作应当中断、compact 何时触发、工具结果如何串回主对话。主权在线程和状态结构，团队沿接口与治理组织工作：thread 的生命周期、rollout 保留哪些事件、状态库放哪、approval policy 如何成为 turn 级选项。因此 Claude Code 更像先把 agent 做会再嵌制度，Codex 更像先立制度接口再让 agent 在里面工作。</p>
+<h2>3.7 本章结论</h2>
+<p>这一章的结论可以写得明确一点：</p>
+<blockquote>
+<p>Claude Code 的连续性更多由 query loop 承担，Codex 的连续性更多由 thread、rollout 与 state 基础设施承担。</p>
+</blockquote>
+<p>前者强调 runtime heartbeat。</p>
+<p>后者强调 persisted session substrate。</p>
+<p>这不是审美差异，这是系统权力分配。谁来拥有连续性，谁就定义了 harness 的中心。</p>
+<p>下一章进入最硬的一层：工具、沙箱、审批和执行策略。到了这里，浪漫叙事一般都会自动退场，因为 shell 不大关心文风。</p>
+
+</article>
+<nav class="pager">
+<a class="prev" href="/harness-books/book2/chapter-02-two-control-planes.html"><div class="pager-label">← 上一篇 · 02</div><div class="pager-title">两种控制面：Prompt 拼装与 Instruction Fragment</div></a>
+<a class="next" href="/harness-books/book2/chapter-04-tools-sandbox-and-exec-policy.html"><div class="pager-label">下一篇 · 04 →</div><div class="pager-title">工具、沙箱与策略语言</div></a>
+</nav>
+<footer style="margin-top:48px;padding-top:24px;border-top:1px solid var(--border);color:var(--muted);font-size:13px;">
+  <p>原文作者：<a href="https://github.com/wquguru" target="_blank" rel="noopener" style="color:var(--accent);">wquguru</a> · 内容版权归原作者所有 · <a href="https://harness-books.agentway.dev/book2-comparing/chapter-03-loop-thread-and-rollout.html" target="_blank" rel="noopener" style="color:var(--accent);">在原站查看</a></p>
+</footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>附录 B · 检查清单 · Claude Code & Codex 设计哲学比较 · Fan's Notes</title>
+<meta name="description" content="Claude Code & Codex 设计哲学比较 - 附录 B · 检查清单">
+<style>
+:root {
+  --bg: #fafaf7; --surface: #ffffff; --surface-2: #f5f5f0;
+  --text: #1a1a1a; --muted: #6b7280; --border: #e5e7eb;
+  --accent: #b45309; --tech: #0369a1; --tech-soft: #f0f9ff;
+  --code-bg: #f6f7f8; --code-text: #24292e;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f0f0e; --surface: #1a1a18; --surface-2: #14140f;
+    --text: #e5e5e0; --muted: #9ca3af; --border: #2d2d2a;
+    --accent: #fbbf24; --tech: #38bdf8; --tech-soft: #0c1e2e;
+    --code-bg: #1e1e1c; --code-text: #d4d4d4;
+  }
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB",
+               "Microsoft YaHei", "Source Han Sans CN", sans-serif;
+  font-size: 16px; line-height: 1.78;
+  -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+}
+.layout { max-width: 760px; margin: 0 auto; padding: 48px 24px 80px; }
+
+/* Top crumb */
+.crumb {
+  font-size: 13px; color: var(--muted);
+  margin-bottom: 24px;
+  display: flex; align-items: center; gap: 8px;
+  flex-wrap: wrap;
+}
+.crumb a {
+  color: var(--muted); text-decoration: none;
+  border-bottom: 1px solid var(--border);
+}
+.crumb a:hover { color: var(--accent); border-color: var(--accent); }
+.crumb .sep { color: var(--border); }
+
+/* Chapter header */
+.chapter-meta {
+  font-family: "SF Mono", Monaco, monospace;
+  font-size: 11px; letter-spacing: 0.1em;
+  color: var(--tech); font-weight: 700;
+  margin-bottom: 8px;
+}
+
+/* Markdown content */
+.content h1 {
+  font-size: 32px; line-height: 1.25;
+  margin: 0 0 32px; font-weight: 700;
+  letter-spacing: -0.015em;
+  padding-bottom: 16px;
+  border-bottom: 2px solid var(--text);
+}
+.content h2 {
+  font-size: 24px; margin: 48px 0 14px;
+  line-height: 1.3; font-weight: 600;
+  letter-spacing: -0.005em;
+}
+.content h3 {
+  font-size: 18px; margin: 32px 0 12px;
+  font-weight: 600; color: var(--accent);
+}
+.content h4 {
+  font-size: 16px; margin: 24px 0 10px;
+  font-weight: 600;
+}
+.content p { margin: 0 0 18px; }
+
+.content a {
+  color: var(--accent); text-decoration: none;
+  border-bottom: 1px solid var(--border);
+  transition: border-color 0.15s;
+}
+.content a:hover { border-color: var(--accent); }
+
+.content ul, .content ol { padding-left: 24px; margin: 0 0 18px; }
+.content li { margin-bottom: 6px; }
+.content li > ul, .content li > ol { margin-top: 6px; }
+
+.content strong { font-weight: 600; }
+.content em { font-style: italic; }
+
+.content blockquote {
+  margin: 20px 0; padding: 4px 0 4px 16px;
+  border-left: 3px solid var(--border);
+  color: var(--muted); font-style: italic;
+}
+
+.content hr {
+  border: 0; height: 1px;
+  background: var(--border);
+  margin: 40px 0;
+}
+
+/* Inline code */
+.content code {
+  font-family: "SF Mono", Monaco, Consolas, "Liberation Mono", monospace;
+  background: var(--code-bg); color: var(--code-text);
+  padding: 2px 6px; border-radius: 4px;
+  font-size: 0.88em;
+  border: 1px solid var(--border);
+}
+
+/* Code blocks */
+.content pre {
+  margin: 20px 0;
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 18px;
+  overflow-x: auto;
+  font-size: 13px; line-height: 1.65;
+}
+.content pre code {
+  background: transparent; border: 0;
+  padding: 0; font-size: inherit;
+  color: var(--code-text);
+}
+
+/* Highlight.js minimal theme (works for both light/dark) */
+.hljs-comment, .hljs-quote { color: #708090; font-style: italic; }
+.hljs-keyword, .hljs-selector-tag, .hljs-built_in { color: #d73a49; }
+.hljs-string, .hljs-attr { color: #032f62; }
+.hljs-number, .hljs-literal { color: #005cc5; }
+.hljs-title, .hljs-function { color: #6f42c1; }
+.hljs-variable, .hljs-tag { color: #e36209; }
+@media (prefers-color-scheme: dark) {
+  .hljs-comment, .hljs-quote { color: #6a737d; }
+  .hljs-keyword, .hljs-selector-tag, .hljs-built_in { color: #f97583; }
+  .hljs-string, .hljs-attr { color: #9ecbff; }
+  .hljs-number, .hljs-literal { color: #79b8ff; }
+  .hljs-title, .hljs-function { color: #b392f0; }
+  .hljs-variable, .hljs-tag { color: #ffab70; }
+}
+
+.content table {
+  width: 100%; border-collapse: collapse;
+  margin: 20px 0; font-size: 14.5px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px; overflow: hidden;
+}
+.content th, .content td {
+  padding: 10px 14px; text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+.content th {
+  background: var(--code-bg);
+  font-weight: 600; font-size: 13px;
+  color: var(--muted);
+}
+.content tr:last-child td { border-bottom: 0; }
+
+/* Pager */
+.pager {
+  margin-top: 64px; padding-top: 24px;
+  border-top: 1px solid var(--border);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.pager a {
+  display: block; padding: 16px 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  text-decoration: none; color: inherit;
+  transition: all 0.15s;
+}
+.pager a:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+.pager .pager-label {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+.pager .pager-title {
+  font-size: 14px; font-weight: 600;
+  line-height: 1.4;
+}
+.pager .next { text-align: right; }
+.pager .prev:empty, .pager .next:empty { background: transparent; border: 0; }
+
+@media (max-width: 600px) {
+  .layout { padding: 32px 18px 64px; }
+  .content h1 { font-size: 26px; }
+  .content h2 { font-size: 21px; }
+  body { font-size: 15.5px; }
+  .pager { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="layout">
+<nav class="crumb">
+  <a href="/">Fan's Notes</a><span class="sep">/</span><a href="/harness-books/">Harness Books</a><span class="sep">/</span><span>Book 2: Claude Code & Codex 设计哲学比较</span>
+</nav>
+<div class="chapter-meta">BOOK 2 · B</div>
+<article class="content">
+<h1>附录 B 检查清单：如何判断你的 Harness 更像 Claude Code、Codex，还是半成品</h1>
+<p>比较如果不能落成检查清单，最后很容易只剩一些表述完整却难落地的判断。下面这份附录，就是把前面几章压成团队可直接讨论的清单。</p>
+<h2>B.1 控制面清单 (invariants)</h2>
+<pre><code class="hljs language-plaintext">assert every instruction has {source, type, precedence}        # fragment 可识别
+assert prompt 中 control-plane 与 output-style 明确区分         # 文风不等于秩序
+assert 本地规则的作用域（CLAUDE.md / AGENTS.md）显式标注
+assert team 规则变更可通过 diff 追踪                           # 非口头约定</code></pre><p>答不清这些，说明控制面还停留在&quot;能用就行&quot;。</p>
+<h2>B.2 连续性清单 (invariants)</h2>
+<pre><code class="hljs language-plaintext">assert 连续性主权 ∈ {main loop, thread+rollout+state}          # 明确归属
+assert 中断 ⇒ tool_result 同步闭账（synthetic 兜底也算）
+assert 长会话有 compact / truncation / recovery 三件套
+assert thread.id / 会话索引 / 状态落地为系统一等概念</code></pre><p>长会话若主要靠模型自己&quot;记得住&quot;，基本不必再看。</p>
+<h2>B.3 工具与审批清单 (invariants)</h2>
+<pre><code class="hljs language-plaintext">assert tool = schema 化接口，additional_properties=false
+assert approval policy 可独立评估（不混在代码 if/else 里）
+assert 危险工具（Bash 等）有专门治理                           # 非一视同仁
+assert {workdir, network, sandbox, approval} 可显式表达</code></pre><p>系统只能回答&quot;我们也有权限控制&quot;，基本等于没设计权限。</p>
+<h2>B.4 本地治理清单 (invariants)</h2>
+<pre><code class="hljs language-plaintext">assert 本地规则可按 {目录, 团队, 任务类型} 分层
+assert skill 视为可复用制度切片，非长 prompt                   # 有版本/来源
+assert hook 挂在明确生命周期事件（pre/post/session_start/stop）
+assert {skill, rule, hook} 具备 {version, source, trigger boundary}</code></pre><h2>B.5 多代理与验证清单 (invariants)</h2>
+<pre><code class="hljs language-plaintext">assert 多代理的第一目的是职责分离，并行是附带           # 否则是把混乱并行化
+assert 存在独立 verifier（verifier ≠ implementer）
+assert 委派为显式工具或显式状态事件，非 runtime 魔法
+assert 子代理 {failure, timeout, cancel} ⇒ 明确 cleanup owner</code></pre><h2>B.6 你更像哪一类系统</h2>
+<p>更像 Claude Code 的信号：</p>
+<ul>
+<li>你最重视 query loop、工具编排、中断、compact 与恢复</li>
+<li>你擅长让规则快速进入现场会话</li>
+<li>你更关心 agent 如何在复杂任务里持续运行</li>
+</ul>
+<p>更像 Codex 的信号：</p>
+<ul>
+<li>你最重视 instruction fragment、tool schema、approval policy、thread / rollout / state</li>
+<li>你擅长把本地规则做成结构化资产</li>
+<li>你更关心 agent 如何在组织里被长期治理</li>
+</ul>
+<p>更像半成品的信号：</p>
+<ul>
+<li>两边的名词都说得出来，但谁负责秩序说不清</li>
+<li>有很多能力入口，但没有清楚的恢复路径</li>
+<li>有很多规则文本，但没有作用域和优先级</li>
+<li>有多代理，但没有责任分离和收尾机制</li>
+</ul>
+<h2>B.7 最后六问</h2>
+<p>要是时间不够，只问这六句：</p>
+<ul>
+<li>谁拥有最终控制权，模型还是 harness</li>
+<li>连续性主要住在 loop 里，还是住在线程和状态里</li>
+<li>工具动手前，谁来拦最后一道</li>
+<li>本地规则怎么进入系统，怎么分层</li>
+<li>验证由谁负责，如何独立</li>
+<li>出事以后，团队靠什么追溯</li>
+</ul>
+<p>这六句问下来，系统大概属于哪一派，通常也就露出来了。</p>
+<h2>B.8 阈值与顺序速查 (thresholds &amp; orderings)</h2>
+<table>
+<thead>
+<tr>
+<th>名称</th>
+<th>值</th>
+<th>作用</th>
+<th>源引用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>MAX_ENTRYPOINT_LINES</code></td>
+<td>200</td>
+<td>入口文件行数上限</td>
+<td>书一 ch5 / <code>memdir/memdir.ts</code></td>
+</tr>
+<tr>
+<td><code>MAX_SECTION_LENGTH</code></td>
+<td>2_000</td>
+<td>session memory 单节上限</td>
+<td><code>SessionMemory/prompts.ts</code></td>
+</tr>
+<tr>
+<td><code>MAX_TOTAL_SESSION_MEMORY_TOKENS</code></td>
+<td>12_000</td>
+<td>会话记忆总预算</td>
+<td><code>SessionMemory/prompts.ts</code></td>
+</tr>
+<tr>
+<td><code>AUTOCOMPACT_BUFFER_TOKENS</code></td>
+<td>13_000</td>
+<td>autocompact 警戒缓冲</td>
+<td><code>compact/autoCompact.ts</code></td>
+</tr>
+<tr>
+<td><code>MAX_CONSECUTIVE_AUTOCOMPACT_FAILURES</code></td>
+<td>3</td>
+<td>熔断阈值</td>
+<td><code>compact/autoCompact.ts</code></td>
+</tr>
+<tr>
+<td><code>yield_time_ms</code></td>
+<td>per-tool</td>
+<td>单次 exec 阻塞毫秒上限</td>
+<td><code>local_tool.rs</code></td>
+</tr>
+<tr>
+<td><code>wait_agent.timeout</code></td>
+<td>min/default/max</td>
+<td>子代理等待窗口</td>
+<td><code>agent_tool.rs</code></td>
+</tr>
+<tr>
+<td>Bash 子命令数 cap</td>
+<td>implicit</td>
+<td>复合子命令上限</td>
+<td><code>bashPermissions.ts</code></td>
+</tr>
+</tbody></table>
+<p>事件顺序速查：</p>
+<ul>
+<li>session_start → user_prompt_submit → pre_tool_use → tool exec → post_tool_use → stop</li>
+<li>spawn_agent → send_input* → wait_agent → close_agent（cascade 关闭后代）</li>
+<li>PTL → collapse → reactive compact → 若仍 PTL 则 surface 错误（不再循环）</li>
+</ul>
+
+</article>
+<nav class="pager">
+<a class="prev" href="/harness-books/book2/appendix-a-source-map.html"><div class="pager-label">← 上一篇 · A</div><div class="pager-title">附录 A · 源码地图</div></a>
+<span class="next"></span>
+</nav>
+<footer style="margin-top:48px;padding-top:24px;border-top:1px solid var(--border);color:var(--muted);font-size:13px;">
+  <p>原文作者：<a href="https://github.com/wquguru" target="_blank" rel="noopener" style="color:var(--accent);">wquguru</a> · 内容版权归原作者所有 · <a href="https://harness-books.agentway.dev/book2-comparing/appendix-b-checklists.html" target="_blank" rel="noopener" style="color:var(--accent);">在原站查看</a></p>
+</footer>
+</div>
+</body>
+</html>

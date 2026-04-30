@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>殊途同归，还是各表一枝 · Claude Code & Codex 设计哲学比较 · Fan's Notes</title>
+<meta name="description" content="Claude Code & Codex 设计哲学比较 - 殊途同归，还是各表一枝">
+<style>
+:root {
+  --bg: #fafaf7; --surface: #ffffff; --surface-2: #f5f5f0;
+  --text: #1a1a1a; --muted: #6b7280; --border: #e5e7eb;
+  --accent: #b45309; --tech: #0369a1; --tech-soft: #f0f9ff;
+  --code-bg: #f6f7f8; --code-text: #24292e;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f0f0e; --surface: #1a1a18; --surface-2: #14140f;
+    --text: #e5e5e0; --muted: #9ca3af; --border: #2d2d2a;
+    --accent: #fbbf24; --tech: #38bdf8; --tech-soft: #0c1e2e;
+    --code-bg: #1e1e1c; --code-text: #d4d4d4;
+  }
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB",
+               "Microsoft YaHei", "Source Han Sans CN", sans-serif;
+  font-size: 16px; line-height: 1.78;
+  -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+}
+.layout { max-width: 760px; margin: 0 auto; padding: 48px 24px 80px; }
+
+/* Top crumb */
+.crumb {
+  font-size: 13px; color: var(--muted);
+  margin-bottom: 24px;
+  display: flex; align-items: center; gap: 8px;
+  flex-wrap: wrap;
+}
+.crumb a {
+  color: var(--muted); text-decoration: none;
+  border-bottom: 1px solid var(--border);
+}
+.crumb a:hover { color: var(--accent); border-color: var(--accent); }
+.crumb .sep { color: var(--border); }
+
+/* Chapter header */
+.chapter-meta {
+  font-family: "SF Mono", Monaco, monospace;
+  font-size: 11px; letter-spacing: 0.1em;
+  color: var(--tech); font-weight: 700;
+  margin-bottom: 8px;
+}
+
+/* Markdown content */
+.content h1 {
+  font-size: 32px; line-height: 1.25;
+  margin: 0 0 32px; font-weight: 700;
+  letter-spacing: -0.015em;
+  padding-bottom: 16px;
+  border-bottom: 2px solid var(--text);
+}
+.content h2 {
+  font-size: 24px; margin: 48px 0 14px;
+  line-height: 1.3; font-weight: 600;
+  letter-spacing: -0.005em;
+}
+.content h3 {
+  font-size: 18px; margin: 32px 0 12px;
+  font-weight: 600; color: var(--accent);
+}
+.content h4 {
+  font-size: 16px; margin: 24px 0 10px;
+  font-weight: 600;
+}
+.content p { margin: 0 0 18px; }
+
+.content a {
+  color: var(--accent); text-decoration: none;
+  border-bottom: 1px solid var(--border);
+  transition: border-color 0.15s;
+}
+.content a:hover { border-color: var(--accent); }
+
+.content ul, .content ol { padding-left: 24px; margin: 0 0 18px; }
+.content li { margin-bottom: 6px; }
+.content li > ul, .content li > ol { margin-top: 6px; }
+
+.content strong { font-weight: 600; }
+.content em { font-style: italic; }
+
+.content blockquote {
+  margin: 20px 0; padding: 4px 0 4px 16px;
+  border-left: 3px solid var(--border);
+  color: var(--muted); font-style: italic;
+}
+
+.content hr {
+  border: 0; height: 1px;
+  background: var(--border);
+  margin: 40px 0;
+}
+
+/* Inline code */
+.content code {
+  font-family: "SF Mono", Monaco, Consolas, "Liberation Mono", monospace;
+  background: var(--code-bg); color: var(--code-text);
+  padding: 2px 6px; border-radius: 4px;
+  font-size: 0.88em;
+  border: 1px solid var(--border);
+}
+
+/* Code blocks */
+.content pre {
+  margin: 20px 0;
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 18px;
+  overflow-x: auto;
+  font-size: 13px; line-height: 1.65;
+}
+.content pre code {
+  background: transparent; border: 0;
+  padding: 0; font-size: inherit;
+  color: var(--code-text);
+}
+
+/* Highlight.js minimal theme (works for both light/dark) */
+.hljs-comment, .hljs-quote { color: #708090; font-style: italic; }
+.hljs-keyword, .hljs-selector-tag, .hljs-built_in { color: #d73a49; }
+.hljs-string, .hljs-attr { color: #032f62; }
+.hljs-number, .hljs-literal { color: #005cc5; }
+.hljs-title, .hljs-function { color: #6f42c1; }
+.hljs-variable, .hljs-tag { color: #e36209; }
+@media (prefers-color-scheme: dark) {
+  .hljs-comment, .hljs-quote { color: #6a737d; }
+  .hljs-keyword, .hljs-selector-tag, .hljs-built_in { color: #f97583; }
+  .hljs-string, .hljs-attr { color: #9ecbff; }
+  .hljs-number, .hljs-literal { color: #79b8ff; }
+  .hljs-title, .hljs-function { color: #b392f0; }
+  .hljs-variable, .hljs-tag { color: #ffab70; }
+}
+
+.content table {
+  width: 100%; border-collapse: collapse;
+  margin: 20px 0; font-size: 14.5px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px; overflow: hidden;
+}
+.content th, .content td {
+  padding: 10px 14px; text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+.content th {
+  background: var(--code-bg);
+  font-weight: 600; font-size: 13px;
+  color: var(--muted);
+}
+.content tr:last-child td { border-bottom: 0; }
+
+/* Pager */
+.pager {
+  margin-top: 64px; padding-top: 24px;
+  border-top: 1px solid var(--border);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.pager a {
+  display: block; padding: 16px 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  text-decoration: none; color: inherit;
+  transition: all 0.15s;
+}
+.pager a:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+.pager .pager-label {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+.pager .pager-title {
+  font-size: 14px; font-weight: 600;
+  line-height: 1.4;
+}
+.pager .next { text-align: right; }
+.pager .prev:empty, .pager .next:empty { background: transparent; border: 0; }
+
+@media (max-width: 600px) {
+  .layout { padding: 32px 18px 64px; }
+  .content h1 { font-size: 26px; }
+  .content h2 { font-size: 21px; }
+  body { font-size: 15.5px; }
+  .pager { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="layout">
+<nav class="crumb">
+  <a href="/">Fan's Notes</a><span class="sep">/</span><a href="/harness-books/">Harness Books</a><span class="sep">/</span><span>Book 2: Claude Code & Codex 设计哲学比较</span>
+</nav>
+<div class="chapter-meta">BOOK 2 · 07</div>
+<article class="content">
+<h1>第 7 章 殊途同归，还是各表一枝</h1>
+<h2>7.1 先说“同归”的部分</h2>
+<p>要是只问结论，我会先说：它们确实殊途同归。</p>
+<p>原因很简单。Claude Code 和 Codex 都不把模型当作值得直接托付的执行体。它们都承认：</p>
+<ul>
+<li>prompt 不等于控制全部</li>
+<li>工具必须受约束</li>
+<li>长会话一定需要状态治理</li>
+<li>本地规则必须进入系统</li>
+<li>多代理必须有分工和验证</li>
+</ul>
+<p>换句话说，它们都已经越过了那种“只要模型更强，系统问题就会自动消失”的幼稚阶段。谁能走到这一步，谁就已经不再把 agent 当成聊天机器人带几把工具那么简单。</p>
+<p>所以从总体方向看，它们确实在同一个目的地上会合：把 harness 当成真正的控制层，把模型当成这层控制之下最不稳定、但也最有生产力的部件。</p>
+<h2>7.2 再说“各表一枝”的部分</h2>
+<p>但要是因此说它们本质一样，那就太粗糙了。</p>
+<p>Claude Code 的主轴更像这样：</p>
+<ul>
+<li>从 query loop 出发</li>
+<li>在运行时处理连续性</li>
+<li>用 compact、工具编排、中断和恢复维持秩序</li>
+<li>用技能、hook、验证把现场规则和团队制度接进来</li>
+</ul>
+<p>Codex 的主轴更像这样：</p>
+<ul>
+<li>从模块边界和控制层显式化出发</li>
+<li>把 instruction 做成 fragment</li>
+<li>把工具做成 schema</li>
+<li>把执行边界做成 policy</li>
+<li>把会话做成 thread / rollout / state</li>
+<li>把本地规则与 hook 做成结构化资产和事件系统</li>
+</ul>
+<p>前者像从机械经验里塑出来的系统。</p>
+<p>后者像从制度设计里塑出来的系统。</p>
+<p>这就是“各表一枝”的地方。差别不在目的，而在骨架。</p>
+<h2>7.3 如果非要给它们起一个更难听但更准确的名字</h2>
+<p>我甚至愿意把它们叫作两种不同的 harness 政体。</p>
+<p>Claude Code 比较接近运行时共和制。很多权力集中在主循环和现场调度上，秩序通过不断的现实协商来维持。它并不是不讲制度，只是制度往往服务于会话现场。</p>
+<p>Codex 比较像控制面立宪制。很多权力首先被写进类型、片段、策略、线程和事件系统里，运行时当然还要做判断，但那套判断更倾向于在明确框架下展开。</p>
+<p>这么说当然有点夸张，不过有助于看清一件事：harness 从来不只是技术组件堆积，它也是一种权力分配方式。谁定义边界，谁解释状态，谁拥有最后的执行解释权——这些事情最后都会体现在架构里。</p>
+<h2>7.4 对后来者的启发</h2>
+<p>如果团队准备做自己的 coding agent，这份比较真正有用的地方，是帮你少犯两类错误，而不是让你选边站。</p>
+<p>第一类错误，是误以为只要学一套功能表就够了。其实不够。你得先决定自己的主要矛盾是什么。是长会话里容易失控，还是规则来源太散、权限边界不清？不同矛盾，会把你推向不同 harness 形态。</p>
+<p>第二类错误，是试图把两者最顺眼的特性不加判断地拼在一起。工程上最危险的往往不是取舍，而在没有取舍。你既想要完全动态的运行时灵活性，又想要彻底显式的结构化控制面，最后多半会得到两头都不彻底的系统。</p>
+<p>更合理的做法是：</p>
+<ul>
+<li>如果你更怕现场失控，就先把 runtime heartbeat 做扎实</li>
+<li>如果你更怕制度失真，就先把 instruction、tool、policy、state 显式化</li>
+<li>等主矛盾稳住，再逐步补另一边</li>
+</ul>
+<p>这里还可以多加一个提醒。现实里很多后起系统既没有把运行时纪律做扎实，也没有把控制层显式化到位，而是走向第三种更容易上手、也更容易失控的路线：把越来越多的 bootstrap 文件、角色设定、技能说明和工作区文本堆进 prompt，试图靠“信息更全”弥补骨架不足。这类系统短期里常常显得能跑，长期里却容易同时暴露两类问题：token 烧得快，工作语义又不够稳。</p>
+<h2>7.5 最终判断</h2>
+<p>书名里的问题，现在可以正式回答。</p>
+<p>它们是殊途同归。</p>
+<p>也是各表一枝。</p>
+<p>“同归”说的是最终承认的现实一致：模型不可靠，harness 才是秩序来源。</p>
+<p>“各表一枝”说的是实现这个现实的政治经济学不同：Claude Code 更信运行时纪律，Codex 更信显式控制层。</p>
+<p>而那些主要靠 prompt 堆叠来维持上下文的系统，则更像还停在中间地带。它们已经意识到模型会忘、会漂移，所以开始加 memory、加 skills、加 compact；但如果上下文治理仍然主要依赖“先注入，再抢救”，那就还没有真正决定把秩序放在哪一层。</p>
+<p>这两种路径没有谁天然更高明。真正的问题是，你的系统准备把不确定性关进哪一层笼子里。</p>
+<p>笼子的位置，决定了系统以后会演化成什么样。</p>
+
+</article>
+<nav class="pager">
+<a class="prev" href="/harness-books/book2/chapter-06-delegation-verification-and-state.html"><div class="pager-label">← 上一篇 · 06</div><div class="pager-title">委派、验证与持久状态</div></a>
+<a class="next" href="/harness-books/book2/chapter-08-how-to-choose-or-build.html"><div class="pager-label">下一篇 · 08 →</div><div class="pager-title">如果你要自己做</div></a>
+</nav>
+<footer style="margin-top:48px;padding-top:24px;border-top:1px solid var(--border);color:var(--muted);font-size:13px;">
+  <p>原文作者：<a href="https://github.com/wquguru" target="_blank" rel="noopener" style="color:var(--accent);">wquguru</a> · 内容版权归原作者所有 · <a href="https://harness-books.agentway.dev/book2-comparing/chapter-07-convergence-and-divergence.html" target="_blank" rel="noopener" style="color:var(--accent);">在原站查看</a></p>
+</footer>
+</div>
+</body>
+</html>

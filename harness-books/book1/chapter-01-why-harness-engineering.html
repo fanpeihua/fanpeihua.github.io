@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>为什么需要 Harness Engineering · Claude Code 设计指南 · Fan's Notes</title>
+<meta name="description" content="Claude Code 设计指南 - 为什么需要 Harness Engineering">
+<style>
+:root {
+  --bg: #fafaf7; --surface: #ffffff; --surface-2: #f5f5f0;
+  --text: #1a1a1a; --muted: #6b7280; --border: #e5e7eb;
+  --accent: #b45309; --tech: #0369a1; --tech-soft: #f0f9ff;
+  --code-bg: #f6f7f8; --code-text: #24292e;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f0f0e; --surface: #1a1a18; --surface-2: #14140f;
+    --text: #e5e5e0; --muted: #9ca3af; --border: #2d2d2a;
+    --accent: #fbbf24; --tech: #38bdf8; --tech-soft: #0c1e2e;
+    --code-bg: #1e1e1c; --code-text: #d4d4d4;
+  }
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB",
+               "Microsoft YaHei", "Source Han Sans CN", sans-serif;
+  font-size: 16px; line-height: 1.78;
+  -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+}
+.layout { max-width: 760px; margin: 0 auto; padding: 48px 24px 80px; }
+
+/* Top crumb */
+.crumb {
+  font-size: 13px; color: var(--muted);
+  margin-bottom: 24px;
+  display: flex; align-items: center; gap: 8px;
+  flex-wrap: wrap;
+}
+.crumb a {
+  color: var(--muted); text-decoration: none;
+  border-bottom: 1px solid var(--border);
+}
+.crumb a:hover { color: var(--accent); border-color: var(--accent); }
+.crumb .sep { color: var(--border); }
+
+/* Chapter header */
+.chapter-meta {
+  font-family: "SF Mono", Monaco, monospace;
+  font-size: 11px; letter-spacing: 0.1em;
+  color: var(--tech); font-weight: 700;
+  margin-bottom: 8px;
+}
+
+/* Markdown content */
+.content h1 {
+  font-size: 32px; line-height: 1.25;
+  margin: 0 0 32px; font-weight: 700;
+  letter-spacing: -0.015em;
+  padding-bottom: 16px;
+  border-bottom: 2px solid var(--text);
+}
+.content h2 {
+  font-size: 24px; margin: 48px 0 14px;
+  line-height: 1.3; font-weight: 600;
+  letter-spacing: -0.005em;
+}
+.content h3 {
+  font-size: 18px; margin: 32px 0 12px;
+  font-weight: 600; color: var(--accent);
+}
+.content h4 {
+  font-size: 16px; margin: 24px 0 10px;
+  font-weight: 600;
+}
+.content p { margin: 0 0 18px; }
+
+.content a {
+  color: var(--accent); text-decoration: none;
+  border-bottom: 1px solid var(--border);
+  transition: border-color 0.15s;
+}
+.content a:hover { border-color: var(--accent); }
+
+.content ul, .content ol { padding-left: 24px; margin: 0 0 18px; }
+.content li { margin-bottom: 6px; }
+.content li > ul, .content li > ol { margin-top: 6px; }
+
+.content strong { font-weight: 600; }
+.content em { font-style: italic; }
+
+.content blockquote {
+  margin: 20px 0; padding: 4px 0 4px 16px;
+  border-left: 3px solid var(--border);
+  color: var(--muted); font-style: italic;
+}
+
+.content hr {
+  border: 0; height: 1px;
+  background: var(--border);
+  margin: 40px 0;
+}
+
+/* Inline code */
+.content code {
+  font-family: "SF Mono", Monaco, Consolas, "Liberation Mono", monospace;
+  background: var(--code-bg); color: var(--code-text);
+  padding: 2px 6px; border-radius: 4px;
+  font-size: 0.88em;
+  border: 1px solid var(--border);
+}
+
+/* Code blocks */
+.content pre {
+  margin: 20px 0;
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 18px;
+  overflow-x: auto;
+  font-size: 13px; line-height: 1.65;
+}
+.content pre code {
+  background: transparent; border: 0;
+  padding: 0; font-size: inherit;
+  color: var(--code-text);
+}
+
+/* Highlight.js minimal theme (works for both light/dark) */
+.hljs-comment, .hljs-quote { color: #708090; font-style: italic; }
+.hljs-keyword, .hljs-selector-tag, .hljs-built_in { color: #d73a49; }
+.hljs-string, .hljs-attr { color: #032f62; }
+.hljs-number, .hljs-literal { color: #005cc5; }
+.hljs-title, .hljs-function { color: #6f42c1; }
+.hljs-variable, .hljs-tag { color: #e36209; }
+@media (prefers-color-scheme: dark) {
+  .hljs-comment, .hljs-quote { color: #6a737d; }
+  .hljs-keyword, .hljs-selector-tag, .hljs-built_in { color: #f97583; }
+  .hljs-string, .hljs-attr { color: #9ecbff; }
+  .hljs-number, .hljs-literal { color: #79b8ff; }
+  .hljs-title, .hljs-function { color: #b392f0; }
+  .hljs-variable, .hljs-tag { color: #ffab70; }
+}
+
+.content table {
+  width: 100%; border-collapse: collapse;
+  margin: 20px 0; font-size: 14.5px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px; overflow: hidden;
+}
+.content th, .content td {
+  padding: 10px 14px; text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+.content th {
+  background: var(--code-bg);
+  font-weight: 600; font-size: 13px;
+  color: var(--muted);
+}
+.content tr:last-child td { border-bottom: 0; }
+
+/* Pager */
+.pager {
+  margin-top: 64px; padding-top: 24px;
+  border-top: 1px solid var(--border);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.pager a {
+  display: block; padding: 16px 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  text-decoration: none; color: inherit;
+  transition: all 0.15s;
+}
+.pager a:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+.pager .pager-label {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+.pager .pager-title {
+  font-size: 14px; font-weight: 600;
+  line-height: 1.4;
+}
+.pager .next { text-align: right; }
+.pager .prev:empty, .pager .next:empty { background: transparent; border: 0; }
+
+@media (max-width: 600px) {
+  .layout { padding: 32px 18px 64px; }
+  .content h1 { font-size: 26px; }
+  .content h2 { font-size: 21px; }
+  body { font-size: 15.5px; }
+  .pager { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="layout">
+<nav class="crumb">
+  <a href="/">Fan's Notes</a><span class="sep">/</span><a href="/harness-books/">Harness Books</a><span class="sep">/</span><span>Book 1: Claude Code 设计指南</span>
+</nav>
+<div class="chapter-meta">BOOK 1 · 01</div>
+<article class="content">
+<h1>第 1 章 为什么需要 Harness Engineering</h1>
+<h2>1.1 问题在于让模型别乱来</h2>
+<p>一个会说话的概率分布，一旦能接触 shell、Git、网络和本地文件，问题就从“回答得不够好”变成“执行造成实际破坏”。所谓 Harness Engineering，就是把这样一个不稳定的核心部件约束成可管理系统的那一套制度化控制平面。它要处理的现实只有一条：模型并不天然值得信任。</p>
+<p>这个判断未必轻松，但通常有用。忽视它，问题最后多半会在日志和事故记录里出现。</p>
+<h2>1.2 Claude Code 的第一层 Harness：受约束的会话系统</h2>
+<p>如果只看表面，Claude Code 像一个能和用户对话、还能顺手改代码的 CLI。可从实现上看，它一开始就没有把自己当成“裸模型接口”来设计，而是当成一个带有上下文边界、运行时状态和行为规约的会话系统。</p>
+<p>这一点从 system prompt 的组织方式就能看出来。</p>
+<ul>
+<li>在 <code>src/constants/prompts.ts:175</code> 开始，系统先定义身份和总任务。</li>
+<li>在 <code>src/constants/prompts.ts:186</code> 开始，补上关于工具、权限、系统提醒和上下文压缩的系统级说明。</li>
+<li>在 <code>src/constants/prompts.ts:199</code> 开始，再补上做任务时的工程约束，比如不要越权改动、不要把验证说成已经完成、不要为了省事发明抽象。</li>
+</ul>
+<p>这里值得停一下。很多人谈 prompt，还停留在“你是一个什么样的助手”这种修辞层面。Claude Code 在实现上把 prompt 放进了运行时控制结构里，这些文字用来规定执行边界、失败行为和报告责任。</p>
+<p>更重要的是，这个 prompt 采用分段拼装方式。在 <code>src/constants/prompts.ts:444</code> 的 <code>getSystemPrompt()</code> 里，静态部分和动态部分被明确拆开，memory、language、output style、MCP instructions、scratchpad 等内容按段注入。到了 <code>src/utils/systemPrompt.ts:28</code>，系统又把默认 prompt、自定义 prompt、agent prompt 和 append prompt 组织成一套优先级规则。</p>
+<p>这说明了一个朴素的工程事实：一个真正可用的代理系统，不能依赖一段“万能提示词”解决所有问题。它必须把控制拆成层，把层次拆成职责。否则，新增提醒和禁令很快就会互相冲突，系统行为也会变得难以预测。</p>
+<h3>不变式：控制平面的三条硬约束 (invariants)</h3>
+<pre><code class="hljs language-plaintext">assert prompt.layers ⊇ {default, project, custom, agent, append}    # 身份 ≠ 运行时
+assert ∀ tool_call t: scheduler.decides_concurrency(t) before exec(t) # 工具受调度
+assert on recoverable_error: route ∈ {recover, terminate_clean}      # 错误进主路径</code></pre><p>这三条一旦任意一条被越过，后面几章里的 query loop、工具、上下文和恢复机制都会立刻显得可疑。</p>
+<h2>1.3 第二层 Harness：代理依赖持续循环</h2>
+<p>如果说 prompt 规定了它应该成为什么样的东西，那么 query loop 规定了它实际上如何运行。</p>
+<p>Claude Code 的核心不在某个单独的 API 调用，而在 <code>src/query.ts:219</code> 开始的 <code>query()</code>，以及 <code>src/query.ts:241</code> 开始的 <code>queryLoop()</code>。这段实现里最重要的一点，是它明确承认代理系统依赖带状态的多轮执行。</p>
+<p>在 <code>src/query.ts:268</code>，系统把 <code>messages</code>、<code>toolUseContext</code>、<code>autoCompactTracking</code>、<code>maxOutputTokensRecoveryCount</code>、<code>hasAttemptedReactiveCompact</code>、<code>pendingToolUseSummary</code>、<code>turnCount</code>、<code>transition</code> 等内容放进同一个跨迭代状态里。一个会话系统一旦这样设计，就等于正式承认：上一轮留下的问题会进入下一轮，系统必须有能力继续处理。</p>
+<p>这是 Harness 思维的核心。真正的问题在于系统能不能在连续多轮里保持行为一致：</p>
+<ul>
+<li>有没有预算概念</li>
+<li>有没有恢复概念</li>
+<li>有没有上下文膨胀后的自救机制</li>
+<li>有没有在工具调用失败后继续推进任务的能力</li>
+</ul>
+<p>缺少这些结构，所谓智能体就只是一个不稳定的执行者。</p>
+<p>在 <code>src/query.ts:365</code> 往后，这个循环还会在每轮调用前处理消息裁剪、tool result budget、history snip、microcompact、context collapse、autocompact 等内容。实现细节虽然很多，但共同指向一点：Claude Code 在调用发生前就尽量把控制权收回到运行时一侧。</p>
+<p>这也是为什么 Harness Engineering 不能被看作 prompt engineering 的附属品。前者关心状态机，后者关心措辞。措辞当然重要，但状态机决定系统行为最终由谁负责。</p>
+<h2>1.4 第三层 Harness：工具调用必须服从调度</h2>
+<p>一个模型如果只能输出文本，顶多让人觉得它有时说得太满。可一旦它能调用工具，系统风险就立刻从修辞风险变成执行风险。这时候最重要的问题是：谁决定工具怎么跑。</p>
+<p>Claude Code 给出的答案很直接。运行时会根据工具属性决定并发还是串行。</p>
+<p>在 <code>src/services/tools/toolOrchestration.ts:19</code> 的 <code>runTools()</code> 里，工具调用先经过 <code>partitionToolCalls()</code> 分组。到了 <code>src/services/tools/toolOrchestration.ts:91</code>，系统会读取工具 schema，并调用 <code>isConcurrencySafe()</code> 判断一个工具是否适合并发执行。能并发的归成一批，不能并发的按顺序一个个来。并发路径里，context modifier 会先缓存，再按原始 block 顺序回放，见 <code>src/services/tools/toolOrchestration.ts:31</code> 到 <code>:63</code>。</p>
+<p>这件事很有代表性。它说明 Claude Code 没有把工具当成模型能力的自然延伸，而是当成需要调度纪律的受管执行单元。缺少调度纪律的工具系统，只会把模型的不稳定性放大到外部世界。</p>
+<p>并发如果不受约束，就会扩大事故半径。Claude Code 在这里采取了偏保守的策略。在会碰到文件、终端和权限的场景里，这种保守通常更可靠。</p>
+<h2>1.5 第四层 Harness：最危险的工具，必须配最细的规矩</h2>
+<p>在所有工具里，Bash 最值得警惕。因为它几乎不受领域边界约束，可以直接接触文件、进程、网络和 Git 仓库，还会带上重定向、管道等复杂 shell 语义。一个系统如果对 Bash 过度信任，后果通常会很具体。</p>
+<p>Claude Code 对 Bash 的态度，可以在 <code>src/tools/BashTool/prompt.ts:42</code> 往后看得很清楚。这里写了一整段操作规约，尤其是围绕 git 和 PR 的那部分：不要乱改 git config，不要跳过 hooks，不要随手 <code>git add .</code>，不要在 pre-commit 失败后用 <code>--amend</code> 把上一条提交也搭进去，不要在没有明确要求时提交，更不要默认 push。</p>
+<p>写到这个地步，有人会觉得它过于细碎。但高风险接口通常就需要高密度约束。Bash 一旦进入真实工作流，很多规则都必须明确写出来。</p>
+<p>Harness Engineering 的一个重要原则，就是把高风险能力包装成高约束能力。能力越强，控制越细。原因很简单：外部世界不会因为模型语气坚定，就自动原谅一次错误执行。</p>
+<h2>1.6 第五层 Harness：错误属于主路径的一部分</h2>
+<p>很多软件把失败路径看成例外，把成功路径看成正文。代理系统不能这样做。因为代理系统的失败不是偶发性的，它是一种稳定存在。模型会超 token，会触发 <code>prompt too long</code>，会撞上 <code>max_output_tokens</code>，还会遇到工具拒绝、用户打断、hook 阻塞、API 重试等各种中断。要是这些情况都只在最后用几个 <code>catch</code> 打发一下，那系统表面上在运行，实际上只是不断把麻烦往后滚。</p>
+<p>Claude Code 在 query loop 里没有这样处理。光看 <code>src/query.ts:453</code> 往后关于 autocompact 的处理，以及 <code>src/query.ts:592</code> 往后对上下文上限和阻断逻辑的注释，就能看出它把失败当作会持续发生的结构性条件来处理。</p>
+<p>这也是 Harness 和普通助手的重要差别之一。普通助手常见的设计逻辑是先回答，错了再道歉。Harness 更强调先约束，再执行；即使出错，也要按恢复路径处理，而不是靠临场发挥补救。</p>
+<p>一个会道歉的系统，不一定成熟。一个知道何时不该开始、何时该重试、何时该中止、何时该准确汇报失败的系统，才更接近成熟。</p>
+<h2>1.7 从源码里可以提炼出的第一个原则</h2>
+<p>到这里，第一章其实只想说一件事：</p>
+<blockquote>
+<p>代理系统的关键能力是约束执行。</p>
+</blockquote>
+<p>Claude Code 的源码在几个关键位置都指向同一个结论：</p>
+<ul>
+<li><code>constants/prompts.ts</code> 说明 prompt 是控制平面的一部分，而不是人格装饰</li>
+<li><code>utils/systemPrompt.ts</code> 说明系统行为必须有清楚的分层优先级</li>
+<li><code>query.ts</code> 说明代理运行依赖持续的循环状态，而不是单次问答</li>
+<li><code>services/tools/toolOrchestration.ts</code> 说明工具调用必须服从调度纪律</li>
+<li><code>tools/BashTool/prompt.ts</code> 说明高风险工具必须伴随高密度约束</li>
+</ul>
+<p>把这些放在一起看，就会发现 Harness Engineering 并不神秘。它只是坚持几条常被忽视的工程常识：</p>
+<ul>
+<li>模型会犯错</li>
+<li>工具会扩大错误后果</li>
+<li>上下文会膨胀</li>
+<li>状态会污染下一轮</li>
+<li>用户会打断你</li>
+<li>失败会反复出现</li>
+</ul>
+<p>既然如此，系统就不能靠“聪明”维持秩序，只能靠结构维持秩序。结构不像聪明那样显眼，但通常更可靠。</p>
+<p>下一章要谈的，是这套结构里最容易被误解的一层：system prompt。很多人把它看成人设文本，本书会说明它更接近操作系统里的规章制度。人设可以改善观感，规章才能约束机器。</p>
+
+</article>
+<nav class="pager">
+<a class="prev" href="/harness-books/book1/preface.html"><div class="pager-label">← 上一篇 · 序</div><div class="pager-title">序言：Harness、终端与工程约束</div></a>
+<a class="next" href="/harness-books/book1/chapter-02-prompt-is-control-plane.html"><div class="pager-label">下一篇 · 02 →</div><div class="pager-title">Prompt 不是人格，Prompt 是控制平面</div></a>
+</nav>
+<footer style="margin-top:48px;padding-top:24px;border-top:1px solid var(--border);color:var(--muted);font-size:13px;">
+  <p>原文作者：<a href="https://github.com/wquguru" target="_blank" rel="noopener" style="color:var(--accent);">wquguru</a> · 内容版权归原作者所有 · <a href="https://harness-books.agentway.dev/book1-claude-code/chapter-01-why-harness-engineering.html" target="_blank" rel="noopener" style="color:var(--accent);">在原站查看</a></p>
+</footer>
+</div>
+</body>
+</html>

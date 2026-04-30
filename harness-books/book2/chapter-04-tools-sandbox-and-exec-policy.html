@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>工具、沙箱与策略语言 · Claude Code & Codex 设计哲学比较 · Fan's Notes</title>
+<meta name="description" content="Claude Code & Codex 设计哲学比较 - 工具、沙箱与策略语言">
+<style>
+:root {
+  --bg: #fafaf7; --surface: #ffffff; --surface-2: #f5f5f0;
+  --text: #1a1a1a; --muted: #6b7280; --border: #e5e7eb;
+  --accent: #b45309; --tech: #0369a1; --tech-soft: #f0f9ff;
+  --code-bg: #f6f7f8; --code-text: #24292e;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f0f0e; --surface: #1a1a18; --surface-2: #14140f;
+    --text: #e5e5e0; --muted: #9ca3af; --border: #2d2d2a;
+    --accent: #fbbf24; --tech: #38bdf8; --tech-soft: #0c1e2e;
+    --code-bg: #1e1e1c; --code-text: #d4d4d4;
+  }
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB",
+               "Microsoft YaHei", "Source Han Sans CN", sans-serif;
+  font-size: 16px; line-height: 1.78;
+  -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+}
+.layout { max-width: 760px; margin: 0 auto; padding: 48px 24px 80px; }
+
+/* Top crumb */
+.crumb {
+  font-size: 13px; color: var(--muted);
+  margin-bottom: 24px;
+  display: flex; align-items: center; gap: 8px;
+  flex-wrap: wrap;
+}
+.crumb a {
+  color: var(--muted); text-decoration: none;
+  border-bottom: 1px solid var(--border);
+}
+.crumb a:hover { color: var(--accent); border-color: var(--accent); }
+.crumb .sep { color: var(--border); }
+
+/* Chapter header */
+.chapter-meta {
+  font-family: "SF Mono", Monaco, monospace;
+  font-size: 11px; letter-spacing: 0.1em;
+  color: var(--tech); font-weight: 700;
+  margin-bottom: 8px;
+}
+
+/* Markdown content */
+.content h1 {
+  font-size: 32px; line-height: 1.25;
+  margin: 0 0 32px; font-weight: 700;
+  letter-spacing: -0.015em;
+  padding-bottom: 16px;
+  border-bottom: 2px solid var(--text);
+}
+.content h2 {
+  font-size: 24px; margin: 48px 0 14px;
+  line-height: 1.3; font-weight: 600;
+  letter-spacing: -0.005em;
+}
+.content h3 {
+  font-size: 18px; margin: 32px 0 12px;
+  font-weight: 600; color: var(--accent);
+}
+.content h4 {
+  font-size: 16px; margin: 24px 0 10px;
+  font-weight: 600;
+}
+.content p { margin: 0 0 18px; }
+
+.content a {
+  color: var(--accent); text-decoration: none;
+  border-bottom: 1px solid var(--border);
+  transition: border-color 0.15s;
+}
+.content a:hover { border-color: var(--accent); }
+
+.content ul, .content ol { padding-left: 24px; margin: 0 0 18px; }
+.content li { margin-bottom: 6px; }
+.content li > ul, .content li > ol { margin-top: 6px; }
+
+.content strong { font-weight: 600; }
+.content em { font-style: italic; }
+
+.content blockquote {
+  margin: 20px 0; padding: 4px 0 4px 16px;
+  border-left: 3px solid var(--border);
+  color: var(--muted); font-style: italic;
+}
+
+.content hr {
+  border: 0; height: 1px;
+  background: var(--border);
+  margin: 40px 0;
+}
+
+/* Inline code */
+.content code {
+  font-family: "SF Mono", Monaco, Consolas, "Liberation Mono", monospace;
+  background: var(--code-bg); color: var(--code-text);
+  padding: 2px 6px; border-radius: 4px;
+  font-size: 0.88em;
+  border: 1px solid var(--border);
+}
+
+/* Code blocks */
+.content pre {
+  margin: 20px 0;
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 18px;
+  overflow-x: auto;
+  font-size: 13px; line-height: 1.65;
+}
+.content pre code {
+  background: transparent; border: 0;
+  padding: 0; font-size: inherit;
+  color: var(--code-text);
+}
+
+/* Highlight.js minimal theme (works for both light/dark) */
+.hljs-comment, .hljs-quote { color: #708090; font-style: italic; }
+.hljs-keyword, .hljs-selector-tag, .hljs-built_in { color: #d73a49; }
+.hljs-string, .hljs-attr { color: #032f62; }
+.hljs-number, .hljs-literal { color: #005cc5; }
+.hljs-title, .hljs-function { color: #6f42c1; }
+.hljs-variable, .hljs-tag { color: #e36209; }
+@media (prefers-color-scheme: dark) {
+  .hljs-comment, .hljs-quote { color: #6a737d; }
+  .hljs-keyword, .hljs-selector-tag, .hljs-built_in { color: #f97583; }
+  .hljs-string, .hljs-attr { color: #9ecbff; }
+  .hljs-number, .hljs-literal { color: #79b8ff; }
+  .hljs-title, .hljs-function { color: #b392f0; }
+  .hljs-variable, .hljs-tag { color: #ffab70; }
+}
+
+.content table {
+  width: 100%; border-collapse: collapse;
+  margin: 20px 0; font-size: 14.5px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px; overflow: hidden;
+}
+.content th, .content td {
+  padding: 10px 14px; text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+.content th {
+  background: var(--code-bg);
+  font-weight: 600; font-size: 13px;
+  color: var(--muted);
+}
+.content tr:last-child td { border-bottom: 0; }
+
+/* Pager */
+.pager {
+  margin-top: 64px; padding-top: 24px;
+  border-top: 1px solid var(--border);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.pager a {
+  display: block; padding: 16px 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  text-decoration: none; color: inherit;
+  transition: all 0.15s;
+}
+.pager a:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+.pager .pager-label {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+.pager .pager-title {
+  font-size: 14px; font-weight: 600;
+  line-height: 1.4;
+}
+.pager .next { text-align: right; }
+.pager .prev:empty, .pager .next:empty { background: transparent; border: 0; }
+
+@media (max-width: 600px) {
+  .layout { padding: 32px 18px 64px; }
+  .content h1 { font-size: 26px; }
+  .content h2 { font-size: 21px; }
+  body { font-size: 15.5px; }
+  .pager { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="layout">
+<nav class="crumb">
+  <a href="/">Fan's Notes</a><span class="sep">/</span><a href="/harness-books/">Harness Books</a><span class="sep">/</span><span>Book 2: Claude Code & Codex 设计哲学比较</span>
+</nav>
+<div class="chapter-meta">BOOK 2 · 04</div>
+<article class="content">
+<h1>第 4 章 工具、沙箱与策略语言：谁来阻止模型动手太快</h1>
+<p><img src="diagrams/diag-03-tool-governance-comparison.png" alt="工具治理对比图"></p>
+<h2>4.1 真正危险的是开始执行</h2>
+<p>模型说错话只浪费时间，跑错命令就可能把目录、仓库、进程和工作流一起带坏。真正把 AI coding system 区分开来的，是调工具之前谁拥有最后解释权。Claude Code 和 Codex 都很认真，但认真得不一样：前者在运行时把工具纳入调度纪律——<code>toolOrchestration.ts</code>、<code>toolExecution.ts</code>、<code>StreamingToolExecutor.ts</code>、<code>useCanUseTool.tsx</code>、Bash 专门 prompt 和 allow/deny/ask 语义，关心的是能不能跑、怎么跑、能不能并发、用户有没有拒绝、如何中断、结果怎么回到上下文。后者把工具本身做成类型化接口——<code>tools/src/lib.rs</code> 导出工具构造器，<code>local_tool.rs</code> 定义 <code>exec_command</code>、<code>shell</code>、<code>shell_command</code>、<code>request_permissions</code> 等 schema。工具在 Codex 里首先是规范化 API，其次才是执行单元。</p>
+<h2>4.2 Claude Code：重点在运行时编排和危险动作约束</h2>
+<p>Claude Code 的工具系统有强烈现场调度感：并发看 schema 和 <code>isConcurrencySafe()</code>，上下文修改要保证回放顺序稳定，流式执行还要处理中断、synthetic result 和 UI 反馈。它承认工具调用是&quot;一个带后果的过程&quot;而非单点动作——像给模型装工地监工：先做哪个、哪些能并行、哪些串行、做完怎么记账、中途被叫停怎么办。对 Bash 这类高风险工具的唠叨，正是成熟工程对危险接口的态度。</p>
+<h2>4.3 Codex：重点在工具 schema、审批参数和策略引擎</h2>
+<p>Codex 把&quot;风险动作&quot;的控制做成正式接口约束。<code>local_tool.rs</code> 里 <code>exec_command</code> 显式拥有 <code>cmd</code>、<code>workdir</code>、<code>shell</code>、<code>tty</code>、<code>yield_time_ms</code>、<code>max_output_tokens</code>、<code>login</code> 和 approval 相关字段——不是接收一个字符串命令了事；<code>shell</code> / <code>shell_command</code> 描述层直接要求设 <code>workdir</code>、提醒别滥用 <code>cd</code>。正确使用方式被嵌进工具定义本身。审批和权限提升抽成显式参数，<code>request_permissions</code> 做成单独工具，<code>execpolicy</code> 单独做成 crate——<code>Policy</code>、<code>Rule</code>、<code>Evaluation</code>、<code>Decision</code>、parser 这套命名等于说：执行边界已经是一门小型政策语言，不只是几个 if/else。而这不是虚张：schema required 字段明确、<code>additional_properties</code> 关闭；<code>execpolicy/src/lib.rs</code> 不仅导出 parser 和 <code>PolicyParser</code>，还导出 <code>blocking_append_allow_prefix_rule</code>、<code>blocking_append_network_rule</code> 这种修正 helper——Codex 不只检查政策，还准备了修改和补丁的正式入口。</p>
+<h2>4.4 运行时审批对照策略语言</h2>
+<p>Claude Code 偏运行时审批链，Codex 偏显式策略语言与参数化审批。Claude Code 的 ask/allow/deny 与调用现场紧密耦合，按上下文、工具类型、用户动作和会话状态决定，长处是灵敏，缺点是规则容易藏在 runtime 逻辑里。Codex 的 exec policy 把规则抽离，可单独解析和评估，长处是可读性和可迁移性更强，适合团队治理，缺点是系统更重，policy 设计必须当正事维护。直说：前者像&quot;值班经理现场拍板&quot;，后者像&quot;公司先写好制度，再看这单是否合规&quot;。</p>
+<h3>骨架：两种风险闸门 (skeleton)</h3>
+<pre><code class="hljs language-plaintext">// 骨架: Claude Code 运行时审批  (源: src/hooks/useCanUseTool.tsx, StreamingToolExecutor.ts)
+decision = hasPermissionsToUseTool(tool, input, ctx)  // allow | deny | ask
+match decision:
+    allow: schedule_with_concurrency_check(tool)       // isConcurrencySafe()
+    deny:  reject(reason)                              // sticky
+    ask:   route_to(coordinator | swarm | interactive)
+interrupt_semantics = tool.interruptBehavior ∈ {cancel, block}
+
+// 骨架: Codex exec-policy 评估  (源: execpolicy/src/lib.rs, local_tool.rs)
+policy = PolicyParser.parse(source)
+for rule in policy.rules:
+    eval = rule.evaluate(exec_command { cmd, workdir, shell, tty,
+                                         yield_time_ms, max_output_tokens, login })
+    if eval.matches: return Decision::{Allow | Deny | RequestPermissions}
+return Decision::default</code></pre><h3>审批决策树</h3>
+<pre><code class="hljs language-plaintext">tool_call
+  ├─ schema 校验失败            → deny（additional_properties=false 阻止乱塞）
+  ├─ 高危前缀匹配 deny rule     → deny
+  ├─ 网络/提权 匹配 ask rule    → request_permissions（显式工具）
+  ├─ 无匹配 &amp; sandbox 可覆盖    → allow（受 workdir/sandbox mode 约束）
+  └─ 无匹配 &amp; sandbox 保守       → ask</code></pre><h3>超时与参数阈值</h3>
+<table>
+<thead>
+<tr>
+<th>名称</th>
+<th>含义</th>
+<th>源引用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>yield_time_ms</code></td>
+<td>单次 exec 允许阻塞的毫秒上限</td>
+<td><code>local_tool.rs (exec_command)</code></td>
+</tr>
+<tr>
+<td><code>max_output_tokens</code></td>
+<td>工具输出纳入上下文的 token 上限</td>
+<td><code>local_tool.rs</code></td>
+</tr>
+<tr>
+<td><code>additional_properties=false</code></td>
+<td>阻止模型乱塞参数</td>
+<td><code>local_tool.rs (schema)</code></td>
+</tr>
+<tr>
+<td>Bash 子命令数 cap</td>
+<td>单次 Bash 调用允许的复合子命令上限</td>
+<td><code>bashPermissions.ts</code></td>
+</tr>
+</tbody></table>
+<h2>4.5 沙箱与审批：产品定义问题</h2>
+<p>沙箱、审批、权限不是安全附属件——对 coding agent 而言，它们定义了产品是什么。系统若允许模型在用户目录直接跑任意命令，就把风险转嫁给了用户；反过来，能显式表达 sandbox mode、network access、approval policy、additional directories、state DB 位置和 MCP tool approvals，才是同时交付能力与行为边界。Codex 把 turn 级条件暴露在 <code>thread.ts</code> 里，视之为线程语义；Claude Code 把边界压到运行时现场——工具执行、中断、permission hook 与 Bash 限制。一个&quot;边做边看守&quot;，一个&quot;先给出执行契约再开始做&quot;。</p>
+<h2>4.6 MCP、扩展工具与边界外移</h2>
+<p>两套系统都能接外部能力，但差异仍在。Claude Code 把 skill / hook / permission / 工具 prompt 拼成场景化治理链，让本地规则跟着现场进主循环；Codex 则把外部能力统一纳入工具系统——<code>tools/src/lib.rs</code> 的 MCP resource、dynamic tool、tool discovery 说明扩展也应是 schema 化、公理化的工具对象，而非临时约定。生态一旦变大，&quot;扩展能力如何服从总规则&quot;就成了压舱石：谁先想清楚边界外移，谁的扩展体系就不会变成杂物间。</p>
+<h2>4.7 本章结论</h2>
+<p>这一章可以压缩成一句比较硬的判断：</p>
+<blockquote>
+<p>Claude Code 的工具治理更强地依赖运行时编排与现场审批，Codex 的工具治理更强地依赖 schema、参数化权限和独立策略系统。</p>
+</blockquote>
+<p>前者像经验丰富的工头。</p>
+<p>后者像有制度处和法务部的施工单位。</p>
+<p>你要是只看“都能跑命令”，就会错过真正重要的差异。重要的是，谁在工具动手之前拥有最终秩序。</p>
+<p>下一章看更接地气的一层：skills、hooks、本地规则文件和团队制度。技术系统一旦要进团队，最后都得学会写村规民约。</p>
+
+</article>
+<nav class="pager">
+<a class="prev" href="/harness-books/book2/chapter-03-loop-thread-and-rollout.html"><div class="pager-label">← 上一篇 · 03</div><div class="pager-title">心跳放在哪：Query Loop 对照 Thread、Rollout 与 State</div></a>
+<a class="next" href="/harness-books/book2/chapter-05-skills-hooks-and-local-governance.html"><div class="pager-label">下一篇 · 05 →</div><div class="pager-title">技能、Hook 与本地规则</div></a>
+</nav>
+<footer style="margin-top:48px;padding-top:24px;border-top:1px solid var(--border);color:var(--muted);font-size:13px;">
+  <p>原文作者：<a href="https://github.com/wquguru" target="_blank" rel="noopener" style="color:var(--accent);">wquguru</a> · 内容版权归原作者所有 · <a href="https://harness-books.agentway.dev/book2-comparing/chapter-04-tools-sandbox-and-exec-policy.html" target="_blank" rel="noopener" style="color:var(--accent);">在原站查看</a></p>
+</footer>
+</div>
+</body>
+</html>

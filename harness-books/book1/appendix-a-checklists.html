@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>附录 A · 检查清单 · Claude Code 设计指南 · Fan's Notes</title>
+<meta name="description" content="Claude Code 设计指南 - 附录 A · 检查清单">
+<style>
+:root {
+  --bg: #fafaf7; --surface: #ffffff; --surface-2: #f5f5f0;
+  --text: #1a1a1a; --muted: #6b7280; --border: #e5e7eb;
+  --accent: #b45309; --tech: #0369a1; --tech-soft: #f0f9ff;
+  --code-bg: #f6f7f8; --code-text: #24292e;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f0f0e; --surface: #1a1a18; --surface-2: #14140f;
+    --text: #e5e5e0; --muted: #9ca3af; --border: #2d2d2a;
+    --accent: #fbbf24; --tech: #38bdf8; --tech-soft: #0c1e2e;
+    --code-bg: #1e1e1c; --code-text: #d4d4d4;
+  }
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB",
+               "Microsoft YaHei", "Source Han Sans CN", sans-serif;
+  font-size: 16px; line-height: 1.78;
+  -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+}
+.layout { max-width: 760px; margin: 0 auto; padding: 48px 24px 80px; }
+
+/* Top crumb */
+.crumb {
+  font-size: 13px; color: var(--muted);
+  margin-bottom: 24px;
+  display: flex; align-items: center; gap: 8px;
+  flex-wrap: wrap;
+}
+.crumb a {
+  color: var(--muted); text-decoration: none;
+  border-bottom: 1px solid var(--border);
+}
+.crumb a:hover { color: var(--accent); border-color: var(--accent); }
+.crumb .sep { color: var(--border); }
+
+/* Chapter header */
+.chapter-meta {
+  font-family: "SF Mono", Monaco, monospace;
+  font-size: 11px; letter-spacing: 0.1em;
+  color: var(--tech); font-weight: 700;
+  margin-bottom: 8px;
+}
+
+/* Markdown content */
+.content h1 {
+  font-size: 32px; line-height: 1.25;
+  margin: 0 0 32px; font-weight: 700;
+  letter-spacing: -0.015em;
+  padding-bottom: 16px;
+  border-bottom: 2px solid var(--text);
+}
+.content h2 {
+  font-size: 24px; margin: 48px 0 14px;
+  line-height: 1.3; font-weight: 600;
+  letter-spacing: -0.005em;
+}
+.content h3 {
+  font-size: 18px; margin: 32px 0 12px;
+  font-weight: 600; color: var(--accent);
+}
+.content h4 {
+  font-size: 16px; margin: 24px 0 10px;
+  font-weight: 600;
+}
+.content p { margin: 0 0 18px; }
+
+.content a {
+  color: var(--accent); text-decoration: none;
+  border-bottom: 1px solid var(--border);
+  transition: border-color 0.15s;
+}
+.content a:hover { border-color: var(--accent); }
+
+.content ul, .content ol { padding-left: 24px; margin: 0 0 18px; }
+.content li { margin-bottom: 6px; }
+.content li > ul, .content li > ol { margin-top: 6px; }
+
+.content strong { font-weight: 600; }
+.content em { font-style: italic; }
+
+.content blockquote {
+  margin: 20px 0; padding: 4px 0 4px 16px;
+  border-left: 3px solid var(--border);
+  color: var(--muted); font-style: italic;
+}
+
+.content hr {
+  border: 0; height: 1px;
+  background: var(--border);
+  margin: 40px 0;
+}
+
+/* Inline code */
+.content code {
+  font-family: "SF Mono", Monaco, Consolas, "Liberation Mono", monospace;
+  background: var(--code-bg); color: var(--code-text);
+  padding: 2px 6px; border-radius: 4px;
+  font-size: 0.88em;
+  border: 1px solid var(--border);
+}
+
+/* Code blocks */
+.content pre {
+  margin: 20px 0;
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 18px;
+  overflow-x: auto;
+  font-size: 13px; line-height: 1.65;
+}
+.content pre code {
+  background: transparent; border: 0;
+  padding: 0; font-size: inherit;
+  color: var(--code-text);
+}
+
+/* Highlight.js minimal theme (works for both light/dark) */
+.hljs-comment, .hljs-quote { color: #708090; font-style: italic; }
+.hljs-keyword, .hljs-selector-tag, .hljs-built_in { color: #d73a49; }
+.hljs-string, .hljs-attr { color: #032f62; }
+.hljs-number, .hljs-literal { color: #005cc5; }
+.hljs-title, .hljs-function { color: #6f42c1; }
+.hljs-variable, .hljs-tag { color: #e36209; }
+@media (prefers-color-scheme: dark) {
+  .hljs-comment, .hljs-quote { color: #6a737d; }
+  .hljs-keyword, .hljs-selector-tag, .hljs-built_in { color: #f97583; }
+  .hljs-string, .hljs-attr { color: #9ecbff; }
+  .hljs-number, .hljs-literal { color: #79b8ff; }
+  .hljs-title, .hljs-function { color: #b392f0; }
+  .hljs-variable, .hljs-tag { color: #ffab70; }
+}
+
+.content table {
+  width: 100%; border-collapse: collapse;
+  margin: 20px 0; font-size: 14.5px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px; overflow: hidden;
+}
+.content th, .content td {
+  padding: 10px 14px; text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+.content th {
+  background: var(--code-bg);
+  font-weight: 600; font-size: 13px;
+  color: var(--muted);
+}
+.content tr:last-child td { border-bottom: 0; }
+
+/* Pager */
+.pager {
+  margin-top: 64px; padding-top: 24px;
+  border-top: 1px solid var(--border);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.pager a {
+  display: block; padding: 16px 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  text-decoration: none; color: inherit;
+  transition: all 0.15s;
+}
+.pager a:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+.pager .pager-label {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+.pager .pager-title {
+  font-size: 14px; font-weight: 600;
+  line-height: 1.4;
+}
+.pager .next { text-align: right; }
+.pager .prev:empty, .pager .next:empty { background: transparent; border: 0; }
+
+@media (max-width: 600px) {
+  .layout { padding: 32px 18px 64px; }
+  .content h1 { font-size: 26px; }
+  .content h2 { font-size: 21px; }
+  body { font-size: 15.5px; }
+  .pager { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="layout">
+<nav class="crumb">
+  <a href="/">Fan's Notes</a><span class="sep">/</span><a href="/harness-books/">Harness Books</a><span class="sep">/</span><span>Book 1: Claude Code 设计指南</span>
+</nav>
+<div class="chapter-meta">BOOK 1 · A</div>
+<article class="content">
+<h1>附录 A 检查清单：把原则落成能执行的约束</h1>
+<p>前面几章一直在谈原则。原则如果不能落成检查清单，最后很容易只剩一些听起来都对、却落不了地的判断。附录的任务，就是把那些容易说、难坚持的判断，压成几组可以直接拿去用的清单。</p>
+<p>这些清单并不保证系统自动变好，它们只是防止一些最常见、也最无聊的错误反复出现。工程里很多进步，本来就靠少犯重复错误，而不只是靠灵感。</p>
+<h2>A.1 Agent Runtime 设计清单</h2>
+<p>一个 AI coding agent 如果要进入真实工程工作流，至少该回答清楚这些问题：</p>
+<ul>
+<li>是否存在明确的 query loop，而非把每轮调用都当作独立问答</li>
+<li>是否有跨轮状态对象，明确记录恢复、预算、压缩、hook、turn 计数等信息</li>
+<li>是否把模型输出当事件流处理，而不只是当最终文案处理</li>
+<li>是否能在中断时补齐未完成的 tool result，保持执行账本闭环</li>
+<li>是否区分完成、失败、恢复、继续这些不同终止语义</li>
+<li>是否为长会话设计了 context budget，而非只在超长时临场补锅</li>
+</ul>
+<p>如果这些问题里有两三个答不上来，那么这个系统大概率还停留在“会做 demo”的阶段，离“会跑工程流程”还有距离。</p>
+<h2>A.2 Prompt 设计清单</h2>
+<p>system prompt 不该只是长，也该有分层和职责。</p>
+<p>检查时至少看这些：</p>
+<ul>
+<li>是否把身份描述、行为规则、工具约束、输出纪律分开组织</li>
+<li>是否明确 prompt 的优先级来源，例如默认、项目、自定义、追加、agent 专属 prompt</li>
+<li>是否把危险动作、越权动作、验证纪律写成明确规则，而非隐约暗示</li>
+<li>是否避免让 prompt 承担本该由 runtime 处理的职责</li>
+<li>是否允许团队稳定维护，而非每次修 bug 都往 prompt 里再塞一段话</li>
+</ul>
+<p>一个很实用的判断标准是：删掉某段 prompt 以后，系统行为会不会出现结构性变化。如果会，说明它真是控制面；如果不会，可能只是装饰。</p>
+<h2>A.3 Tool 与 Permission 设计清单</h2>
+<p>凡是让模型碰世界的系统，都该先问这些：</p>
+<ul>
+<li>工具调用是否经过统一调度，而非让模型直接裸调</li>
+<li>并发是否需要显式证明安全，而非默认允许</li>
+<li>是否存在 <code>allow / deny / ask</code> 这样的权限语义分叉</li>
+<li>高风险工具是否被当成特例治理，而非与普通工具一视同仁</li>
+<li>是否能对中断、fallback、sibling failure 生成明确收尾语义</li>
+<li>是否能记录工具执行因果链，避免出现悬空 <code>tool_use</code></li>
+</ul>
+<p>如果你的 Bash 和 ReadTool 在治理上几乎一样，那通常说明风险理解得还不够。</p>
+<h2>A.4 Context 治理清单</h2>
+<p>任何长会话代理，迟早都会被上下文教育。早点治理，代价比较低。</p>
+<p>检查时至少看这些：</p>
+<ul>
+<li>长期规则、长期记忆、会话连续性、临时对话是否分层</li>
+<li>是否有明确入口文件和正文文件的区分，避免索引型文件不断膨胀</li>
+<li>是否对 memory、session memory、skill 附件设 token 预算</li>
+<li>是否预留 compact 输出空间，而非把窗口吃满再抢救</li>
+<li>compact 之后是否恢复工作语义，例如计划、技能、关键文件、工具状态</li>
+<li>是否对 compact 自己失败也准备了恢复策略</li>
+</ul>
+<p>上下文治理做得好的系统，往往看起来有点吝啬。那种吝啬通常是优点，不是缺点。</p>
+<h2>A.5 Error Recovery 设计清单</h2>
+<p>错误恢复最怕两件事：没有设计，和设计成死循环。</p>
+<p>至少要检查：</p>
+<ul>
+<li>可恢复错误是否先进入恢复分支，而非第一时间只展示给用户</li>
+<li>恢复路径是否分层，先低破坏性，再高破坏性</li>
+<li>是否有防止 reactive compact、stop hooks、retry 相互咬住的保护</li>
+<li><code>max_output_tokens</code> 后是否优先续写，而非优先 recap</li>
+<li>自动恢复是否有计数、限次和熔断</li>
+<li>中断是否也被当作需要语义收尾的失败态</li>
+</ul>
+<p>一个不会收手的恢复系统，和一个不会恢复的系统一样危险，只是它危险得更勤奋一点。</p>
+<h2>A.6 Multi-Agent 设计清单</h2>
+<p>多代理的重点在于组织不确定性。检查时要看：</p>
+<ul>
+<li>fork 时是否考虑 prompt cache 共享和 cache-safe 参数一致性</li>
+<li>子代理默认是否隔离 mutable state</li>
+<li>是否区分 research、implementation、verification、synthesis 角色</li>
+<li>coordinator 是否真正承担综合理解，而非只转发 worker 结果</li>
+<li>verification 是否独立于 implementation</li>
+<li>agent 生命周期是否可观测、可中止、可清理</li>
+<li>父 abort 是否能传播到子代理，防止孤儿任务残留</li>
+</ul>
+<p>如果一个系统号称 multi-agent，但所有 agent 都在做差不多的事，而且没人真正负责 synthesis 和 verification，那它通常只是在把混乱扩成并行。</p>
+<h2>A.7 Team 落地清单</h2>
+<p>团队推广时，最容易误判的一点，是把个人熟练度误当成制度成熟度。</p>
+<p>落地前最好先核对：</p>
+<ul>
+<li>是否已有分层 <code>CLAUDE.md</code>，且团队知道什么该写进去、什么不该写</li>
+<li>是否先统一验证定义，再批量造 skill</li>
+<li>是否按后果和环境敏感度划 approval 边界</li>
+<li>是否把关键制度挂在合适 hook 时点，而非全塞进静态文档</li>
+<li>是否保留 transcript、task output、hook event 等复盘证据</li>
+<li>是否有对 stale memory、过期规则、失效 skill 的维护机制</li>
+</ul>
+<p>一个团队真正能承受代理系统，往往是因为普通成员也能在制度内把它用对，而不只是依赖几个高手。</p>
+<h2>A.8 Review 问题单</h2>
+<p>如果你要 review 一个 AI coding agent 方案，可以直接追问下面这些问题：</p>
+<ul>
+<li>哪些行为由 prompt 约束，哪些由 runtime 强制？</li>
+<li>模型误用工具时，谁来拦？在哪里拦？</li>
+<li>上下文何时压缩，压缩后如何恢复工作语义？</li>
+<li>prompt too long 和 max output tokens 分别怎么恢复？</li>
+<li>中断后怎样保证 transcript 和工具结果一致？</li>
+<li>多代理里谁负责 synthesis，谁负责 verification？</li>
+<li>失败恢复有没有熔断和防死循环机制？</li>
+<li>团队如何审计代理做过什么、为什么这么做？</li>
+</ul>
+<p>一个方案如果在这些问题上总回答“到时候可以再加”，通常说明它现在还没有真正设计运行时，只是设计了一个乐观场景。</p>
+<h2>A.9 最后一个清单</h2>
+<p>嫌前面都太长，至少记住：先设计权限再设计能力、先回滚再自治、先验证再交付、先上下文预算再长期对话、先生命周期再多代理、先制度再指望团队熟练。做到这六条未必立刻优秀；做不到大概率只是暂时没出事。</p>
+<h2>A.10 实现种子 (pseudocode stubs)</h2>
+<p>把前几章的几个骨架压成可直接抄写的起点。具体形态见对应章节，这里只保留最小脊柱。</p>
+<h3>A.10.1 queryLoop (骨架，引自第 3 章)</h3>
+<pre><code class="hljs language-plaintext">state = { messages, toolUseContext, autoCompactTracking, turnCount, transition, ... }
+while not done(state):
+    govern_input(state)                 // memory / snip / collapse / autocompact
+    events = stream_model(state)
+    for e in events:
+        if e.is(tool_use): schedule(e, state.toolUseContext)
+        if e.is(api_error): return surface(e)
+    if interrupted: drain_tools_with_synthetic_results(state); break
+    state = advance(state, recover_if_needed(state))
+assert state.turnCount monotonic ∧ every tool_use has tool_result</code></pre><h3>A.10.2 permission decision (骨架，引自第 4 章)</h3>
+<pre><code class="hljs language-plaintext">decision = hasPermissionsToUseTool(tool, input, ctx)
+match decision:
+    allow: exec(tool, input)
+    deny:  reject(reason)
+    ask:   route_to(coordinator | worker | classifier | interactive)
+assert decision ∈ {allow, deny, ask}        # 三值不塌缩
+assert ask never auto-escalates to allow    # 不可越权升级</code></pre><h3>A.10.3 forkAgent (骨架，引自第 7 章)</h3>
+<pre><code class="hljs language-plaintext">params = CacheSafeParams { systemPrompt, userContext, systemContext, toolUseContext, forkContextMessages }
+ctx    = createSubagentContext(parent)       // mutable state isolated by default
+hooks.fire(SubagentStart, { agent_id, agent_type })
+defer hooks.fire(SubagentStop, { agent_transcript_path })
+assert parent.abort ⇒ propagate(child.abort)</code></pre><h3>A.10.4 recoverFromError (骨架，引自第 6 章)</h3>
+<pre><code class="hljs language-plaintext">on recoverable_error(e):
+    if e.is(prompt_too_long):
+        if stagedCollapse &gt; 0: recoverFromOverflow()
+        elif not hasAttemptedReactiveCompact: tryReactiveCompact()
+        else: surface(e); skip_stop_hooks()
+    if e.is(max_output_tokens):
+        if cap &lt; MAX: raise(maxOutputTokensOverride); retry()
+        else: append(meta_continue_msg); retry()
+assert consecutiveFailures &lt; MAX_CONSECUTIVE_AUTOCOMPACT_FAILURES</code></pre>
+</article>
+<nav class="pager">
+<a class="prev" href="/harness-books/book1/chapter-09-ten-principles.html"><div class="pager-label">← 上一篇 · 09</div><div class="pager-title">Harness Engineering 十条原则</div></a>
+<a class="next" href="/harness-books/book1/appendix-b-diagram-notes.html"><div class="pager-label">下一篇 · B →</div><div class="pager-title">附录 B · 图示</div></a>
+</nav>
+<footer style="margin-top:48px;padding-top:24px;border-top:1px solid var(--border);color:var(--muted);font-size:13px;">
+  <p>原文作者：<a href="https://github.com/wquguru" target="_blank" rel="noopener" style="color:var(--accent);">wquguru</a> · 内容版权归原作者所有 · <a href="https://harness-books.agentway.dev/book1-claude-code/appendix-a-checklists.html" target="_blank" rel="noopener" style="color:var(--accent);">在原站查看</a></p>
+</footer>
+</div>
+</body>
+</html>

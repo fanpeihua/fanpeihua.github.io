@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>两种控制面：Prompt 拼装与 Instruction Fragment · Claude Code & Codex 设计哲学比较 · Fan's Notes</title>
+<meta name="description" content="Claude Code & Codex 设计哲学比较 - 两种控制面：Prompt 拼装与 Instruction Fragment">
+<style>
+:root {
+  --bg: #fafaf7; --surface: #ffffff; --surface-2: #f5f5f0;
+  --text: #1a1a1a; --muted: #6b7280; --border: #e5e7eb;
+  --accent: #b45309; --tech: #0369a1; --tech-soft: #f0f9ff;
+  --code-bg: #f6f7f8; --code-text: #24292e;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f0f0e; --surface: #1a1a18; --surface-2: #14140f;
+    --text: #e5e5e0; --muted: #9ca3af; --border: #2d2d2a;
+    --accent: #fbbf24; --tech: #38bdf8; --tech-soft: #0c1e2e;
+    --code-bg: #1e1e1c; --code-text: #d4d4d4;
+  }
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB",
+               "Microsoft YaHei", "Source Han Sans CN", sans-serif;
+  font-size: 16px; line-height: 1.78;
+  -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+}
+.layout { max-width: 760px; margin: 0 auto; padding: 48px 24px 80px; }
+
+/* Top crumb */
+.crumb {
+  font-size: 13px; color: var(--muted);
+  margin-bottom: 24px;
+  display: flex; align-items: center; gap: 8px;
+  flex-wrap: wrap;
+}
+.crumb a {
+  color: var(--muted); text-decoration: none;
+  border-bottom: 1px solid var(--border);
+}
+.crumb a:hover { color: var(--accent); border-color: var(--accent); }
+.crumb .sep { color: var(--border); }
+
+/* Chapter header */
+.chapter-meta {
+  font-family: "SF Mono", Monaco, monospace;
+  font-size: 11px; letter-spacing: 0.1em;
+  color: var(--tech); font-weight: 700;
+  margin-bottom: 8px;
+}
+
+/* Markdown content */
+.content h1 {
+  font-size: 32px; line-height: 1.25;
+  margin: 0 0 32px; font-weight: 700;
+  letter-spacing: -0.015em;
+  padding-bottom: 16px;
+  border-bottom: 2px solid var(--text);
+}
+.content h2 {
+  font-size: 24px; margin: 48px 0 14px;
+  line-height: 1.3; font-weight: 600;
+  letter-spacing: -0.005em;
+}
+.content h3 {
+  font-size: 18px; margin: 32px 0 12px;
+  font-weight: 600; color: var(--accent);
+}
+.content h4 {
+  font-size: 16px; margin: 24px 0 10px;
+  font-weight: 600;
+}
+.content p { margin: 0 0 18px; }
+
+.content a {
+  color: var(--accent); text-decoration: none;
+  border-bottom: 1px solid var(--border);
+  transition: border-color 0.15s;
+}
+.content a:hover { border-color: var(--accent); }
+
+.content ul, .content ol { padding-left: 24px; margin: 0 0 18px; }
+.content li { margin-bottom: 6px; }
+.content li > ul, .content li > ol { margin-top: 6px; }
+
+.content strong { font-weight: 600; }
+.content em { font-style: italic; }
+
+.content blockquote {
+  margin: 20px 0; padding: 4px 0 4px 16px;
+  border-left: 3px solid var(--border);
+  color: var(--muted); font-style: italic;
+}
+
+.content hr {
+  border: 0; height: 1px;
+  background: var(--border);
+  margin: 40px 0;
+}
+
+/* Inline code */
+.content code {
+  font-family: "SF Mono", Monaco, Consolas, "Liberation Mono", monospace;
+  background: var(--code-bg); color: var(--code-text);
+  padding: 2px 6px; border-radius: 4px;
+  font-size: 0.88em;
+  border: 1px solid var(--border);
+}
+
+/* Code blocks */
+.content pre {
+  margin: 20px 0;
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 18px;
+  overflow-x: auto;
+  font-size: 13px; line-height: 1.65;
+}
+.content pre code {
+  background: transparent; border: 0;
+  padding: 0; font-size: inherit;
+  color: var(--code-text);
+}
+
+/* Highlight.js minimal theme (works for both light/dark) */
+.hljs-comment, .hljs-quote { color: #708090; font-style: italic; }
+.hljs-keyword, .hljs-selector-tag, .hljs-built_in { color: #d73a49; }
+.hljs-string, .hljs-attr { color: #032f62; }
+.hljs-number, .hljs-literal { color: #005cc5; }
+.hljs-title, .hljs-function { color: #6f42c1; }
+.hljs-variable, .hljs-tag { color: #e36209; }
+@media (prefers-color-scheme: dark) {
+  .hljs-comment, .hljs-quote { color: #6a737d; }
+  .hljs-keyword, .hljs-selector-tag, .hljs-built_in { color: #f97583; }
+  .hljs-string, .hljs-attr { color: #9ecbff; }
+  .hljs-number, .hljs-literal { color: #79b8ff; }
+  .hljs-title, .hljs-function { color: #b392f0; }
+  .hljs-variable, .hljs-tag { color: #ffab70; }
+}
+
+.content table {
+  width: 100%; border-collapse: collapse;
+  margin: 20px 0; font-size: 14.5px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px; overflow: hidden;
+}
+.content th, .content td {
+  padding: 10px 14px; text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+.content th {
+  background: var(--code-bg);
+  font-weight: 600; font-size: 13px;
+  color: var(--muted);
+}
+.content tr:last-child td { border-bottom: 0; }
+
+/* Pager */
+.pager {
+  margin-top: 64px; padding-top: 24px;
+  border-top: 1px solid var(--border);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.pager a {
+  display: block; padding: 16px 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  text-decoration: none; color: inherit;
+  transition: all 0.15s;
+}
+.pager a:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+.pager .pager-label {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+.pager .pager-title {
+  font-size: 14px; font-weight: 600;
+  line-height: 1.4;
+}
+.pager .next { text-align: right; }
+.pager .prev:empty, .pager .next:empty { background: transparent; border: 0; }
+
+@media (max-width: 600px) {
+  .layout { padding: 32px 18px 64px; }
+  .content h1 { font-size: 26px; }
+  .content h2 { font-size: 21px; }
+  body { font-size: 15.5px; }
+  .pager { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="layout">
+<nav class="crumb">
+  <a href="/">Fan's Notes</a><span class="sep">/</span><a href="/harness-books/">Harness Books</a><span class="sep">/</span><span>Book 2: Claude Code & Codex 设计哲学比较</span>
+</nav>
+<div class="chapter-meta">BOOK 2 · 02</div>
+<article class="content">
+<h1>第 2 章 两种控制面：Prompt 拼装与 Instruction Fragment</h1>
+<p><img src="diagrams/diag-01-control-plane-comparison.png" alt="控制面对比图"></p>
+<h2>2.1 控制面这件事，首先不是文风问题</h2>
+<p>谈 prompt 最容易落到文风上，仿佛系统控制的核心是把一段文字写得更像老工程师——这有点像把警察制度理解成说话语气。Claude Code 和 Codex 都不这么看，它们都把面向模型的指令当作行为控制的一部分，只是实现方式不同。Claude Code 采用层层拼装：<code>constants/prompts.ts</code>、<code>utils/systemPrompt.ts</code>、<code>claudemd.ts</code>、memory 与 output style 按运行时条件注入到 system prompt 里，重点不是文案而是多个来源如何排优先级、避免互相打架。Codex 则是结构化片段：<code>instructions/src/fragment.rs</code> 定义 <code>AGENTS.md</code> 和 skill 的 fragment 标记，<code>user_instructions.rs</code> 把用户指令序列化成带目录和边界标记的消息——instruction 不是随意串接的自由文本，而是&quot;有开始、有结束、有来源类型&quot;的上下文单元。</p>
+<h2>2.2 Claude Code 的控制面是动态装配线</h2>
+<p>Claude Code 的 system prompt 有一个朴素前提：控制面会随着任务、memory、工具能力和团队注入而变化，不是固定文本。因此它是装配线——默认 prompt 做底板，append prompt 加要求，agent prompt 补角色，<code>CLAUDE.md</code> 和 memory 带现场条件。好处是同一主循环适配多场景；代价是必须在乎装配顺序，否则层层叠加容易互相覆盖、语义稀释。也因此它很依赖运行时的 prompt 治理——控制面是不断被注入、覆盖、折叠和压缩的动态组合物，而非静止法规。这与 loop 性格相配：每轮都要重新计算&quot;现在什么最重要&quot;。</p>
+<h2>2.3 Codex 的控制面是带编号的公文系统</h2>
+<p>Codex 正相反——它不愿让 instruction 只是&quot;模型自己体会&quot;的自由文本。<code>ContextualUserFragmentDefinition</code> 这命名已相当直白：强调片段类型、起止边界、包裹规则和消息转换。一段本地规则不只是&quot;有内容&quot;，还必须能被识别为某一类内容：<code>AGENTS.md</code> 是明确的 fragment，skill 是明确包裹过的上下文单元。</p>
+<p>这不是概念层面的漂亮命名。<code>fragment.rs</code> 把 <code>AGENTS_MD_START_MARKER</code> / <code>AGENTS_MD_END_MARKER</code> / <code>SKILL_OPEN_TAG</code> / <code>SKILL_CLOSE_TAG</code> 定成常量，由 <code>ContextualUserFragmentDefinition::wrap()</code> 和 <code>into_message()</code> 包装成 <code>ResponseItem::Message</code>。<code>user_instructions.rs</code> 里 <code>UserInstructions</code> 把目录序列化成 <code># AGENTS.md instructions for ...</code>，<code>SkillInstructions</code> 还带 <code>&lt;name&gt;</code> 和 <code>&lt;path&gt;</code>。Codex 连&quot;这段规则来自哪个目录、哪个 skill 文件&quot;都不让模型猜。</p>
+<p>直接后果：控制面可调试性更强——哪段内容来自哪里一目了然；也更适合继续程序化——今天是 marker，明天就可能细化为 precedence、merge rule 或 visibility rule。</p>
+<h3>骨架：两种控制面装配 (skeleton)</h3>
+<pre><code class="hljs language-plaintext">// 骨架: Claude Code 动态拼装  (源: constants/prompts.ts, utils/systemPrompt.ts, claudemd.ts)
+system_prompt = concat(
+    default_prompt,           // 底板
+    append_prompt,            // 外加
+    agent_prompt,             // 角色
+    claudemd_layers,          // team / personal / project
+    memory_sections,          // session memory
+    output_style              // 表达约束
+)
+// 运行时每轮重算：memory 预取、collapse、microcompact、autocompact
+
+// 骨架: Codex fragment 拼装  (源: instructions/src/fragment.rs, user_instructions.rs)
+for frag in [agents_md, skill, user_instructions]:
+    body = ContextualUserFragmentDefinition::wrap(
+        START_MARKER, content, END_MARKER,
+        meta { source_dir, name, path }
+    )
+    msg  = frag.into_message()              // -&gt; ResponseItem::Message
+    thread.append(msg)</code></pre><h3>不变式 (invariants)</h3>
+<pre><code class="hljs language-plaintext">assert every fragment has matching (START_MARKER, END_MARKER)   # marker 成对
+assert fragment.source ∈ {AGENTS_MD, SKILL, USER}              # 类型可识别
+assert precedence(project) &gt; precedence(team) &gt; precedence(default)  # 优先级单调
+assert claudemd_layers 覆盖顺序 = team → personal → project     # 后注入覆盖前注入
+assert child_agents_md enabled ⇒ 附加 scope/precedence 说明     # 作用域显式</code></pre><h2>2.4 AGENTS.md 与 CLAUDE.md：同样是本地规则，气质却不同</h2>
+<p><code>CLAUDE.md</code> 更接近工程现场公告板：贴近任务目录、和 memory/skill 一起构成&quot;做事时该记住什么&quot;，适合登记常识、禁忌与局部制度。<code>AGENTS.md</code> 则被 Codex 拉进 hierarchy 讨论——<code>docs/agents_md.md</code> 明确说，即便当前没有 <code>AGENTS.md</code>，开启 <code>child_agents_md</code> 时系统也会追加作用域与优先级说明。Codex 关心的不只是&quot;有没有规则&quot;，还包括&quot;规则的适用范围和继承关系有没有被系统明说&quot;。</p>
+<p>一句话：Claude Code 让现场规则进入会话，Codex 让现场规则进入制度。</p>
+<h2>2.5 两种控制面的代价</h2>
+<p>运行时装配线灵活但难以彻底形式化，依赖主循环和工程经验，规则一多就要防互相覆盖和语义稀释。结构化片段更显式但更重：marker、类型、序列化和注入方式都要定义，还得区分谁是一等对象。前者养出经验型控制力，后者养出制度型控制力——一个长于灵活但不够显式，一个长于清楚但要持续维护结构成本。</p>
+<h2>2.6 这章的比较结论</h2>
+<blockquote>
+<p>Claude Code 把 prompt 视为运行时控制面的动态拼装结果，Codex 把 instruction 视为可识别、可包裹、可序列化的结构化片段。</p>
+</blockquote>
+<p>前者更像现场编导，后者更像制度秘书。谁更先进这问题没意义——真正要看的是系统更怕哪种失控：怕长会话指令失真、现场变化太快，欣赏 Claude Code 的动态装配；怕规则来源不清、作用域模糊、无法系统化治理，欣赏 Codex 的 fragment 化。下一章谈更深的分野：连续性究竟寄托在 query loop，还是寄托在 thread、rollout 和 state 这些更显式的结构上。</p>
+
+</article>
+<nav class="pager">
+<a class="prev" href="/harness-books/book2/chapter-01-why-this-comparison.html"><div class="pager-label">← 上一篇 · 01</div><div class="pager-title">为什么要把 Claude Code 和 Codex 放在一起看</div></a>
+<a class="next" href="/harness-books/book2/chapter-03-loop-thread-and-rollout.html"><div class="pager-label">下一篇 · 03 →</div><div class="pager-title">心跳放在哪：Query Loop 对照 Thread、Rollout 与 State</div></a>
+</nav>
+<footer style="margin-top:48px;padding-top:24px;border-top:1px solid var(--border);color:var(--muted);font-size:13px;">
+  <p>原文作者：<a href="https://github.com/wquguru" target="_blank" rel="noopener" style="color:var(--accent);">wquguru</a> · 内容版权归原作者所有 · <a href="https://harness-books.agentway.dev/book2-comparing/chapter-02-two-control-planes.html" target="_blank" rel="noopener" style="color:var(--accent);">在原站查看</a></p>
+</footer>
+</div>
+</body>
+</html>

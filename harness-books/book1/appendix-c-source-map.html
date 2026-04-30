@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>附录 C · 源码地图 · Claude Code 设计指南 · Fan's Notes</title>
+<meta name="description" content="Claude Code 设计指南 - 附录 C · 源码地图">
+<style>
+:root {
+  --bg: #fafaf7; --surface: #ffffff; --surface-2: #f5f5f0;
+  --text: #1a1a1a; --muted: #6b7280; --border: #e5e7eb;
+  --accent: #b45309; --tech: #0369a1; --tech-soft: #f0f9ff;
+  --code-bg: #f6f7f8; --code-text: #24292e;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f0f0e; --surface: #1a1a18; --surface-2: #14140f;
+    --text: #e5e5e0; --muted: #9ca3af; --border: #2d2d2a;
+    --accent: #fbbf24; --tech: #38bdf8; --tech-soft: #0c1e2e;
+    --code-bg: #1e1e1c; --code-text: #d4d4d4;
+  }
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB",
+               "Microsoft YaHei", "Source Han Sans CN", sans-serif;
+  font-size: 16px; line-height: 1.78;
+  -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+}
+.layout { max-width: 760px; margin: 0 auto; padding: 48px 24px 80px; }
+
+/* Top crumb */
+.crumb {
+  font-size: 13px; color: var(--muted);
+  margin-bottom: 24px;
+  display: flex; align-items: center; gap: 8px;
+  flex-wrap: wrap;
+}
+.crumb a {
+  color: var(--muted); text-decoration: none;
+  border-bottom: 1px solid var(--border);
+}
+.crumb a:hover { color: var(--accent); border-color: var(--accent); }
+.crumb .sep { color: var(--border); }
+
+/* Chapter header */
+.chapter-meta {
+  font-family: "SF Mono", Monaco, monospace;
+  font-size: 11px; letter-spacing: 0.1em;
+  color: var(--tech); font-weight: 700;
+  margin-bottom: 8px;
+}
+
+/* Markdown content */
+.content h1 {
+  font-size: 32px; line-height: 1.25;
+  margin: 0 0 32px; font-weight: 700;
+  letter-spacing: -0.015em;
+  padding-bottom: 16px;
+  border-bottom: 2px solid var(--text);
+}
+.content h2 {
+  font-size: 24px; margin: 48px 0 14px;
+  line-height: 1.3; font-weight: 600;
+  letter-spacing: -0.005em;
+}
+.content h3 {
+  font-size: 18px; margin: 32px 0 12px;
+  font-weight: 600; color: var(--accent);
+}
+.content h4 {
+  font-size: 16px; margin: 24px 0 10px;
+  font-weight: 600;
+}
+.content p { margin: 0 0 18px; }
+
+.content a {
+  color: var(--accent); text-decoration: none;
+  border-bottom: 1px solid var(--border);
+  transition: border-color 0.15s;
+}
+.content a:hover { border-color: var(--accent); }
+
+.content ul, .content ol { padding-left: 24px; margin: 0 0 18px; }
+.content li { margin-bottom: 6px; }
+.content li > ul, .content li > ol { margin-top: 6px; }
+
+.content strong { font-weight: 600; }
+.content em { font-style: italic; }
+
+.content blockquote {
+  margin: 20px 0; padding: 4px 0 4px 16px;
+  border-left: 3px solid var(--border);
+  color: var(--muted); font-style: italic;
+}
+
+.content hr {
+  border: 0; height: 1px;
+  background: var(--border);
+  margin: 40px 0;
+}
+
+/* Inline code */
+.content code {
+  font-family: "SF Mono", Monaco, Consolas, "Liberation Mono", monospace;
+  background: var(--code-bg); color: var(--code-text);
+  padding: 2px 6px; border-radius: 4px;
+  font-size: 0.88em;
+  border: 1px solid var(--border);
+}
+
+/* Code blocks */
+.content pre {
+  margin: 20px 0;
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 18px;
+  overflow-x: auto;
+  font-size: 13px; line-height: 1.65;
+}
+.content pre code {
+  background: transparent; border: 0;
+  padding: 0; font-size: inherit;
+  color: var(--code-text);
+}
+
+/* Highlight.js minimal theme (works for both light/dark) */
+.hljs-comment, .hljs-quote { color: #708090; font-style: italic; }
+.hljs-keyword, .hljs-selector-tag, .hljs-built_in { color: #d73a49; }
+.hljs-string, .hljs-attr { color: #032f62; }
+.hljs-number, .hljs-literal { color: #005cc5; }
+.hljs-title, .hljs-function { color: #6f42c1; }
+.hljs-variable, .hljs-tag { color: #e36209; }
+@media (prefers-color-scheme: dark) {
+  .hljs-comment, .hljs-quote { color: #6a737d; }
+  .hljs-keyword, .hljs-selector-tag, .hljs-built_in { color: #f97583; }
+  .hljs-string, .hljs-attr { color: #9ecbff; }
+  .hljs-number, .hljs-literal { color: #79b8ff; }
+  .hljs-title, .hljs-function { color: #b392f0; }
+  .hljs-variable, .hljs-tag { color: #ffab70; }
+}
+
+.content table {
+  width: 100%; border-collapse: collapse;
+  margin: 20px 0; font-size: 14.5px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px; overflow: hidden;
+}
+.content th, .content td {
+  padding: 10px 14px; text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+.content th {
+  background: var(--code-bg);
+  font-weight: 600; font-size: 13px;
+  color: var(--muted);
+}
+.content tr:last-child td { border-bottom: 0; }
+
+/* Pager */
+.pager {
+  margin-top: 64px; padding-top: 24px;
+  border-top: 1px solid var(--border);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.pager a {
+  display: block; padding: 16px 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  text-decoration: none; color: inherit;
+  transition: all 0.15s;
+}
+.pager a:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+.pager .pager-label {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+.pager .pager-title {
+  font-size: 14px; font-weight: 600;
+  line-height: 1.4;
+}
+.pager .next { text-align: right; }
+.pager .prev:empty, .pager .next:empty { background: transparent; border: 0; }
+
+@media (max-width: 600px) {
+  .layout { padding: 32px 18px 64px; }
+  .content h1 { font-size: 26px; }
+  .content h2 { font-size: 21px; }
+  body { font-size: 15.5px; }
+  .pager { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="layout">
+<nav class="crumb">
+  <a href="/">Fan's Notes</a><span class="sep">/</span><a href="/harness-books/">Harness Books</a><span class="sep">/</span><span>Book 1: Claude Code 设计指南</span>
+</nav>
+<div class="chapter-meta">BOOK 1 · C</div>
+<article class="content">
+<h1>附录 C 源码地图：本书各章主要依据哪些文件</h1>
+<p>这本书虽然不是源码导读，但终究是基于源码写的。这里把每一章最主要的依据文件整理成一份地图。</p>
+<p>这份地图不是完整索引，只列与本书论点直接相关的主文件。</p>
+<p>这里也补一句版权边界：这份源码地图的作用，是说明分析依据来自哪些文件，而不是承诺随内容提供这些文件的正文内容。这里仅保留必要的工程性引用、模块定位和结构分析，不附源码副本，不做大段实现转载。</p>
+<h2>C.1 第 1 章 为什么需要 Harness Engineering</h2>
+<p>核心文件：</p>
+<ul>
+<li><code>src/constants/prompts.ts</code></li>
+<li><code>src/utils/systemPrompt.ts</code></li>
+<li><code>src/query.ts</code></li>
+<li><code>src/services/tools/toolOrchestration.ts</code></li>
+<li><code>src/tools/BashTool/prompt.ts</code></li>
+</ul>
+<p>本章主要论点来源：</p>
+<ul>
+<li>prompt 属于控制面组成部分，而不是人格包装</li>
+<li>query loop 才是代理系统骨架</li>
+<li>工具和 Bash 风险说明 harness 的必要性</li>
+</ul>
+<h2>C.2 第 2 章 Prompt 是控制面，不是人格装修</h2>
+<p>核心文件：</p>
+<ul>
+<li><code>src/constants/prompts.ts</code></li>
+<li><code>src/utils/systemPrompt.ts</code></li>
+<li><code>src/utils/claudemd.ts</code></li>
+<li><code>src/memdir/memdir.ts</code></li>
+<li><code>src/constants/systemPromptSections.ts</code></li>
+<li><code>src/main.tsx</code></li>
+</ul>
+<p>本章主要论点来源：</p>
+<ul>
+<li>system prompt 的分层拼装</li>
+<li><code>CLAUDE.md</code> 与 memory 作为控制面输入</li>
+<li>动态系统提醒与上下文注入</li>
+</ul>
+<h2>C.3 第 3 章 Query Loop：代理系统的心跳</h2>
+<p>核心文件：</p>
+<ul>
+<li><code>src/query.ts</code></li>
+<li><code>src/QueryEngine.ts</code></li>
+</ul>
+<p>本章主要论点来源：</p>
+<ul>
+<li>query loop 的状态机性质</li>
+<li>输入治理先于模型调用</li>
+<li>流式事件消费与恢复分支</li>
+<li>QueryEngine 对 conversation lifecycle 的所有权</li>
+</ul>
+<h2>C.4 第 4 章 工具、权限与中断</h2>
+<p>核心文件：</p>
+<ul>
+<li><code>src/services/tools/toolOrchestration.ts</code></li>
+<li><code>src/services/tools/toolExecution.ts</code></li>
+<li><code>src/services/tools/StreamingToolExecutor.ts</code></li>
+<li><code>src/hooks/useCanUseTool.tsx</code></li>
+<li><code>src/utils/permissions/PermissionResult.ts</code></li>
+<li><code>src/tools/BashTool/prompt.ts</code></li>
+<li><code>src/tools/BashTool/bashPermissions.ts</code></li>
+</ul>
+<p>本章主要论点来源：</p>
+<ul>
+<li>并发安全与上下文顺序回放</li>
+<li>工具执行包裹层</li>
+<li><code>allow / deny / ask</code> 权限语义</li>
+<li>streaming 工具中断与 synthetic result</li>
+<li>Bash 的特殊高压治理</li>
+</ul>
+<h2>C.5 第 5 章 上下文治理：Memory、CLAUDE.md 与 Compact</h2>
+<p>核心文件：</p>
+<ul>
+<li><code>src/utils/claudemd.ts</code></li>
+<li><code>src/memdir/memdir.ts</code></li>
+<li><code>src/services/SessionMemory/prompts.ts</code></li>
+<li><code>src/services/compact/autoCompact.ts</code></li>
+<li><code>src/services/compact/compact.ts</code></li>
+<li><code>src/query.ts</code></li>
+</ul>
+<p>本章主要论点来源：</p>
+<ul>
+<li><code>CLAUDE.md</code> 的分层发现和加载</li>
+<li><code>MEMORY.md</code> 作为入口索引而非正文仓库</li>
+<li>session memory 的结构化连续性</li>
+<li>autocompact 阈值、buffer 与 circuit breaker</li>
+<li>compact 后的工作语义重建</li>
+</ul>
+<h2>C.6 第 6 章 错误与恢复</h2>
+<p>核心文件：</p>
+<ul>
+<li><code>src/query.ts</code></li>
+<li><code>src/services/compact/autoCompact.ts</code></li>
+<li><code>src/services/compact/compact.ts</code></li>
+<li><code>src/services/api/withRetry.ts</code></li>
+</ul>
+<p>本章主要论点来源：</p>
+<ul>
+<li>withheld recoverable errors</li>
+<li>prompt-too-long 的 collapse drain 与 reactive compact</li>
+<li><code>max_output_tokens</code> 的 escalate 与 resume</li>
+<li>autocompact failure 熔断</li>
+<li>compaction 自身 PTL 重试</li>
+</ul>
+<h2>C.7 第 7 章 多代理与验证</h2>
+<p>核心文件：</p>
+<ul>
+<li><code>src/utils/forkedAgent.ts</code></li>
+<li><code>src/coordinator/coordinatorMode.ts</code></li>
+<li><code>src/tasks/LocalAgentTask/LocalAgentTask.tsx</code></li>
+<li><code>src/utils/hooks/hooksConfigManager.ts</code></li>
+<li><code>src/skills/bundled/verify.ts</code></li>
+<li><code>src/memdir/memoryTypes.ts</code></li>
+</ul>
+<p>本章主要论点来源：</p>
+<ul>
+<li>forked agent 的 cache-safe 参数与状态隔离</li>
+<li>coordinator 的 synthesis 责任</li>
+<li>verification 独立成阶段</li>
+<li>subagent lifecycle hook</li>
+<li>task cleanup 与父子 abort 传播</li>
+<li>对 stale memory 的 verify discipline</li>
+</ul>
+<h2>C.8 第 8 章 团队落地</h2>
+<p>核心文件：</p>
+<ul>
+<li><code>src/utils/claudemd.ts</code></li>
+<li><code>src/tools/SkillTool/prompt.ts</code></li>
+<li><code>src/tools/SkillTool/SkillTool.ts</code></li>
+<li><code>src/utils/forkedAgent.ts</code></li>
+<li><code>src/utils/hooks/hooksConfigManager.ts</code></li>
+<li><code>src/main.tsx</code></li>
+</ul>
+<p>本章主要论点来源：</p>
+<ul>
+<li>团队 <code>CLAUDE.md</code> 的分层稳定性</li>
+<li>skill 作为制度切片而非 prompt 收藏夹</li>
+<li>approval 边界与 allow rules</li>
+<li>hook 生命周期治理</li>
+<li>session startup 与 instructions / skill loading</li>
+</ul>
+<h2>C.9 第 9 章 十条原则</h2>
+<p>第 9 章并非直接从单一文件推出，它是对前面所有章节的压缩。它的依据，就是全书已经使用过的这些核心模块共同呈现出的系统结构：</p>
+<ul>
+<li>prompt assembly</li>
+<li>query loop</li>
+<li>tool orchestration</li>
+<li>permission model</li>
+<li>context governance</li>
+<li>recovery system</li>
+<li>multi-agent orchestration</li>
+<li>team governance hooks</li>
+</ul>
+
+</article>
+<nav class="pager">
+<a class="prev" href="/harness-books/book1/appendix-b-diagram-notes.html"><div class="pager-label">← 上一篇 · B</div><div class="pager-title">附录 B · 图示</div></a>
+<span class="next"></span>
+</nav>
+<footer style="margin-top:48px;padding-top:24px;border-top:1px solid var(--border);color:var(--muted);font-size:13px;">
+  <p>原文作者：<a href="https://github.com/wquguru" target="_blank" rel="noopener" style="color:var(--accent);">wquguru</a> · 内容版权归原作者所有 · <a href="https://harness-books.agentway.dev/book1-claude-code/appendix-c-source-map.html" target="_blank" rel="noopener" style="color:var(--accent);">在原站查看</a></p>
+</footer>
+</div>
+</body>
+</html>

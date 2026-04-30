@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>附录 A · 源码地图 · Claude Code & Codex 设计哲学比较 · Fan's Notes</title>
+<meta name="description" content="Claude Code & Codex 设计哲学比较 - 附录 A · 源码地图">
+<style>
+:root {
+  --bg: #fafaf7; --surface: #ffffff; --surface-2: #f5f5f0;
+  --text: #1a1a1a; --muted: #6b7280; --border: #e5e7eb;
+  --accent: #b45309; --tech: #0369a1; --tech-soft: #f0f9ff;
+  --code-bg: #f6f7f8; --code-text: #24292e;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f0f0e; --surface: #1a1a18; --surface-2: #14140f;
+    --text: #e5e5e0; --muted: #9ca3af; --border: #2d2d2a;
+    --accent: #fbbf24; --tech: #38bdf8; --tech-soft: #0c1e2e;
+    --code-bg: #1e1e1c; --code-text: #d4d4d4;
+  }
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB",
+               "Microsoft YaHei", "Source Han Sans CN", sans-serif;
+  font-size: 16px; line-height: 1.78;
+  -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+}
+.layout { max-width: 760px; margin: 0 auto; padding: 48px 24px 80px; }
+
+/* Top crumb */
+.crumb {
+  font-size: 13px; color: var(--muted);
+  margin-bottom: 24px;
+  display: flex; align-items: center; gap: 8px;
+  flex-wrap: wrap;
+}
+.crumb a {
+  color: var(--muted); text-decoration: none;
+  border-bottom: 1px solid var(--border);
+}
+.crumb a:hover { color: var(--accent); border-color: var(--accent); }
+.crumb .sep { color: var(--border); }
+
+/* Chapter header */
+.chapter-meta {
+  font-family: "SF Mono", Monaco, monospace;
+  font-size: 11px; letter-spacing: 0.1em;
+  color: var(--tech); font-weight: 700;
+  margin-bottom: 8px;
+}
+
+/* Markdown content */
+.content h1 {
+  font-size: 32px; line-height: 1.25;
+  margin: 0 0 32px; font-weight: 700;
+  letter-spacing: -0.015em;
+  padding-bottom: 16px;
+  border-bottom: 2px solid var(--text);
+}
+.content h2 {
+  font-size: 24px; margin: 48px 0 14px;
+  line-height: 1.3; font-weight: 600;
+  letter-spacing: -0.005em;
+}
+.content h3 {
+  font-size: 18px; margin: 32px 0 12px;
+  font-weight: 600; color: var(--accent);
+}
+.content h4 {
+  font-size: 16px; margin: 24px 0 10px;
+  font-weight: 600;
+}
+.content p { margin: 0 0 18px; }
+
+.content a {
+  color: var(--accent); text-decoration: none;
+  border-bottom: 1px solid var(--border);
+  transition: border-color 0.15s;
+}
+.content a:hover { border-color: var(--accent); }
+
+.content ul, .content ol { padding-left: 24px; margin: 0 0 18px; }
+.content li { margin-bottom: 6px; }
+.content li > ul, .content li > ol { margin-top: 6px; }
+
+.content strong { font-weight: 600; }
+.content em { font-style: italic; }
+
+.content blockquote {
+  margin: 20px 0; padding: 4px 0 4px 16px;
+  border-left: 3px solid var(--border);
+  color: var(--muted); font-style: italic;
+}
+
+.content hr {
+  border: 0; height: 1px;
+  background: var(--border);
+  margin: 40px 0;
+}
+
+/* Inline code */
+.content code {
+  font-family: "SF Mono", Monaco, Consolas, "Liberation Mono", monospace;
+  background: var(--code-bg); color: var(--code-text);
+  padding: 2px 6px; border-radius: 4px;
+  font-size: 0.88em;
+  border: 1px solid var(--border);
+}
+
+/* Code blocks */
+.content pre {
+  margin: 20px 0;
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 18px;
+  overflow-x: auto;
+  font-size: 13px; line-height: 1.65;
+}
+.content pre code {
+  background: transparent; border: 0;
+  padding: 0; font-size: inherit;
+  color: var(--code-text);
+}
+
+/* Highlight.js minimal theme (works for both light/dark) */
+.hljs-comment, .hljs-quote { color: #708090; font-style: italic; }
+.hljs-keyword, .hljs-selector-tag, .hljs-built_in { color: #d73a49; }
+.hljs-string, .hljs-attr { color: #032f62; }
+.hljs-number, .hljs-literal { color: #005cc5; }
+.hljs-title, .hljs-function { color: #6f42c1; }
+.hljs-variable, .hljs-tag { color: #e36209; }
+@media (prefers-color-scheme: dark) {
+  .hljs-comment, .hljs-quote { color: #6a737d; }
+  .hljs-keyword, .hljs-selector-tag, .hljs-built_in { color: #f97583; }
+  .hljs-string, .hljs-attr { color: #9ecbff; }
+  .hljs-number, .hljs-literal { color: #79b8ff; }
+  .hljs-title, .hljs-function { color: #b392f0; }
+  .hljs-variable, .hljs-tag { color: #ffab70; }
+}
+
+.content table {
+  width: 100%; border-collapse: collapse;
+  margin: 20px 0; font-size: 14.5px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px; overflow: hidden;
+}
+.content th, .content td {
+  padding: 10px 14px; text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+.content th {
+  background: var(--code-bg);
+  font-weight: 600; font-size: 13px;
+  color: var(--muted);
+}
+.content tr:last-child td { border-bottom: 0; }
+
+/* Pager */
+.pager {
+  margin-top: 64px; padding-top: 24px;
+  border-top: 1px solid var(--border);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.pager a {
+  display: block; padding: 16px 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  text-decoration: none; color: inherit;
+  transition: all 0.15s;
+}
+.pager a:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+.pager .pager-label {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+.pager .pager-title {
+  font-size: 14px; font-weight: 600;
+  line-height: 1.4;
+}
+.pager .next { text-align: right; }
+.pager .prev:empty, .pager .next:empty { background: transparent; border: 0; }
+
+@media (max-width: 600px) {
+  .layout { padding: 32px 18px 64px; }
+  .content h1 { font-size: 26px; }
+  .content h2 { font-size: 21px; }
+  body { font-size: 15.5px; }
+  .pager { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="layout">
+<nav class="crumb">
+  <a href="/">Fan's Notes</a><span class="sep">/</span><a href="/harness-books/">Harness Books</a><span class="sep">/</span><span>Book 2: Claude Code & Codex 设计哲学比较</span>
+</nav>
+<div class="chapter-meta">BOOK 2 · A</div>
+<article class="content">
+<h1>附录 A 源码地图：这套比较主要依据哪些文件</h1>
+<p>这份附录只做一件事：说明各章判断主要基于哪些文件。它不是源码转载目录，也不意味着内容会提供相关源代码副本。</p>
+<p>这里仍然保留同样的边界：</p>
+<ul>
+<li>仅做必要的工程性引用和模块定位</li>
+<li>不附带 Claude Code 或 Codex 的实现正文</li>
+<li>不做大段源码转录</li>
+</ul>
+<h2>A.1 Claude Code 侧主要依据</h2>
+<p>总体控制面与 prompt：</p>
+<ul>
+<li><code>src/constants/prompts.ts</code></li>
+<li><code>src/utils/systemPrompt.ts</code></li>
+<li><code>src/utils/claudemd.ts</code></li>
+<li><code>src/memdir/memdir.ts</code></li>
+</ul>
+<p>运行时循环与恢复：</p>
+<ul>
+<li><code>src/query.ts</code></li>
+<li><code>src/QueryEngine.ts</code></li>
+<li><code>src/services/compact/autoCompact.ts</code></li>
+<li><code>src/services/compact/compact.ts</code></li>
+</ul>
+<p>工具与权限：</p>
+<ul>
+<li><code>src/services/tools/toolOrchestration.ts</code></li>
+<li><code>src/services/tools/toolExecution.ts</code></li>
+<li><code>src/services/tools/StreamingToolExecutor.ts</code></li>
+<li><code>src/hooks/useCanUseTool.tsx</code></li>
+<li><code>src/tools/BashTool/prompt.ts</code></li>
+<li><code>src/tools/BashTool/bashPermissions.ts</code></li>
+</ul>
+<p>多代理、skills、hooks：</p>
+<ul>
+<li><code>src/utils/forkedAgent.ts</code></li>
+<li><code>src/coordinator/coordinatorMode.ts</code></li>
+<li><code>src/tasks/LocalAgentTask/LocalAgentTask.tsx</code></li>
+<li><code>src/tools/SkillTool/SkillTool.ts</code></li>
+<li><code>src/tools/SkillTool/prompt.ts</code></li>
+<li><code>src/utils/hooks/hooksConfigManager.ts</code></li>
+</ul>
+<h2>A.2 Codex 侧主要依据</h2>
+<p>核心模块骨架：</p>
+<ul>
+<li><code>core/src/lib.rs</code></li>
+<li><code>tools/src/lib.rs</code></li>
+<li><code>skills/src/lib.rs</code></li>
+<li><code>hooks/src/lib.rs</code></li>
+</ul>
+<p>instruction fragment 与用户注入：</p>
+<ul>
+<li><code>instructions/src/lib.rs</code></li>
+<li><code>instructions/src/fragment.rs</code></li>
+<li><code>instructions/src/user_instructions.rs</code></li>
+<li><code>docs/agents_md.md</code></li>
+</ul>
+<p>工具、审批与执行策略：</p>
+<ul>
+<li><code>tools/src/local_tool.rs</code></li>
+<li><code>tools/src/agent_tool.rs</code></li>
+<li><code>execpolicy/src/lib.rs</code></li>
+<li><code>docs/execpolicy.md</code></li>
+<li><code>docs/sandbox.md</code></li>
+</ul>
+<p>线程与状态：</p>
+<ul>
+<li><code>sdk/typescript/src/thread.ts</code></li>
+<li><code>core/src/lib.rs</code></li>
+<li><code>core/src/thread_manager.rs</code></li>
+<li><code>core/src/rollout.rs</code></li>
+<li><code>core/src/state_db_bridge.rs</code></li>
+<li><code>core/src/message_history.rs</code></li>
+</ul>
+<p>hook 事件引擎：</p>
+<ul>
+<li><code>hooks/src/engine/mod.rs</code></li>
+</ul>
+<h2>A.3 各章对照</h2>
+<p>第 1 章：</p>
+<ul>
+<li>Claude Code 的 <code>query.ts</code>、<code>toolOrchestration.ts</code></li>
+<li>Codex 的 <code>core/src/lib.rs</code></li>
+</ul>
+<p>第 2 章：</p>
+<ul>
+<li>Claude Code 的 prompt assembly 与 <code>CLAUDE.md</code></li>
+<li>Codex 的 <code>fragment.rs</code>、<code>user_instructions.rs</code></li>
+</ul>
+<p>第 3 章：</p>
+<ul>
+<li>Claude Code 的 query loop / QueryEngine</li>
+<li>Codex 的 <code>thread.ts</code>、<code>thread_manager</code>、<code>rollout</code>、<code>state_db_bridge</code> 暴露模块</li>
+</ul>
+<p>第 4 章：</p>
+<ul>
+<li>Claude Code 的工具编排、Bash 限制、权限语义</li>
+<li>Codex 的 <code>tools/src/lib.rs</code>、<code>local_tool.rs</code>、<code>execpolicy/src/lib.rs</code></li>
+</ul>
+<p>第 5 章：</p>
+<ul>
+<li>Claude Code 的 skill / hook / memory 体系</li>
+<li>Codex 的 skills 体系、hooks engine</li>
+</ul>
+<p>第 6 章：</p>
+<ul>
+<li>Claude Code 的 forked agent / verification 纪律</li>
+<li>Codex 的 agent tool 集合、thread / rollout / state</li>
+</ul>
+<p>第 7 章：</p>
+<ul>
+<li>综合前述所有文件形成总判断</li>
+</ul>
+
+</article>
+<nav class="pager">
+<a class="prev" href="/harness-books/book2/chapter-08-how-to-choose-or-build.html"><div class="pager-label">← 上一篇 · 08</div><div class="pager-title">如果你要自己做</div></a>
+<a class="next" href="/harness-books/book2/appendix-b-checklists.html"><div class="pager-label">下一篇 · B →</div><div class="pager-title">附录 B · 检查清单</div></a>
+</nav>
+<footer style="margin-top:48px;padding-top:24px;border-top:1px solid var(--border);color:var(--muted);font-size:13px;">
+  <p>原文作者：<a href="https://github.com/wquguru" target="_blank" rel="noopener" style="color:var(--accent);">wquguru</a> · 内容版权归原作者所有 · <a href="https://harness-books.agentway.dev/book2-comparing/appendix-a-source-map.html" target="_blank" rel="noopener" style="color:var(--accent);">在原站查看</a></p>
+</footer>
+</div>
+</body>
+</html>

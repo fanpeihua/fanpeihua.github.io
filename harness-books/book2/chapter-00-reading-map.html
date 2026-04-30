@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>阅读地图 · Claude Code & Codex 设计哲学比较 · Fan's Notes</title>
+<meta name="description" content="Claude Code & Codex 设计哲学比较 - 阅读地图">
+<style>
+:root {
+  --bg: #fafaf7; --surface: #ffffff; --surface-2: #f5f5f0;
+  --text: #1a1a1a; --muted: #6b7280; --border: #e5e7eb;
+  --accent: #b45309; --tech: #0369a1; --tech-soft: #f0f9ff;
+  --code-bg: #f6f7f8; --code-text: #24292e;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f0f0e; --surface: #1a1a18; --surface-2: #14140f;
+    --text: #e5e5e0; --muted: #9ca3af; --border: #2d2d2a;
+    --accent: #fbbf24; --tech: #38bdf8; --tech-soft: #0c1e2e;
+    --code-bg: #1e1e1c; --code-text: #d4d4d4;
+  }
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB",
+               "Microsoft YaHei", "Source Han Sans CN", sans-serif;
+  font-size: 16px; line-height: 1.78;
+  -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+}
+.layout { max-width: 760px; margin: 0 auto; padding: 48px 24px 80px; }
+
+/* Top crumb */
+.crumb {
+  font-size: 13px; color: var(--muted);
+  margin-bottom: 24px;
+  display: flex; align-items: center; gap: 8px;
+  flex-wrap: wrap;
+}
+.crumb a {
+  color: var(--muted); text-decoration: none;
+  border-bottom: 1px solid var(--border);
+}
+.crumb a:hover { color: var(--accent); border-color: var(--accent); }
+.crumb .sep { color: var(--border); }
+
+/* Chapter header */
+.chapter-meta {
+  font-family: "SF Mono", Monaco, monospace;
+  font-size: 11px; letter-spacing: 0.1em;
+  color: var(--tech); font-weight: 700;
+  margin-bottom: 8px;
+}
+
+/* Markdown content */
+.content h1 {
+  font-size: 32px; line-height: 1.25;
+  margin: 0 0 32px; font-weight: 700;
+  letter-spacing: -0.015em;
+  padding-bottom: 16px;
+  border-bottom: 2px solid var(--text);
+}
+.content h2 {
+  font-size: 24px; margin: 48px 0 14px;
+  line-height: 1.3; font-weight: 600;
+  letter-spacing: -0.005em;
+}
+.content h3 {
+  font-size: 18px; margin: 32px 0 12px;
+  font-weight: 600; color: var(--accent);
+}
+.content h4 {
+  font-size: 16px; margin: 24px 0 10px;
+  font-weight: 600;
+}
+.content p { margin: 0 0 18px; }
+
+.content a {
+  color: var(--accent); text-decoration: none;
+  border-bottom: 1px solid var(--border);
+  transition: border-color 0.15s;
+}
+.content a:hover { border-color: var(--accent); }
+
+.content ul, .content ol { padding-left: 24px; margin: 0 0 18px; }
+.content li { margin-bottom: 6px; }
+.content li > ul, .content li > ol { margin-top: 6px; }
+
+.content strong { font-weight: 600; }
+.content em { font-style: italic; }
+
+.content blockquote {
+  margin: 20px 0; padding: 4px 0 4px 16px;
+  border-left: 3px solid var(--border);
+  color: var(--muted); font-style: italic;
+}
+
+.content hr {
+  border: 0; height: 1px;
+  background: var(--border);
+  margin: 40px 0;
+}
+
+/* Inline code */
+.content code {
+  font-family: "SF Mono", Monaco, Consolas, "Liberation Mono", monospace;
+  background: var(--code-bg); color: var(--code-text);
+  padding: 2px 6px; border-radius: 4px;
+  font-size: 0.88em;
+  border: 1px solid var(--border);
+}
+
+/* Code blocks */
+.content pre {
+  margin: 20px 0;
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 18px;
+  overflow-x: auto;
+  font-size: 13px; line-height: 1.65;
+}
+.content pre code {
+  background: transparent; border: 0;
+  padding: 0; font-size: inherit;
+  color: var(--code-text);
+}
+
+/* Highlight.js minimal theme (works for both light/dark) */
+.hljs-comment, .hljs-quote { color: #708090; font-style: italic; }
+.hljs-keyword, .hljs-selector-tag, .hljs-built_in { color: #d73a49; }
+.hljs-string, .hljs-attr { color: #032f62; }
+.hljs-number, .hljs-literal { color: #005cc5; }
+.hljs-title, .hljs-function { color: #6f42c1; }
+.hljs-variable, .hljs-tag { color: #e36209; }
+@media (prefers-color-scheme: dark) {
+  .hljs-comment, .hljs-quote { color: #6a737d; }
+  .hljs-keyword, .hljs-selector-tag, .hljs-built_in { color: #f97583; }
+  .hljs-string, .hljs-attr { color: #9ecbff; }
+  .hljs-number, .hljs-literal { color: #79b8ff; }
+  .hljs-title, .hljs-function { color: #b392f0; }
+  .hljs-variable, .hljs-tag { color: #ffab70; }
+}
+
+.content table {
+  width: 100%; border-collapse: collapse;
+  margin: 20px 0; font-size: 14.5px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px; overflow: hidden;
+}
+.content th, .content td {
+  padding: 10px 14px; text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+.content th {
+  background: var(--code-bg);
+  font-weight: 600; font-size: 13px;
+  color: var(--muted);
+}
+.content tr:last-child td { border-bottom: 0; }
+
+/* Pager */
+.pager {
+  margin-top: 64px; padding-top: 24px;
+  border-top: 1px solid var(--border);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.pager a {
+  display: block; padding: 16px 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  text-decoration: none; color: inherit;
+  transition: all 0.15s;
+}
+.pager a:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+.pager .pager-label {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+.pager .pager-title {
+  font-size: 14px; font-weight: 600;
+  line-height: 1.4;
+}
+.pager .next { text-align: right; }
+.pager .prev:empty, .pager .next:empty { background: transparent; border: 0; }
+
+@media (max-width: 600px) {
+  .layout { padding: 32px 18px 64px; }
+  .content h1 { font-size: 26px; }
+  .content h2 { font-size: 21px; }
+  body { font-size: 15.5px; }
+  .pager { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="layout">
+<nav class="crumb">
+  <a href="/">Fan's Notes</a><span class="sep">/</span><a href="/harness-books/">Harness Books</a><span class="sep">/</span><span>Book 2: Claude Code & Codex 设计哲学比较</span>
+</nav>
+<div class="chapter-meta">BOOK 2 · 导</div>
+<article class="content">
+<h1>阅读地图：如何理解第一本书与这本比较书</h1>
+<p>如果把这两个目录都看成在写 AI coding agent，那么最容易误读的地方，是把它们当成两份重复文档。它们并不重复，分工其实很清楚。</p>
+<p>第一本书更像单体解剖。它以 Claude Code 为样本，讨论一套可控 agent 为什么必须具备控制面、query loop、工具权限、上下文治理、恢复路径、多代理验证和团队制度这些器官。它要回答的问题是：一套能在真实工程环境里持续工作的 harness，内部骨架应该是什么样。</p>
+<p>这本比较书更像比较解剖。它把 Claude Code 和 Codex 放在一起，比较两者如何承认模型不可靠，以及如何把秩序安放在不同层级。它要回答的问题是：同样是做 harness，哪些设计更接近共识，哪些体现了不同工程路线的取舍。</p>
+<p>现在还可以再多补一层用途：当你把前面这些判断带去看第三方 harness 时，也更容易识别一种常见误区。很多系统表面上也有 memory、skills、compact 和多代理，但上下文治理的主轴仍然是先把大量文本塞进 prompt，超了再截断和补救。这种路线看上去像“信息更全”，实际往往更费 token，也更容易把工作语义冲淡。</p>
+<p>换句话说，可以把两者理解成同一研究计划的前后两步：</p>
+<ul>
+<li>第一步，在第一本书里先抽出 Harness Engineering 的一般原则。</li>
+<li>第二步，在这本比较书里再看这些原则如何在两套系统里分别落地。</li>
+</ul>
+<h2>先看第一本书：Claude Code 给出的九个结构判断</h2>
+<p>第一本书的主线可压成九条：harness 先约束模型别把工程环境弄坏；prompt 是控制平面的一部分；query loop 才是 agent 的心跳；工具是受审批、调度、中断语义约束的执行接口；上下文越多不等于越好，memory / <code>CLAUDE.md</code> / compact 本质是预算治理；错误属于主路径，恢复要第一等设计；多代理的价值在职责分区与独立验证；团队落地必须把规则沉淀成可复用制度；最终这些抽成一套稳定的 Harness Engineering 原则清单。</p>
+<p>只读第一本书会得到一个强印象：Claude Code 的系统气质偏运行时治理——它先关心会话如何连续运行、工具如何别闯祸、恢复如何别把系统拖进死循环、验证如何别沦为形式。</p>
+<h2>再看这本比较书：同一个问题，Claude Code 和 Codex 从哪里起笔</h2>
+<p>这本比较书在这个基础上，把比较轴明确拆成了几层。</p>
+<h3>控制面</h3>
+<p>Claude Code 更像动态 prompt 装配线。它把很多秩序压进运行前后的 prompt 拼装、会话状态和上下文治理里。</p>
+<p>Codex 更像显式控制层。它把 instruction fragments、审批策略、工具 schema、thread、rollout、hook 等结构尽量模块化、类型化、可组合化。</p>
+<h3>连续性</h3>
+<p>Claude Code 把连续性压进主循环，强调 query loop 的心跳纪律。</p>
+<p>Codex 把连续性拆进 thread、rollout 和 state bridge，强调状态如何被结构化持有和恢复。</p>
+<h3>工具与权限</h3>
+<p>Claude Code 偏运行时约束，重点在调用时如何审批、如何中断、如何避免危险动作直接落地。</p>
+<p>Codex 偏策略语言和工具契约，重点在 schema、approval policy、sandbox 和 exec policy 这些显式器官。</p>
+<h3>本地治理</h3>
+<p>Claude Code 倾向把地方经验收编成现场记忆，例如 <code>CLAUDE.md</code>、memory、skills 和工作流约束。</p>
+<p>Codex 倾向把地方制度挂到结构化注入和事件系统上，例如 instructions、skills、hooks 和明确的工具边界。</p>
+<h3>多代理与验证</h3>
+<p>Claude Code 强调多代理是运行时职责分区，验证必须独立于实现阶段。</p>
+<p>Codex 则更强调通过显式委派、持久状态和工具化协作，把验证从“礼仪动作”变成可跟踪的系统能力。</p>
+<h2>合起来以后，真正清楚的是什么</h2>
+<p>把第一本书和这本比较书放在一起看，能得到三个更完整的结论。</p>
+<h3>第一，比较的重点主要落在 harness</h3>
+<p>这两套文档反复指向同一个事实：AI coding system 的核心挑战，首先是如何让模型在终端、文件系统、权限和团队制度中不失控；模型能力的提升要放在这个前提里理解。</p>
+<h3>第二，Claude Code 和 Codex 的差别，主要是秩序安放的位置不同</h3>
+<p>Claude Code 更像从运行时事故经验里塑出来的系统，优先解决连续性、恢复和现场治理。</p>
+<p>Codex 更像从显式结构设计里塑出来的系统，优先解决控制层命名、策略表达、边界清晰和可组合性。</p>
+<h3>第三，后来者不该照抄产品，而该识别自己的主要不确定性</h3>
+<p>如果你的问题是长会话容易失控、恢复路径很脆、验证总被跳过，那么更该先学第一本书强调的运行时纪律。</p>
+<p>如果你的问题是规则来源太散、权限边界不清、工具契约不稳定、团队很难复制同一套行为，那么更该先学这本比较书里总结出的 Codex 式显式控制层。</p>
+<p>如果你看到某套系统主要靠堆叠 bootstrap 文本、身份设定、技能目录和工作区说明来维持连续性，那也不必急着被“上下文很多”这件事打动。很多时候，这更像一种尚未把上下文真正治理起来的过渡状态，离成熟的第三条路线还有一段距离。</p>
+<h2>推荐阅读顺序</h2>
+<p>如果你是第一次进入这套材料，推荐按下面的顺序读。</p>
+<ol>
+<li>先读<a href="preface.md">序言</a>，先确认这套比较关注的是秩序放在哪一层，不只是罗列功能表。</li>
+<li>再读<a href="chapter-01-why-this-comparison.md">第 1 章 为什么要把 Claude Code 和 Codex 放在一起看</a>，建立问题意识。</li>
+<li>然后顺着第 2 到第 6 章读完控制面、连续性、工具治理、本地制度和多代理验证这五条比较轴。</li>
+<li>如果只想快速看总结，直接读<a href="chapter-07-convergence-and-divergence.md">第 7 章 殊途同归，还是各表一枝</a>。</li>
+<li>如果你的目标是自己动手搭系统，最后读<a href="chapter-08-how-to-choose-or-build.md">第 8 章 如果你要自己做：该向谁学，先学什么</a>。这一章现在也补了一张三路对照图，用来说明为什么有些 harness 明明“上下文很满”，却依然又贵又乱。</li>
+</ol>
+<h2>一句话总结</h2>
+<p>第一本书解释的是：为什么一个可控的 agent 必须采用这种结构。</p>
+<p>这本比较书解释的是：当两套系统都认真做 harness 时，它们为什么会长得不一样。</p>
+
+</article>
+<nav class="pager">
+<a class="prev" href="/harness-books/book2/"><div class="pager-label">← 上一篇 · 00</div><div class="pager-title">Introduction</div></a>
+<a class="next" href="/harness-books/book2/preface.html"><div class="pager-label">下一篇 · 序 →</div><div class="pager-title">序言：两套 Harness</div></a>
+</nav>
+<footer style="margin-top:48px;padding-top:24px;border-top:1px solid var(--border);color:var(--muted);font-size:13px;">
+  <p>原文作者：<a href="https://github.com/wquguru" target="_blank" rel="noopener" style="color:var(--accent);">wquguru</a> · 内容版权归原作者所有 · <a href="https://harness-books.agentway.dev/book2-comparing/chapter-00-reading-map.html" target="_blank" rel="noopener" style="color:var(--accent);">在原站查看</a></p>
+</footer>
+</div>
+</body>
+</html>

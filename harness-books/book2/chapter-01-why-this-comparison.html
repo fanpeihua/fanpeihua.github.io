@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>为什么要把 Claude Code 和 Codex 放在一起看 · Claude Code & Codex 设计哲学比较 · Fan's Notes</title>
+<meta name="description" content="Claude Code & Codex 设计哲学比较 - 为什么要把 Claude Code 和 Codex 放在一起看">
+<style>
+:root {
+  --bg: #fafaf7; --surface: #ffffff; --surface-2: #f5f5f0;
+  --text: #1a1a1a; --muted: #6b7280; --border: #e5e7eb;
+  --accent: #b45309; --tech: #0369a1; --tech-soft: #f0f9ff;
+  --code-bg: #f6f7f8; --code-text: #24292e;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f0f0e; --surface: #1a1a18; --surface-2: #14140f;
+    --text: #e5e5e0; --muted: #9ca3af; --border: #2d2d2a;
+    --accent: #fbbf24; --tech: #38bdf8; --tech-soft: #0c1e2e;
+    --code-bg: #1e1e1c; --code-text: #d4d4d4;
+  }
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB",
+               "Microsoft YaHei", "Source Han Sans CN", sans-serif;
+  font-size: 16px; line-height: 1.78;
+  -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+}
+.layout { max-width: 760px; margin: 0 auto; padding: 48px 24px 80px; }
+
+/* Top crumb */
+.crumb {
+  font-size: 13px; color: var(--muted);
+  margin-bottom: 24px;
+  display: flex; align-items: center; gap: 8px;
+  flex-wrap: wrap;
+}
+.crumb a {
+  color: var(--muted); text-decoration: none;
+  border-bottom: 1px solid var(--border);
+}
+.crumb a:hover { color: var(--accent); border-color: var(--accent); }
+.crumb .sep { color: var(--border); }
+
+/* Chapter header */
+.chapter-meta {
+  font-family: "SF Mono", Monaco, monospace;
+  font-size: 11px; letter-spacing: 0.1em;
+  color: var(--tech); font-weight: 700;
+  margin-bottom: 8px;
+}
+
+/* Markdown content */
+.content h1 {
+  font-size: 32px; line-height: 1.25;
+  margin: 0 0 32px; font-weight: 700;
+  letter-spacing: -0.015em;
+  padding-bottom: 16px;
+  border-bottom: 2px solid var(--text);
+}
+.content h2 {
+  font-size: 24px; margin: 48px 0 14px;
+  line-height: 1.3; font-weight: 600;
+  letter-spacing: -0.005em;
+}
+.content h3 {
+  font-size: 18px; margin: 32px 0 12px;
+  font-weight: 600; color: var(--accent);
+}
+.content h4 {
+  font-size: 16px; margin: 24px 0 10px;
+  font-weight: 600;
+}
+.content p { margin: 0 0 18px; }
+
+.content a {
+  color: var(--accent); text-decoration: none;
+  border-bottom: 1px solid var(--border);
+  transition: border-color 0.15s;
+}
+.content a:hover { border-color: var(--accent); }
+
+.content ul, .content ol { padding-left: 24px; margin: 0 0 18px; }
+.content li { margin-bottom: 6px; }
+.content li > ul, .content li > ol { margin-top: 6px; }
+
+.content strong { font-weight: 600; }
+.content em { font-style: italic; }
+
+.content blockquote {
+  margin: 20px 0; padding: 4px 0 4px 16px;
+  border-left: 3px solid var(--border);
+  color: var(--muted); font-style: italic;
+}
+
+.content hr {
+  border: 0; height: 1px;
+  background: var(--border);
+  margin: 40px 0;
+}
+
+/* Inline code */
+.content code {
+  font-family: "SF Mono", Monaco, Consolas, "Liberation Mono", monospace;
+  background: var(--code-bg); color: var(--code-text);
+  padding: 2px 6px; border-radius: 4px;
+  font-size: 0.88em;
+  border: 1px solid var(--border);
+}
+
+/* Code blocks */
+.content pre {
+  margin: 20px 0;
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 18px;
+  overflow-x: auto;
+  font-size: 13px; line-height: 1.65;
+}
+.content pre code {
+  background: transparent; border: 0;
+  padding: 0; font-size: inherit;
+  color: var(--code-text);
+}
+
+/* Highlight.js minimal theme (works for both light/dark) */
+.hljs-comment, .hljs-quote { color: #708090; font-style: italic; }
+.hljs-keyword, .hljs-selector-tag, .hljs-built_in { color: #d73a49; }
+.hljs-string, .hljs-attr { color: #032f62; }
+.hljs-number, .hljs-literal { color: #005cc5; }
+.hljs-title, .hljs-function { color: #6f42c1; }
+.hljs-variable, .hljs-tag { color: #e36209; }
+@media (prefers-color-scheme: dark) {
+  .hljs-comment, .hljs-quote { color: #6a737d; }
+  .hljs-keyword, .hljs-selector-tag, .hljs-built_in { color: #f97583; }
+  .hljs-string, .hljs-attr { color: #9ecbff; }
+  .hljs-number, .hljs-literal { color: #79b8ff; }
+  .hljs-title, .hljs-function { color: #b392f0; }
+  .hljs-variable, .hljs-tag { color: #ffab70; }
+}
+
+.content table {
+  width: 100%; border-collapse: collapse;
+  margin: 20px 0; font-size: 14.5px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px; overflow: hidden;
+}
+.content th, .content td {
+  padding: 10px 14px; text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+.content th {
+  background: var(--code-bg);
+  font-weight: 600; font-size: 13px;
+  color: var(--muted);
+}
+.content tr:last-child td { border-bottom: 0; }
+
+/* Pager */
+.pager {
+  margin-top: 64px; padding-top: 24px;
+  border-top: 1px solid var(--border);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.pager a {
+  display: block; padding: 16px 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  text-decoration: none; color: inherit;
+  transition: all 0.15s;
+}
+.pager a:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+.pager .pager-label {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+.pager .pager-title {
+  font-size: 14px; font-weight: 600;
+  line-height: 1.4;
+}
+.pager .next { text-align: right; }
+.pager .prev:empty, .pager .next:empty { background: transparent; border: 0; }
+
+@media (max-width: 600px) {
+  .layout { padding: 32px 18px 64px; }
+  .content h1 { font-size: 26px; }
+  .content h2 { font-size: 21px; }
+  body { font-size: 15.5px; }
+  .pager { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="layout">
+<nav class="crumb">
+  <a href="/">Fan's Notes</a><span class="sep">/</span><a href="/harness-books/">Harness Books</a><span class="sep">/</span><span>Book 2: Claude Code & Codex 设计哲学比较</span>
+</nav>
+<div class="chapter-meta">BOOK 2 · 01</div>
+<article class="content">
+<h1>第 1 章 为什么要把 Claude Code 和 Codex 放在一起看</h1>
+<h2>1.1 因为它们比较的是对模型的不信任</h2>
+<p>如果把 Claude Code 和 Codex 当作两个“会写代码的助手”，那比较就会很无聊。无非是谁支持更多工具、谁的终端体验更顺手、谁的配置项更细。这些东西当然有用，但它们不解释为什么系统会呈现出今天这种形态。</p>
+<p>真正值得比较的地方，是它们都承认了一件对产品宣传不太友好的事实：模型不能直接拿来当执行体。它会误判，会忘记上下文，会把语气里的自信和结论里的正确性混为一谈。一旦这种东西接上 shell、文件系统和多轮状态，问题就不再是“答得对不对”，而是“它做过的事以后谁来收拾”。</p>
+<p>Claude Code 在这一点上表现得很像一个做过事故复盘的系统。你看 <code>query.ts</code>、<code>toolOrchestration.ts</code>、<code>compact.ts</code> 以及 Bash 相关 prompt，就会发现它对失败、膨胀、中断和误操作的想象力很丰富。一个系统如果老是预设好几种失败路径，通常是因为它见过太多乐观主义留下的烂摊子，而不只是因为悲观。</p>
+<p>Codex 则是另一种诚实。它把“不信任模型”落实为显式模块边界。<code>core/src/lib.rs</code> 里把 <code>instructions</code>、<code>skills</code>、<code>sandboxing</code>、<code>exec_policy</code>、<code>rollout</code>、<code>state_db_bridge</code>、<code>thread_manager</code> 等器官明明白白列出来，等于是在说：秩序不能靠模型自己领会，得靠系统把职责拆出来。</p>
+<p>所以比较这两者，是为了看两种不同的驯化路线，而不是为了看谁更会调用命令。</p>
+<h2>1.2 Claude Code 代表一种运行时优先的驯化路线</h2>
+<p>Claude Code 的很多精华，发生在主循环附近。这不是偶然。因为它的问题意识本来就很强烈地围绕“会话如何连续”展开。系统不只是要回答，还要在回答之后继续存在；不只是要执行，还要在执行之后保留秩序。这种压力会让架构自然向运行时编排倾斜。</p>
+<p>因此它的关键词是：</p>
+<ul>
+<li>query loop</li>
+<li>compact</li>
+<li>tool orchestration</li>
+<li>interrupt</li>
+<li>permission ask/allow/deny</li>
+<li>forked agent lifecycle</li>
+</ul>
+<p>这些词看上去都不像品牌文案，更接近值班表。可一个系统到了真的要干活的时候，值班表往往比愿景更重要。</p>
+<p>Claude Code 的长处也因此很鲜明。它对“连续工作中的脏活”特别敏感：消息膨胀、输出截断、工具结果回灌、上下文裁剪、子代理状态隔离、验证阶段独立、hook 生命周期收口。这些东西不是光靠一套漂亮接口定义就能解决的，必须经过运行时一轮轮摔打。</p>
+<h2>1.3 Codex 代表一种显式控制面优先的驯化路线</h2>
+<p>Codex 的气质不太一样。它当然也有运行时，但更引人注目的，是它把控制层尽量做成显式结构。</p>
+<p>在 <code>instructions/src/fragment.rs</code> 和 <code>user_instructions.rs</code> 里，用户指令和 skill 指令会以带有清楚 marker 的 contextual fragment 进入 prompt，而不是随便拼接。<code>AGENTS.md</code> 的内容会被包装成明确边界的用户消息，skill 也会以 <code>&lt;skill&gt;</code> 片段注入。这说明 Codex 对控制面有一种近乎文书工作的偏爱：它并不拒绝灵活，但不愿让灵活失去边界。</p>
+<p>同样，<code>tools/src/lib.rs</code> 和 <code>local_tool.rs</code> 也很说明问题。工具是一组 schema 化的构造结果，而不只是一堆运行时对象。<code>exec_command</code>、<code>shell</code>、<code>write_stdin</code>、<code>request_permissions</code>、<code>spawn_agent</code>、<code>wait_agent</code> 等工具，在系统里首先是接口定义，其次才是执行动作。</p>
+<p>再看 <code>execpolicy/src/lib.rs</code>，审批和执行限制甚至被做成单独 crate，包含 <code>Policy</code>、<code>Rule</code>、<code>Evaluation</code>、<code>Decision</code>、parser 等概念。这种做法其实很少见。很多系统也有权限策略，但往往散落在运行时各处；Codex 则把它往“可解析的政策语言”那一边推了一步。</p>
+<h2>1.4 两者都在回答同一个问题，但起笔位置不同</h2>
+<p>从更高处看，这两套系统都在回答同一个问题：</p>
+<p>如何让一个会说话、会调工具、但本质不可靠的模型，在工程环境里做出可接受的事？</p>
+<p>Claude Code 的起笔位置更接近：</p>
+<p>“模型已经在循环里了。我们怎样保证它这一轮不会把下一轮弄坏？”</p>
+<p>Codex 的起笔位置更接近：</p>
+<p>“模型会接触很多控制信息。我们怎样把这些信息做成显式、可组合、可策略化的结构？”</p>
+<p>前者强调流转，后者强调分层。前者把秩序安在 runtime heartbeat 上，后者把秩序安在 typed substrate 上。两者都不轻信模型，但它们把“不信任”安放在不同地方。</p>
+<h2>1.5 为什么这种差异值得团队认真看</h2>
+<p>因为一个团队以后会形成什么样的工作方式，常常取决于它最先把秩序放在哪。</p>
+<p>如果你先强调运行时连续性，团队自然会更关注：</p>
+<ul>
+<li>错误恢复</li>
+<li>中断响应</li>
+<li>状态污染</li>
+<li>工具编排</li>
+<li>长会话可靠性</li>
+</ul>
+<p>如果你先强调显式控制面，团队自然会更关注：</p>
+<ul>
+<li>指令边界</li>
+<li>配置层级</li>
+<li>tool schema</li>
+<li>policy 语言</li>
+<li>thread state 与持久化</li>
+</ul>
+<p>两种方向都没有错。错的是混着用，最后既没有运行时纪律，也没有清楚的控制层，只剩一堆可以演示、但不好维护的聪明把戏。</p>
+<h2>1.6 本文的基本判断</h2>
+<p>这一章先把全文立场摆明：</p>
+<blockquote>
+<p>Claude Code 和 Codex 代表的是两种 harness 设计哲学，而不只是两个“谁功能更全”的产品。</p>
+</blockquote>
+<p>它们殊途同归，是因为都知道模型不可信，真正可信的只能是约束结构。</p>
+<p>它们各表一枝，是因为一个更接近从现场经验里塑出来的运行时系统，另一个更接近由类型、策略和线程模型塑出来的控制系统。</p>
+<p>下面的章节，就沿着这条判断往下拆。</p>
+
+</article>
+<nav class="pager">
+<a class="prev" href="/harness-books/book2/preface.html"><div class="pager-label">← 上一篇 · 序</div><div class="pager-title">序言：两套 Harness</div></a>
+<a class="next" href="/harness-books/book2/chapter-02-two-control-planes.html"><div class="pager-label">下一篇 · 02 →</div><div class="pager-title">两种控制面：Prompt 拼装与 Instruction Fragment</div></a>
+</nav>
+<footer style="margin-top:48px;padding-top:24px;border-top:1px solid var(--border);color:var(--muted);font-size:13px;">
+  <p>原文作者：<a href="https://github.com/wquguru" target="_blank" rel="noopener" style="color:var(--accent);">wquguru</a> · 内容版权归原作者所有 · <a href="https://harness-books.agentway.dev/book2-comparing/chapter-01-why-this-comparison.html" target="_blank" rel="noopener" style="color:var(--accent);">在原站查看</a></p>
+</footer>
+</div>
+</body>
+</html>

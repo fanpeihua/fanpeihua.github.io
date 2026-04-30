@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>委派、验证与持久状态 · Claude Code & Codex 设计哲学比较 · Fan's Notes</title>
+<meta name="description" content="Claude Code & Codex 设计哲学比较 - 委派、验证与持久状态">
+<style>
+:root {
+  --bg: #fafaf7; --surface: #ffffff; --surface-2: #f5f5f0;
+  --text: #1a1a1a; --muted: #6b7280; --border: #e5e7eb;
+  --accent: #b45309; --tech: #0369a1; --tech-soft: #f0f9ff;
+  --code-bg: #f6f7f8; --code-text: #24292e;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f0f0e; --surface: #1a1a18; --surface-2: #14140f;
+    --text: #e5e5e0; --muted: #9ca3af; --border: #2d2d2a;
+    --accent: #fbbf24; --tech: #38bdf8; --tech-soft: #0c1e2e;
+    --code-bg: #1e1e1c; --code-text: #d4d4d4;
+  }
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB",
+               "Microsoft YaHei", "Source Han Sans CN", sans-serif;
+  font-size: 16px; line-height: 1.78;
+  -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+}
+.layout { max-width: 760px; margin: 0 auto; padding: 48px 24px 80px; }
+
+/* Top crumb */
+.crumb {
+  font-size: 13px; color: var(--muted);
+  margin-bottom: 24px;
+  display: flex; align-items: center; gap: 8px;
+  flex-wrap: wrap;
+}
+.crumb a {
+  color: var(--muted); text-decoration: none;
+  border-bottom: 1px solid var(--border);
+}
+.crumb a:hover { color: var(--accent); border-color: var(--accent); }
+.crumb .sep { color: var(--border); }
+
+/* Chapter header */
+.chapter-meta {
+  font-family: "SF Mono", Monaco, monospace;
+  font-size: 11px; letter-spacing: 0.1em;
+  color: var(--tech); font-weight: 700;
+  margin-bottom: 8px;
+}
+
+/* Markdown content */
+.content h1 {
+  font-size: 32px; line-height: 1.25;
+  margin: 0 0 32px; font-weight: 700;
+  letter-spacing: -0.015em;
+  padding-bottom: 16px;
+  border-bottom: 2px solid var(--text);
+}
+.content h2 {
+  font-size: 24px; margin: 48px 0 14px;
+  line-height: 1.3; font-weight: 600;
+  letter-spacing: -0.005em;
+}
+.content h3 {
+  font-size: 18px; margin: 32px 0 12px;
+  font-weight: 600; color: var(--accent);
+}
+.content h4 {
+  font-size: 16px; margin: 24px 0 10px;
+  font-weight: 600;
+}
+.content p { margin: 0 0 18px; }
+
+.content a {
+  color: var(--accent); text-decoration: none;
+  border-bottom: 1px solid var(--border);
+  transition: border-color 0.15s;
+}
+.content a:hover { border-color: var(--accent); }
+
+.content ul, .content ol { padding-left: 24px; margin: 0 0 18px; }
+.content li { margin-bottom: 6px; }
+.content li > ul, .content li > ol { margin-top: 6px; }
+
+.content strong { font-weight: 600; }
+.content em { font-style: italic; }
+
+.content blockquote {
+  margin: 20px 0; padding: 4px 0 4px 16px;
+  border-left: 3px solid var(--border);
+  color: var(--muted); font-style: italic;
+}
+
+.content hr {
+  border: 0; height: 1px;
+  background: var(--border);
+  margin: 40px 0;
+}
+
+/* Inline code */
+.content code {
+  font-family: "SF Mono", Monaco, Consolas, "Liberation Mono", monospace;
+  background: var(--code-bg); color: var(--code-text);
+  padding: 2px 6px; border-radius: 4px;
+  font-size: 0.88em;
+  border: 1px solid var(--border);
+}
+
+/* Code blocks */
+.content pre {
+  margin: 20px 0;
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 18px;
+  overflow-x: auto;
+  font-size: 13px; line-height: 1.65;
+}
+.content pre code {
+  background: transparent; border: 0;
+  padding: 0; font-size: inherit;
+  color: var(--code-text);
+}
+
+/* Highlight.js minimal theme (works for both light/dark) */
+.hljs-comment, .hljs-quote { color: #708090; font-style: italic; }
+.hljs-keyword, .hljs-selector-tag, .hljs-built_in { color: #d73a49; }
+.hljs-string, .hljs-attr { color: #032f62; }
+.hljs-number, .hljs-literal { color: #005cc5; }
+.hljs-title, .hljs-function { color: #6f42c1; }
+.hljs-variable, .hljs-tag { color: #e36209; }
+@media (prefers-color-scheme: dark) {
+  .hljs-comment, .hljs-quote { color: #6a737d; }
+  .hljs-keyword, .hljs-selector-tag, .hljs-built_in { color: #f97583; }
+  .hljs-string, .hljs-attr { color: #9ecbff; }
+  .hljs-number, .hljs-literal { color: #79b8ff; }
+  .hljs-title, .hljs-function { color: #b392f0; }
+  .hljs-variable, .hljs-tag { color: #ffab70; }
+}
+
+.content table {
+  width: 100%; border-collapse: collapse;
+  margin: 20px 0; font-size: 14.5px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px; overflow: hidden;
+}
+.content th, .content td {
+  padding: 10px 14px; text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+.content th {
+  background: var(--code-bg);
+  font-weight: 600; font-size: 13px;
+  color: var(--muted);
+}
+.content tr:last-child td { border-bottom: 0; }
+
+/* Pager */
+.pager {
+  margin-top: 64px; padding-top: 24px;
+  border-top: 1px solid var(--border);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.pager a {
+  display: block; padding: 16px 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  text-decoration: none; color: inherit;
+  transition: all 0.15s;
+}
+.pager a:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+.pager .pager-label {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+.pager .pager-title {
+  font-size: 14px; font-weight: 600;
+  line-height: 1.4;
+}
+.pager .next { text-align: right; }
+.pager .prev:empty, .pager .next:empty { background: transparent; border: 0; }
+
+@media (max-width: 600px) {
+  .layout { padding: 32px 18px 64px; }
+  .content h1 { font-size: 26px; }
+  .content h2 { font-size: 21px; }
+  body { font-size: 15.5px; }
+  .pager { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="layout">
+<nav class="crumb">
+  <a href="/">Fan's Notes</a><span class="sep">/</span><a href="/harness-books/">Harness Books</a><span class="sep">/</span><span>Book 2: Claude Code & Codex 设计哲学比较</span>
+</nav>
+<div class="chapter-meta">BOOK 2 · 06</div>
+<article class="content">
+<h1>第 6 章 委派、验证与持久状态：谁来防止系统自己给自己打高分</h1>
+<h2>6.1 多代理的真正问题是责任</h2>
+<p>一听多代理就想到效率提升，像听公司扩编——其实真正棘手的从来是多出来的责任怎么切。若同一系统既执行又总结又验证，还顺手给自己写评语，结论多半令人宽慰但不可靠：&quot;干得不错&quot;。Claude Code 清醒地把 explore、execute、synthesis、verification 拆开，verify 是独立纪律而非礼貌动作——系统不愿让&quot;完成&quot;由执行代理自己宣布。Codex 也走这条路：<code>tools/src/lib.rs</code> 里 <code>create_spawn_agent_tool_v*</code>、<code>create_wait_agent_tool_v*</code>、<code>create_send_message_tool</code>、<code>create_close_agent_tool_v*</code> 说明委派是正式工具能力，不是黑魔法。</p>
+<h2>6.2 Claude Code：多代理服务于运行时职责分区</h2>
+<p>Claude Code 的多代理围绕主循环和任务推进展开——主代理不该什么都自己干，尤其不该既干活又验收。因此多代理主要用于：探索外包、执行分流、synthesis 汇总、verification 独立复核。这很符合它的强项在运行时编排——多代理被纳入&quot;当前这轮怎么推进&quot;的治理框架，而不是先有 agent platform 再往里塞任务。</p>
+<h2>6.3 Codex：多代理服务于显式工具化协作</h2>
+<p>Codex 把委派定义成工具接口，多代理更像正式子系统。两个直接影响：委派动作更易被记录、审计和组合（显式工具调用，不是 runtime 魔法）；协作更易与线程、状态和审批体系对齐（thread/rollout/policy 本就一等公民）。<code>agent_tool.rs</code> 里 <code>spawn_agent</code>、<code>send_input</code>、<code>wait_agent</code>、<code>close_agent</code> 各有 schema：<code>send_input</code> 区分 <code>interrupt=true</code> 立即打断和默认排队；<code>wait_agent</code> 有 default/min/max timeout；<code>close_agent</code> 连 open descendants 一起关闭——抢占、等待、收尾都是协议字段。适合做成平台能力，不见得更灵巧但更易长期维护。</p>
+<h2>6.4 持久状态让验证不只是礼仪</h2>
+<p>验证流于形式的一个主因是系统没有足够好的状态承接——上一步干了什么、为什么、哪些工具动过、哪些文件变过，若只在执行代理脑子里，验证就容易沦为貌似认真实则缺材料的表演。Claude Code 让会话状态、工具结果和恢复分支在 runtime 里连续可见，配合独立验证纪律降低自我美化。Codex 通过 thread、rollout、message history、state DB bridge 给验证提供更清楚的材料基础。二者并不冲突——前者补执行者过于沉浸现场的问题，后者补系统协作必须留下结构化证据的问题。</p>
+<h2>6.5 对恢复与收尾的不同态度</h2>
+<p>Claude Code 很在乎 task cleanup、父子 abort 传播、subagent lifecycle hook——在它的世界里，多代理首先是运行时现场的一部分，出问题必须能及时收口。Codex 则把代理生命周期纳入显式状态管理和调用协议：不只关心&quot;子代理死没死&quot;，还关心&quot;委派行为作为系统事件该如何留存&quot;。前者像现场总工，担心人散场后地上还留坑；后者像带项目管理系统的组织者，担心每个协作动作是否进入记录体系。</p>
+<h3>骨架：Codex 代理委派协议 (skeleton)</h3>
+<pre><code class="hljs language-plaintext">// 骨架: agent_tool.rs spawn/wait/send/close
+handle = spawn_agent { role, prompt, timeout, inherit_approval }
+for msg in updates:
+    send_input(handle, msg, interrupt ∈ {true, false})  // true=立即打断, false=排队
+result = wait_agent(handle, timeout ∈ [min, default, max])
+close_agent(handle, cascade=true)                        // 连同 open descendants 一并关闭</code></pre><h3>孤儿与超时故障矩阵</h3>
+<table>
+<thead>
+<tr>
+<th>事件顺序</th>
+<th>前置状态</th>
+<th>触发</th>
+<th>下一步</th>
+<th>阈值</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>父代理 abort</td>
+<td>子代理在飞</td>
+<td>parent.abort</td>
+<td>cascade abort 传到 handle；写 rollout 事件</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>wait_agent</code> 超时</td>
+<td>子代理未返回</td>
+<td>timeout ≥ max</td>
+<td>关闭 handle，返回 timeout 结果</td>
+<td><code>wait_agent.max</code></td>
+</tr>
+<tr>
+<td><code>send_input(interrupt=true)</code></td>
+<td>子代理排队中</td>
+<td>抢占</td>
+<td>丢弃队列，注入新输入</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>close_agent</code></td>
+<td>有 open descendants</td>
+<td>显式关闭</td>
+<td>级联关闭所有后代</td>
+<td><code>cascade=true</code></td>
+</tr>
+<tr>
+<td>子代理崩溃</td>
+<td>—</td>
+<td>异常退出</td>
+<td>返回 error，保留 thread 记录</td>
+<td>—</td>
+</tr>
+<tr>
+<td>handle 泄漏</td>
+<td>任务结束未 close</td>
+<td>finalize</td>
+<td>强制 close + evict</td>
+<td>不允许悬挂句柄</td>
+</tr>
+</tbody></table>
+<h2>6.6 本章结论</h2>
+<p>这一章的结论不难写：</p>
+<blockquote>
+<p>Claude Code 的多代理设计更强调运行时职责分离与现场收尾，Codex 的多代理设计更强调工具化委派、状态承接与可审计协作。</p>
+</blockquote>
+<p>二者都试图避免系统自己给自己打高分。</p>
+<p>只是 Claude Code 更靠角色分离和验证纪律。</p>
+<p>Codex 更靠显式接口、线程状态和协作记录。</p>
+<p>最后一章，我们把前面六章压成总判断，回答书名里的问题：究竟是殊途同归，还是根本不同种。</p>
+
+</article>
+<nav class="pager">
+<a class="prev" href="/harness-books/book2/chapter-05-skills-hooks-and-local-governance.html"><div class="pager-label">← 上一篇 · 05</div><div class="pager-title">技能、Hook 与本地规则</div></a>
+<a class="next" href="/harness-books/book2/chapter-07-convergence-and-divergence.html"><div class="pager-label">下一篇 · 07 →</div><div class="pager-title">殊途同归，还是各表一枝</div></a>
+</nav>
+<footer style="margin-top:48px;padding-top:24px;border-top:1px solid var(--border);color:var(--muted);font-size:13px;">
+  <p>原文作者：<a href="https://github.com/wquguru" target="_blank" rel="noopener" style="color:var(--accent);">wquguru</a> · 内容版权归原作者所有 · <a href="https://harness-books.agentway.dev/book2-comparing/chapter-06-delegation-verification-and-state.html" target="_blank" rel="noopener" style="color:var(--accent);">在原站查看</a></p>
+</footer>
+</div>
+</body>
+</html>
