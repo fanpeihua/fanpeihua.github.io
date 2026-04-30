@@ -270,6 +270,27 @@
     margin: 48px 0;
   }
 
+  /* Crosslink at top */
+  .crosslink {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    font-size: 13px;
+    margin-bottom: 32px;
+    padding-bottom: 16px;
+    border-bottom: 1px dashed var(--border);
+  }
+  .crosslink a {
+    color: var(--muted);
+    text-decoration: none;
+    border: 1px solid var(--border);
+    padding: 4px 12px;
+    border-radius: 999px;
+    transition: all 0.15s;
+  }
+  .crosslink a:hover { color: var(--accent); border-color: var(--accent); }
+  .crosslink a.current { background: var(--text); color: var(--bg); border-color: var(--text); }
+
   @media (max-width: 600px) {
     .layout { padding: 32px 18px 80px; }
     h1 { font-size: 28px; }
@@ -280,6 +301,11 @@
 </head>
 <body>
 <div class="layout">
+
+<nav class="crosslink">
+  <a class="current" href="/longevity/">程序员延寿指南</a>
+  <a href="/human-system/">人体系统调优 →</a>
+</nav>
 
 <header class="hero">
   <div class="eyebrow">Health · Evidence-based</div>
