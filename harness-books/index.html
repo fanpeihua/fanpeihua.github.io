@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Harness Books · 章节索引 · Fan's Notes</title>
+<meta name="description" content="Claude Code 与 Codex 系统设计哲学两本书的章节索引">
+<style>
+  :root {
+    --bg: #fafaf7;
+    --surface: #ffffff;
+    --surface-2: #f5f5f0;
+    --text: #1a1a1a;
+    --muted: #6b7280;
+    --border: #e5e7eb;
+    --accent: #b45309;
+    --tech: #0369a1;
+    --tech-soft: #f0f9ff;
+    --pdf: #dc2626;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f0f0e;
+      --surface: #1a1a18;
+      --surface-2: #14140f;
+      --text: #e5e5e0;
+      --muted: #9ca3af;
+      --border: #2d2d2a;
+      --accent: #fbbf24;
+      --tech: #38bdf8;
+      --tech-soft: #0c1e2e;
+      --pdf: #f87171;
+    }
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB",
+                 "Microsoft YaHei", "Source Han Sans CN", sans-serif;
+    font-size: 16px;
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  .layout { max-width: 880px; margin: 0 auto; padding: 56px 24px 120px; }
+
+  /* Breadcrumb */
+  .crumb {
+    font-size: 13px; color: var(--muted);
+    margin-bottom: 32px;
+  }
+  .crumb a {
+    color: var(--muted); text-decoration: none;
+    border-bottom: 1px solid var(--border);
+  }
+  .crumb a:hover { color: var(--accent); border-color: var(--accent); }
+
+  header.hero {
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 32px;
+    margin-bottom: 48px;
+  }
+  .eyebrow {
+    color: var(--tech); font-size: 12px;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    margin-bottom: 12px; font-weight: 600;
+  }
+  h1 {
+    font-size: 38px; line-height: 1.2;
+    margin: 0 0 14px; font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+  .subtitle {
+    font-size: 16px; color: var(--muted);
+    margin: 0 0 20px;
+  }
+  .meta-row {
+    display: flex; flex-wrap: wrap; gap: 12px;
+    font-size: 13px;
+  }
+  .meta-row a {
+    color: var(--muted); text-decoration: none;
+    border: 1px solid var(--border);
+    padding: 4px 12px; border-radius: 999px;
+    transition: all 0.15s;
+  }
+  .meta-row a:hover { color: var(--accent); border-color: var(--accent); }
+  .meta-row a.primary {
+    color: var(--tech); border-color: var(--tech);
+    background: var(--tech-soft);
+  }
+
+  /* Book section */
+  .book {
+    margin-top: 56px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 32px 36px;
+  }
+  .book-header {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 16px; flex-wrap: wrap;
+    padding-bottom: 16px; margin-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+  }
+  .book-num {
+    font-family: "SF Mono", Monaco, monospace;
+    font-size: 11px;
+    color: var(--tech); font-weight: 700;
+    letter-spacing: 0.1em;
+  }
+  .book-title {
+    font-size: 22px; font-weight: 700;
+    margin: 4px 0 0; letter-spacing: -0.01em;
+  }
+  .book-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .book-actions a {
+    font-size: 12px; color: var(--muted);
+    text-decoration: none;
+    padding: 5px 12px; border-radius: 6px;
+    border: 1px solid var(--border);
+    transition: all 0.15s;
+    display: inline-flex; align-items: center; gap: 5px;
+  }
+  .book-actions a:hover { color: var(--accent); border-color: var(--accent); }
+  .book-actions a.pdf-link { color: var(--pdf); border-color: var(--pdf); }
+  .book-actions a.pdf-link:hover { background: var(--pdf); color: white; }
+
+  /* Chapter list */
+  .toc-group { margin-top: 24px; }
+  .toc-group:first-child { margin-top: 0; }
+  .toc-group-label {
+    font-size: 11px; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--muted);
+    margin-bottom: 10px; font-weight: 600;
+  }
+  .chapters { list-style: none; padding: 0; margin: 0; }
+  .chapter {
+    border-bottom: 1px dashed var(--border);
+  }
+  .chapter:last-child { border-bottom: 0; }
+  .chapter a {
+    display: flex; align-items: center;
+    text-decoration: none; color: var(--text);
+    padding: 12px 0;
+    gap: 16px;
+    transition: padding 0.15s;
+  }
+  .chapter a:hover { padding-left: 8px; color: var(--accent); }
+  .chapter-num {
+    flex-shrink: 0;
+    font-family: "SF Mono", Monaco, monospace;
+    font-size: 12px;
+    color: var(--muted);
+    width: 36px;
+    font-weight: 600;
+  }
+  .chapter-title {
+    flex: 1;
+    font-size: 15.5px;
+    line-height: 1.45;
+  }
+  .chapter-arrow {
+    flex-shrink: 0;
+    color: var(--muted);
+    font-size: 14px;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .chapter a:hover .chapter-arrow { opacity: 1; color: var(--accent); }
+
+  /* Recommended path */
+  .recommend {
+    margin: 64px 0 0;
+    background: var(--tech-soft);
+    border-left: 3px solid var(--tech);
+    border-radius: 8px;
+    padding: 20px 24px;
+  }
+  .recommend-title {
+    color: var(--tech); font-size: 13px;
+    font-weight: 600; letter-spacing: 0.06em;
+    text-transform: uppercase; margin-bottom: 12px;
+  }
+  .recommend ul { margin: 0; padding-left: 20px; }
+  .recommend li { margin-bottom: 6px; font-size: 14.5px; }
+  .recommend a {
+    color: var(--tech); text-decoration: none;
+    border-bottom: 1px solid var(--tech);
+  }
+
+  /* Footer */
+  footer {
+    margin-top: 80px; padding-top: 32px;
+    border-top: 1px solid var(--border);
+    color: var(--muted); font-size: 13px;
+  }
+  footer a { color: var(--muted); }
+
+  @media (max-width: 600px) {
+    .layout { padding: 32px 18px 80px; }
+    .book { padding: 24px 20px; }
+    h1 { font-size: 30px; }
+    .book-title { font-size: 19px; }
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+
+<div class="crumb">
+  <a href="/">← Fan's Notes</a>
+  <span> / Harness Books</span>
+</div>
+
+<header class="hero">
+  <div class="eyebrow">Engineering Series</div>
+  <h1>Harness Books — Claude Code &amp; Codex 设计哲学</h1>
+  <p class="subtitle">两本关于 coding agent harness 工程的书，作者 <a href="https://github.com/wquguru" target="_blank" rel="noopener" style="color:var(--accent);">wquguru</a>。原文阅读站托管在 AgentWay。</p>
+  <div class="meta-row">
+    <a class="primary" href="https://harness-books.agentway.dev/" target="_blank" rel="noopener">官方在线阅读</a>
+    <a href="https://github.com/wquguru/harness-books" target="_blank" rel="noopener">GitHub 源</a>
+    <a href="https://harness-books.agentway.dev/en/" target="_blank" rel="noopener">English Version</a>
+  </div>
+</header>
+
+<p style="font-size:15px;color:var(--muted);line-height:1.75;">
+  当一个会写代码的模型被放进终端、仓库、权限系统、团队工作流——什么让整个系统保持<strong style="color:var(--text)">有界、连贯、可问责</strong>？这两本书不逐行讲源码，而是讨论一个 harness 如何组织约束与执行，如何把"模型必然不稳定"折叠成可持续的工程秩序。
+</p>
+
+<!-- Book 1 -->
+<section class="book" id="book1">
+  <div class="book-header">
+    <div>
+      <div class="book-num">BOOK 01</div>
+      <h2 class="book-title">Claude Code 设计指南</h2>
+    </div>
+    <div class="book-actions">
+      <a href="https://harness-books.agentway.dev/book1-claude-code/" target="_blank" rel="noopener">官方阅读</a>
+      <a class="pdf-link" href="https://harness-books.agentway.dev/book1-claude-code/exported/book1-claude-code.pdf" target="_blank" rel="noopener">PDF</a>
+    </div>
+  </div>
+
+  <div class="toc-group">
+    <div class="toc-group-label">前置 · Front Matter</div>
+    <ul class="chapters">
+      <li class="chapter"><a href="https://harness-books.agentway.dev/book1-claude-code/index.html" target="_blank" rel="noopener">
+        <span class="chapter-num">00</span><span class="chapter-title">Introduction · 引言</span><span class="chapter-arrow">↗</span></a></li>
+      <li class="chapter"><a href="https://harness-books.agentway.dev/book1-claude-code/preface.html" target="_blank" rel="noopener">
+        <span class="chapter-num">序</span><span class="chapter-title">Harness、终端与工程约束</span><span class="chapter-arrow">↗</span></a></li>
+    </ul>
+  </div>
+
+  <div class="toc-group">
+    <div class="toc-group-label">正文 · Chapters</div>
+    <ul class="chapters">
+      <li class="chapter"><a href="https://harness-books.agentway.dev/book1-claude-code/chapter-01-why-harness-engineering.html" target="_blank" rel="noopener">
+        <span class="chapter-num">01</span><span class="chapter-title">为什么需要 Harness Engineering</span><span class="chapter-arrow">↗</span></a></li>
+      <li class="chapter"><a href="https://harness-books.agentway.dev/book1-claude-code/chapter-02-prompt-is-control-plane.html" target="_blank" rel="noopener">
+        <span class="chapter-num">02</span><span class="chapter-title">Prompt 不是人格，Prompt 是控制平面</span><span class="chapter-arrow">↗</span></a></li>
+      <li class="chapter"><a href="https://harness-books.agentway.dev/book1-claude-code/chapter-03-query-loop-heartbeat.html" target="_blank" rel="noopener">
+        <span class="chapter-num">03</span><span class="chapter-title">Query Loop：代理系统的心跳</span><span class="chapter-arrow">↗</span></a></li>
+      <li class="chapter"><a href="https://harness-books.agentway.dev/book1-claude-code/chapter-04-tools-permissions-interrupts.html" target="_blank" rel="noopener">
+        <span class="chapter-num">04</span><span class="chapter-title">工具、权限与中断：为什么代理不能直接碰世界</span><span class="chapter-arrow">↗</span></a></li>
+      <li class="chapter"><a href="https://harness-books.agentway.dev/book1-claude-code/chapter-05-context-memory-compact.html" target="_blank" rel="noopener">
+        <span class="chapter-num">05</span><span class="chapter-title">上下文治理：Memory、CLAUDE.md 与 Compact 是预算制度</span><span class="chapter-arrow">↗</span></a></li>
+      <li class="chapter"><a href="https://harness-books.agentway.dev/book1-claude-code/chapter-06-errors-and-recovery.html" target="_blank" rel="noopener">
+        <span class="chapter-num">06</span><span class="chapter-title">错误与恢复：出错后仍能继续工作的代理系统</span><span class="chapter-arrow">↗</span></a></li>
+      <li class="chapter"><a href="https://harness-books.agentway.dev/book1-claude-code/chapter-07-multi-agent-and-verification.html" target="_blank" rel="noopener">
+        <span class="chapter-num">07</span><span class="chapter-title">多代理与验证：用分工和验证管理不稳定性</span><span class="chapter-arrow">↗</span></a></li>
+      <li class="chapter"><a href="https://harness-books.agentway.dev/book1-claude-code/chapter-08-team-landing-practices.html" target="_blank" rel="noopener">
+        <span class="chapter-num">08</span><span class="chapter-title">团队落地：把一个聪明工具变成可复用制度</span><span class="chapter-arrow">↗</span></a></li>
+      <li class="chapter"><a href="https://harness-books.agentway.dev/book1-claude-code/chapter-09-ten-principles.html" target="_blank" rel="noopener">
+        <span class="chapter-num">09</span><span class="chapter-title">Harness Engineering 十条原则</span><span class="chapter-arrow">↗</span></a></li>
+    </ul>
+  </div>
+
+  <div class="toc-group">
+    <div class="toc-group-label">附录 · Appendices</div>
+    <ul class="chapters">
+      <li class="chapter"><a href="https://harness-books.agentway.dev/book1-claude-code/appendix-a-checklists.html" target="_blank" rel="noopener">
+        <span class="chapter-num">A</span><span class="chapter-title">检查清单：把原则落成能执行的约束</span><span class="chapter-arrow">↗</span></a></li>
+      <li class="chapter"><a href="https://harness-books.agentway.dev/book1-claude-code/appendix-b-diagram-notes.html" target="_blank" rel="noopener">
+        <span class="chapter-num">B</span><span class="chapter-title">图示：把运行时骨架画出来</span><span class="chapter-arrow">↗</span></a></li>
+      <li class="chapter"><a href="https://harness-books.agentway.dev/book1-claude-code/appendix-c-source-map.html" target="_blank" rel="noopener">
+        <span class="chapter-num">C</span><span class="chapter-title">源码地图：本书各章主要依据哪些文件</span><span class="chapter-arrow">↗</span></a></li>
+    </ul>
+  </div>
+</section>
+
+<!-- Book 2 -->
+<section class="book" id="book2">
+  <div class="book-header">
+    <div>
+      <div class="book-num">BOOK 02</div>
+      <h2 class="book-title">Claude Code &amp; Codex 设计哲学比较</h2>
+    </div>
+    <div class="book-actions">
+      <a href="https://harness-books.agentway.dev/book2-comparing/" target="_blank" rel="noopener">官方阅读</a>
+      <a class="pdf-link" href="https://harness-books.agentway.dev/book2-comparing/exported/book2-comparing.pdf" target="_blank" rel="noopener">PDF</a>
+    </div>
+  </div>
+
+  <div class="toc-group">
+    <div class="toc-group-label">前置 · Front Matter</div>
+    <ul class="chapters">
+      <li class="chapter"><a href="https://harness-books.agentway.dev/book2-comparing/index.html" target="_blank" rel="noopener">
+        <span class="chapter-num">00</span><span class="chapter-title">Introduction · 引言</span><span class="chapter-arrow">↗</span></a></li>
+      <li class="chapter"><a href="https://harness-books.agentway.dev/book2-comparing/chapter-00-reading-map.html" target="_blank" rel="noopener">
+        <span class="chapter-num">导</span><span class="chapter-title">阅读地图：如何理解第一本书与这本比较书</span><span class="chapter-arrow">↗</span></a></li>
+      <li class="chapter"><a href="https://harness-books.agentway.dev/book2-comparing/preface.html" target="_blank" rel="noopener">
+        <span class="chapter-num">序</span><span class="chapter-title">两套 Harness，不必假装是同一匹马的附件</span><span class="chapter-arrow">↗</span></a></li>
+    </ul>
+  </div>
+
+  <div class="toc-group">
+    <div class="toc-group-label">正文 · Chapters</div>
+    <ul class="chapters">
+      <li class="chapter"><a href="https://harness-books.agentway.dev/book2-comparing/chapter-01-why-this-comparison.html" target="_blank" rel="noopener">
+        <span class="chapter-num">01</span><span class="chapter-title">为什么要把 Claude Code 和 Codex 放在一起看</span><span class="chapter-arrow">↗</span></a></li>
+      <li class="chapter"><a href="https://harness-books.agentway.dev/book2-comparing/chapter-02-two-control-planes.html" target="_blank" rel="noopener">
+        <span class="chapter-num">02</span><span class="chapter-title">两种控制面：Prompt 拼装与 Instruction Fragment</span><span class="chapter-arrow">↗</span></a></li>
+      <li class="chapter"><a href="https://harness-books.agentway.dev/book2-comparing/chapter-03-loop-thread-and-rollout.html" target="_blank" rel="noopener">
+        <span class="chapter-num">03</span><span class="chapter-title">心跳放在哪：Query Loop 对照 Thread、Rollout 与 State</span><span class="chapter-arrow">↗</span></a></li>
+      <li class="chapter"><a href="https://harness-books.agentway.dev/book2-comparing/chapter-04-tools-sandbox-and-exec-policy.html" target="_blank" rel="noopener">
+        <span class="chapter-num">04</span><span class="chapter-title">工具、沙箱与策略语言：谁来阻止模型动手太快</span><span class="chapter-arrow">↗</span></a></li>
+      <li class="chapter"><a href="https://harness-books.agentway.dev/book2-comparing/chapter-05-skills-hooks-and-local-governance.html" target="_blank" rel="noopener">
+        <span class="chapter-num">05</span><span class="chapter-title">技能、Hook 与本地规则：系统如何学会守乡约</span><span class="chapter-arrow">↗</span></a></li>
+      <li class="chapter"><a href="https://harness-books.agentway.dev/book2-comparing/chapter-06-delegation-verification-and-state.html" target="_blank" rel="noopener">
+        <span class="chapter-num">06</span><span class="chapter-title">委派、验证与持久状态：谁来防止系统自己给自己打高分</span><span class="chapter-arrow">↗</span></a></li>
+      <li class="chapter"><a href="https://harness-books.agentway.dev/book2-comparing/chapter-07-convergence-and-divergence.html" target="_blank" rel="noopener">
+        <span class="chapter-num">07</span><span class="chapter-title">殊途同归，还是各表一枝</span><span class="chapter-arrow">↗</span></a></li>
+      <li class="chapter"><a href="https://harness-books.agentway.dev/book2-comparing/chapter-08-how-to-choose-or-build.html" target="_blank" rel="noopener">
+        <span class="chapter-num">08</span><span class="chapter-title">如果你要自己做：该向谁学，先学什么</span><span class="chapter-arrow">↗</span></a></li>
+    </ul>
+  </div>
+
+  <div class="toc-group">
+    <div class="toc-group-label">附录 · Appendices</div>
+    <ul class="chapters">
+      <li class="chapter"><a href="https://harness-books.agentway.dev/book2-comparing/appendix-a-source-map.html" target="_blank" rel="noopener">
+        <span class="chapter-num">A</span><span class="chapter-title">源码地图：这套比较主要依据哪些文件</span><span class="chapter-arrow">↗</span></a></li>
+      <li class="chapter"><a href="https://harness-books.agentway.dev/book2-comparing/appendix-b-checklists.html" target="_blank" rel="noopener">
+        <span class="chapter-num">B</span><span class="chapter-title">检查清单：判断 Harness 更像 Claude Code、Codex，还是半成品</span><span class="chapter-arrow">↗</span></a></li>
+    </ul>
+  </div>
+</section>
+
+<aside class="recommend">
+  <div class="recommend-title">📍 作者推荐阅读路径</div>
+  <ul>
+    <li>想要完整框架：先读 <a href="#book1">Book 1</a>，再读 <a href="#book2">Book 2</a></li>
+    <li>已经熟悉 coding agent 工具，想直接看架构差异：从 <a href="#book2">Book 2</a> 开始</li>
+    <li>只想看结论：读 <a href="https://harness-books.agentway.dev/book1-claude-code/chapter-09-ten-principles.html" target="_blank" rel="noopener">Book 1 第 9 章</a> + <a href="https://harness-books.agentway.dev/book2-comparing/chapter-07-convergence-and-divergence.html" target="_blank" rel="noopener">Book 2 第 7 章</a></li>
+  </ul>
+</aside>
+
+<footer>
+  <p>章节链接均跳转至作者官方阅读站 <a href="https://harness-books.agentway.dev/" target="_blank" rel="noopener">harness-books.agentway.dev</a>。本页仅作个人导航索引使用，所有内容版权归原作者所有。</p>
+  <p><a href="/">← 返回 Fan's Notes 首页</a></p>
+</footer>
+
+</div>
+</body>
+</html>
